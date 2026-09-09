@@ -14,13 +14,14 @@ aplikace se čtyřmi obrazovkami**.
 
 **Dvě věci ze zadání ale hotové nejsou a nesmí se na ně zapomenout:**
 
-1. **OCR je zablokované.** `@capacitor-mlkit/text-recognition` vyžaduje snímek uložený na
-   disk, což jde proti akceptačnímu kritériu „snímky se nikdy neukládají do cache“. Plugin
-   je proto odinstalovaný. Logika v `packages/ocr` je hotová a čeká — `zMlKit` přijme výstup
-   ML Kitu, ať přijde odkudkoliv. **Než to začneš řešit, přečti si `docs/ocr-a-carovy-kod.md`
-   a nech rozhodnout uživatele** — jsou tam tři možnosti a jedna z nich mění zadání.
+1. **Nic z aplikace neběželo na skutečném telefonu.** Sestaví se a logika je pokrytá testy,
+   ale sken, focení ani šifrovaná databáze na zařízení vyzkoušené nejsou.
 2. **Sken kódu není ověřený na reálném tiketu.** Čtečka vrací `rawValue` jako řetězec, ne
    bajty, takže offsety ze zadání nesedí a sériové číslo se hledá vzorem.
+3. **Snímek pro OCR se ukládá do privátní cache** — vědomá odchylka od zadání, odsouhlasená
+   9. 9. 2026. Podmínkou je, že vždycky zmizí a nikdy neskončí v galerii. **Nesahej na
+   `snimekTiketu.ts` tak, abys porušil `finally`**; ta záruka je celý důvod, proč je ten
+   postup oddělený od napojení na pluginy. Viz `docs/ocr-a-carovy-kod.md`.
 
 ```
 packages/jadro/src/    model.ts, validace.ts, koncoveCislice.ts, slucovani.ts,
@@ -40,7 +41,7 @@ Ověřené příkazy (npm workspace, Node 24):
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 346 testů (jádro, ocr, fetcher i soukromí aplikace)
+npm test             # vitest, 354 testů (jádro, ocr, fetcher i soukromí aplikace)
 npm run typecheck    # tsc --build, strict
 
 npm run vyherka -- stav

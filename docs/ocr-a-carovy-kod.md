@@ -11,11 +11,26 @@ napojení na zařízení naráží na dvě věci, které se nedají obejít bez 
 |---|---|
 | Skládání řádků, čtení čísel, čtení kódu | **hotové**, otestované bez zařízení |
 | Sken čárového kódu (PDF417) | **zapojený**, ale neověřený na reálném tiketu |
-| Rozpoznávání čísel z tiketu (OCR) | **zablokované** — viz níže |
+| Rozpoznávání čísel z tiketu (OCR) | **zapojené** s vědomou odchylkou od zadání — viz níže |
 
 ---
 
-## Blokátor 1: rozpoznávání textu chce uložený soubor
+## Rozhodnutí: rozpoznávání textu chce uložený soubor
+
+> **Rozhodnuto 9. 9. 2026: povolen dočasný soubor v privátní cache aplikace.**
+> Je to změna akceptačního kritéria ze zadání, ne jeho obejití. Zbytek téhle sekce popisuje,
+> proč k tomu došlo a co se místo toho zvažovalo.
+>
+> Podmínkou je, že snímek **vždycky** zmizí — při úspěchu, při chybě rozpoznávání i při
+> výjimce — a že se nikdy nedostane do galerie. Postup je proto v jedné funkci
+> (`app/src/app/data/snimekTiketu.ts`) s `finally` a s vyměnitelnými závislostmi, aby na to
+> šel napsat test. Hlídají to `app/test/snimekTiketu.test.ts` a `app/test/soukromi.test.ts`.
+>
+> Co to znamená v praxi: snímek tiketu leží v privátní cache aplikace řádově desítky
+> milisekund. Do cloudové zálohy se nedostane (`allowBackup="false"` a pravidla bez výjimek),
+> do galerie ani do MediaStore taky ne (`saveToGallery: false`, `CameraSource.Camera`).
+
+### Původní rozpor
 
 `@capacitor-mlkit/text-recognition` má jedinou metodu:
 
@@ -35,13 +50,13 @@ které se nepoužívají.
 ### Možnosti
 
 1. **Ponechat ruční zadání čísel.** Sken kódu dá sériové číslo, čísla se opíší z papíru.
-   Plně v souladu se zadáním, hotové dnes, méně pohodlné.
+   Plně v souladu se zadáním, méně pohodlné. Ruční zadání zůstává plnohodnotnou cestou
+   bez ohledu na tohle rozhodnutí.
 2. **Vlastní plugin nad `InputImage.fromMediaImage`.** ML Kit umí zpracovat snímek přímo
    z proudu kamery, bez souboru. Znamená to ~150 řádků Javy nebo Kotlinu v projektu.
    Zadání odmítá psát v nativním kódu *aplikaci*; malý plugin je něco jiného, ale pořád
    je to nativní kód k údržbě.
-3. **Povolit dočasný soubor v privátní cache aplikace** a hned ho mazat. Je to jednodušší,
-   ale je to doslovné porušení akceptačního kritéria. Bez výslovné změny zadání ne.
+3. **Povolit dočasný soubor v privátní cache aplikace** a hned ho mazat. ← **zvoleno**
 
 Vyhodnocovací část je na tom nezávislá: `packages/ocr` přijímá útržky textu s rámečky
 (`zMlKit`) a je jedno, odkud přijdou. Až se způsob pořízení snímku vyřeší, napojení je
@@ -49,7 +64,7 @@ otázka několika řádků.
 
 ---
 
-## Blokátor 2: čtečka kódů nevrací syrové bajty
+## Blokátor: čtečka kódů nevrací syrové bajty
 
 `@capacitor-mlkit/barcode-scanning` vrací v `Barcode` jen `rawValue: string`, ne `rawBytes`.
 Payload tiketu je přitom binární — 72 bajtů šifrovaného bloku s vysokou entropií.

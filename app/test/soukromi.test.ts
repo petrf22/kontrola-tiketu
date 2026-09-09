@@ -130,12 +130,31 @@ describe('sken nesahá na síť', () => {
     expect(gradle).not.toMatch(/play-services-mlkit-barcode-scanning/);
   });
 
-  it('rozpoznávání textu není zapojené — vyžaduje uložený snímek', () => {
-    // Podrobnosti v docs/ocr-a-carovy-kod.md. Až se to vyřeší, tenhle test se změní.
-    const balik = JSON.parse(cti('package.json')) as { dependencies?: Record<string, string> };
-    expect(Object.keys(balik.dependencies ?? {})).not.toContain(
-      '@capacitor-mlkit/text-recognition',
-    );
+});
+
+/**
+ * Ukládání snímku do privátní cache je vědomá odchylka od původního zadání
+ * (viz docs/ocr-a-carovy-kod.md). Podmínkou bylo, že snímek nikdy neskončí v galerii
+ * a vždycky se smaže. Tyhle testy z té podmínky dělají něco vymahatelného.
+ */
+describe('snímek tiketu se neukládá natrvalo', () => {
+  it('focení nikdy neukládá do galerie', () => {
+    const napojeni = cti('src/app/data/snimekTiketu-capacitor.ts');
+    expect(napojeni).toMatch(/saveToGallery:\s*false/);
+    expect(napojeni).not.toMatch(/saveToGallery:\s*true/);
+  });
+
+  it('bere snímek z kamery, ne z galerie', () => {
+    const napojeni = cti('src/app/data/snimekTiketu-capacitor.ts');
+    expect(napojeni).toMatch(/CameraSource\.Camera/);
+    expect(napojeni).not.toMatch(/CameraSource\.(Photos|Prompt)/);
+  });
+
+  it('úklid dočasného souboru je ve finally, ne na šťastné cestě', () => {
+    // Chování hlídají testy v snimekTiketu.test.ts; tohle drží tvar, na kterém stojí.
+    const postup = cti('src/app/data/snimekTiketu.ts');
+    expect(postup).toMatch(/finally\s*\{/);
+    expect(postup).toMatch(/ukliď/);
   });
 });
 

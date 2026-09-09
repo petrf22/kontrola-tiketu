@@ -8,7 +8,7 @@ import {
   type Tiket,
 } from '@kontrola-tiketu/jadro';
 import { prectiCisla } from '@kontrola-tiketu/ocr';
-import { NaskenovanyTiket } from '../data/sken.js';
+import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { Stav } from '../data/stav.js';
 
 interface Radek {
@@ -49,6 +49,15 @@ interface Radek {
         <input type="text" inputmode="numeric" maxlength="6" placeholder="např. 236412"
           [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
       </label>
+
+      @if (rozpoznanoZeSnimku) {
+        <p class="ze-snimku">
+          Čísla jsou rozpoznaná ze snímku — projdi je prosím proti papíru.
+          @if (opravene.length > 0) {
+            Rozpoznávač musel opravit: {{ opravene.join(', ') }}.
+          }
+        </p>
+      }
 
       <h2>Sloupce</h2>
       @for (radek of radky(); track $index) {
@@ -102,6 +111,10 @@ interface Radek {
     .ulozit { background: var(--barva-duraz); color: #fff; border-color: transparent; }
     .ulozit:disabled { opacity: 0.45; cursor: not-allowed; }
     .problemy { margin: 0; padding-left: 1.1rem; color: var(--barva-chyba); font-size: 0.85rem; }
+    .ze-snimku {
+      margin: 0; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
+      border-left: 3px solid var(--barva-duraz); font-size: 0.85rem;
+    }
   `,
 })
 export class NovyTiket {
@@ -111,11 +124,26 @@ export class NovyTiket {
   /** Sériové číslo z naskenovaného čárového kódu, pokud uživatel přišel ze skenu. */
   private readonly serioveCislo = inject(NaskenovanyTiket).vyzvedni();
 
-  protected readonly hra = signal<Hra>('eurojackpot');
-  protected readonly prvni = signal(new Date().toISOString().slice(0, 10));
-  protected readonly pocet = signal(1);
+  /** Čísla rozpoznaná ze snímku. Jsou jen návrh — uživatel je tu potvrzuje a opravuje. */
+  private readonly rozpoznane = inject(NactenaCisla).vyzvedni();
+
+  protected readonly hra = signal<Hra>(this.rozpoznane?.hra ?? 'eurojackpot');
+  protected readonly prvni = signal(
+    this.rozpoznane?.hlavicka.datum ?? new Date().toISOString().slice(0, 10),
+  );
+  protected readonly pocet = signal(this.rozpoznane?.hlavicka.pocetSlosovani ?? 1);
   protected readonly doplnkova = signal('');
-  protected readonly radky = signal<Radek[]>([{ cisla: '', eurocisla: '' }]);
+  protected readonly radky = signal<Radek[]>(
+    this.rozpoznane === null || this.rozpoznane.sloupce.length === 0
+      ? [{ cisla: '', eurocisla: '' }]
+      : this.rozpoznane.sloupce.map((s) => ({
+          cisla: s.cisla.join(' '),
+          eurocisla: s.eurocisla.join(' '),
+        })),
+  );
+
+  /** Útržky, které bylo potřeba opravit. Uživateli se zvýrazní, ať je zkontroluje. */
+  protected readonly opravene = (this.rozpoznane?.sloupce ?? []).flatMap((s) => s.opravene);
 
   protected readonly navrh = computed<Tiket>(() => {
     const hra = this.hra();
@@ -144,6 +172,8 @@ export class NovyTiket {
   });
 
   protected readonly problemy = computed(() => zkontrolujTiket(this.navrh()));
+
+  protected readonly rozpoznanoZeSnimku = this.rozpoznane !== null;
 
   protected zmenHru(hra: Hra): void {
     this.hra.set(hra);

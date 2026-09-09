@@ -38,7 +38,9 @@ Absence síťového oprávnění v manifestu je ověřitelná záruka, že aplik
 - nic se nedostane do cloudové zálohy (`allowBackup="false"`)
 - obrazovky jsou chráněné proti screenshotům a náhledům v přepínači aplikací
 - lokální databáze je šifrovaná, klíč je v Android Keystore
-- snímky z kamery se zpracovávají ve streamu a nikam se neukládají
+- čárový kód se čte ve streamu, snímek se nikam neukládá
+- snímek pro rozpoznání čísel jde do privátní cache aplikace a hned se maže; do galerie se
+  nedostane nikdy ([proč tahle výjimka](docs/ocr-a-carovy-kod.md))
 - jediné oprávnění je přístup ke kameře
 - číslo klubové karty, které je v čárovém kódu tiketu čitelné, se zahazuje
 
@@ -84,11 +86,8 @@ Aby nevznikl mylný dojem, že je aplikace hotová:
 - **Sken kódu není ověřený na reálném tiketu.** Čtečka vrací payload jako řetězec, ne jako
   bajty, takže se sériové číslo hledá vzorem místo na pevném offsetu. Obrazovka ho proto
   jen předá do formuláře, kde ho zkontroluješ proti papíru.
-- **Rozpoznávání čísel z tiketu (OCR) je zablokované.** Dostupný plugin ML Kitu vyžaduje
-  snímek uložený na disk, což jde proti požadavku zpracovávat snímky jen ve streamu.
-  Čísla se zatím opisují ručně. Sken čárového kódu zapojený je a sériové číslo z něj
-  vyplní identifikátor tiketu. Podrobnosti a možnosti řešení jsou
-  v [`docs/ocr-a-carovy-kod.md`](docs/ocr-a-carovy-kod.md).
+- **Nic z toho neběželo na skutečném telefonu.** Aplikace se sestaví a logika je pokrytá
+  testy, ale sken kódu, focení ani šifrovaná databáze na zařízení vyzkoušené nejsou.
 
 Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 

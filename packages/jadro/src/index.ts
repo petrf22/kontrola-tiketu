@@ -5,3 +5,4 @@ export * from './eurojackpot.js';
 export * from './sportka.js';
 export * from './sance.js';
 export * from './extra6.js';
+export * from './vyhodnoceni.js';

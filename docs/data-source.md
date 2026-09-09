@@ -79,10 +79,13 @@ Prázdnou listinou se projeví neexistující rok, budoucí týden i neplatná h
 nikdy chybový kód. Fetcher takový týden přeskočí bez chyby.
 
 ```bash
-# platný týden
-curl -s "https://www.allwyn.cz/system/vyherka?year=2026&week=36&game=sportka" | wc -c   # ~59 kB
-# prázdný týden
-curl -s "https://www.allwyn.cz/system/vyherka?year=2026&week=45&game=sportka" | wc -c   # 2537
+# platný týden — 58929 B, po dekódování entit obsahuje 3 tahy Sportky a 3 losování Šance
+curl -s "https://www.allwyn.cz/system/vyherka?year=2026&week=36&game=sportka" \
+  | python3 -c 'import sys,html,re; h=html.unescape(sys.stdin.read()); \
+      print(re.findall(r"(?:SPORTKA|ŠANCE) (?:STŘEDA|PÁTEK|NEDĚLE)", h))'
+
+# prázdný týden — přesně 2537 B, bez řetězce "Losování dne"
+curl -s "https://www.allwyn.cz/system/vyherka?year=2026&week=45&game=sportka" | wc -c
 ```
 
 ### Hloubka archivu
@@ -233,6 +236,16 @@ struktura je pozoruhodně stabilní.
 3. **Nepředpokládat počet sekcí.** Sportka měla historicky 2 tahy týdně, dnes 3.
 4. **Historická data mohou být neúplná** — u roku 1994 je `Na výhry: 0,00 Kč`.
 5. **Vedoucí nuly** u Extra 6 a Šance jsou významné — ukládat jako řetězec, nikdy jako číslo.
+6. **Diakritika je v HTML jako číselné entity** — v surových bajtech stojí `SPORTKA ST&#x158;EDA`,
+   ne `SPORTKA STŘEDA`. Před jakýmkoliv hledáním v textu je nutné entity dekódovat, jinak
+   nadpisy sekcí nikdy nesednou:
+
+   ```bash
+   # nenajde nic:
+   curl -s "…&game=sportka" | grep -c 'SPORTKA STŘEDA'
+   # najde:
+   curl -s "…&game=sportka" | python3 -c 'import sys,html; print(html.unescape(sys.stdin.read()).count("SPORTKA STŘEDA"))'
+   ```
 
 ---
 

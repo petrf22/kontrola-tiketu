@@ -16,6 +16,18 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // Nativní knihovny (SQLCipher, ML Kit) tvoří většinu velikosti a každá architektura
+    // je v balíku zvlášť. Rozdělením vznikne APK pro každou zvlášť, takže se do telefonu
+    // dostane jen ta jeho. Play Bundle dělá totéž; tohle je jeho obdoba pro sideload.
+    splits {
+        abi {
+            enable true
+            reset()
+            include 'arm64-v8a', 'armeabi-v7a', 'x86_64'
+            universalApk true   // ať zůstane i verze pro všechny, kdyby byla potřeba
+        }
+    }
+
     buildTypes {
         release {
             // R8 zapnutý schválně. Debug build maskuje, že si Capacitor, SQLCipher i ML Kit

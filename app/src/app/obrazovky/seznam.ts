@@ -16,8 +16,8 @@ interface RadekSeznamu {
   template: `
     @if (radky().length === 0) {
       <p class="prazdno">
-        Zatím tu nic není. Založ tiket ručně, nebo ho naskenuj.
-        <a routerLink="/tiket/novy">Nový tiket</a>
+        Zatím tu nic není. Vyfoť tiket, nebo ho zadej ručně.
+        <a routerLink="/sken-cisel">Vyfotit tiket</a>
       </p>
     } @else {
       <ul class="tikety">

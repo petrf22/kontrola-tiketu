@@ -105,7 +105,14 @@ interface Radek {
         </ul>
       }
 
-      <button type="submit" class="ulozit" [disabled]="problemy().length > 0">Uložit tiket</button>
+      <!--
+        Tlačítko se jmenuje podle toho, proč ho uživatel mačká, ne podle toho, co dělá uvnitř.
+        Uložení je vedlejší efekt, důvod je zjistit, jestli tiket vyhrál.
+      -->
+      <button type="submit" class="ulozit" [disabled]="problemy().length > 0">
+        Zkontrolovat tiket
+      </button>
+      <p class="pod-tlacitkem">Tiket se zároveň uloží do seznamu, ať ho můžeš zkontrolovat i po dalších losováních.</p>
     </form>
   `,
   styles: `
@@ -129,6 +136,9 @@ interface Radek {
     .ulozit { background: var(--barva-duraz); color: #fff; border-color: transparent; }
     .ulozit:disabled { opacity: 0.45; cursor: not-allowed; }
     .problemy { margin: 0; padding-left: 1.1rem; color: var(--barva-chyba); font-size: 0.85rem; }
+    .pod-tlacitkem {
+      margin: -0.5rem 0 0; font-size: 0.78rem; color: var(--barva-text-tlumeny);
+    }
     .ze-snimku, .ze-skenu {
       margin: 0; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
       border-left: 3px solid var(--barva-duraz); font-size: 0.85rem; line-height: 1.5;

@@ -3,6 +3,18 @@ import { Router } from '@angular/router';
 import type { Sloupec, VysledekSlosovani, VysledekTiketu, Vyhra } from '@kontrola-tiketu/jadro';
 import { Stav } from '../data/stav.js';
 
+/** Kolik koncových číslic se u kterého pořadí shoduje. */
+const DELKA_SHODY: Readonly<Record<string, number>> = {
+  sestecisli: 6,
+  peticisli: 5,
+  ctyrcisli: 4,
+  trojcisli: 3,
+  dvojcisli: 2,
+  'koncove-cislo': 1,
+  // Sousední číslo se žádnou číslicí neshoduje — je o jednu vedle, proto nula.
+  'sousedni-cislo': 0,
+};
+
 const POPIS_VYHRADY: Readonly<Record<string, string>> = {
   'chybi-sazby': 'chybí sazby Extra 6 — naimportuj novější soubor s výsledky',
   'delene-prvni-poradi': 'při více než dvou výhrách se první pořadí dělí, částka je horní odhad',
@@ -62,6 +74,23 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
               }
             </ol>
 
+            @if (doplnkovaKZobrazeni(slosovani); as d) {
+              <div class="doplnkova">
+                <span class="nazev">{{ d.nazev }}</span>
+                <span class="cisla">
+                  @for (c of d.tvoje; track $index) {
+                    <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
+                  }
+                </span>
+                @if (d.vylosovane) {
+                  <span class="tazene">vylosováno {{ d.vylosovane }}</span>
+                }
+                @if (d.sousedni) {
+                  <span class="tazene">koncové číslo o jednu vedle</span>
+                }
+              </div>
+            }
+
             @if (slosovani.vyhry.length === 0) {
               <p class="bez-vyhry">Bez výhry.</p>
             } @else {
@@ -117,6 +146,13 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
     }
     .cislo.shoda { background: var(--barva-duraz); color: #fff; font-weight: 600; }
     .sloupce .poradi { margin-left: auto; font-size: 0.8rem; color: var(--barva-text-tlumeny); }
+    .doplnkova {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem;
+      margin-bottom: 0.75rem; padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--barva-ram);
+    }
+    .doplnkova .nazev { font-size: 0.85rem; color: var(--barva-text-tlumeny); }
+    .tazene { font-size: 0.75rem; color: var(--barva-text-tlumeny); }
     .vyhry { list-style: none; margin: 0; padding: 0; }
     .vyhry li {
       display: grid; grid-template-columns: 1fr auto; gap: 0 1rem;
@@ -135,7 +171,7 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
 export class Detail {
   readonly id = input.required<string>();
 
-  private readonly stav = inject(Stav);
+  protected readonly stav = inject(Stav);
   private readonly router = inject(Router);
 
   protected readonly tiket = computed(() => this.stav.tikety().find((t) => t.id === this.id()));
@@ -184,6 +220,34 @@ export class Detail {
         popis: poradi === null ? '—' : `pořadí ${poradi}`,
       };
     });
+  }
+
+  /**
+   * Kód doplňkové hry se zvýrazněnou shodnou koncovkou.
+   *
+   * Vyhodnocuje se shodou koncových číslic, takže se dá ukázat přesně ta část kódu, která
+   * padla. Sedmé pořadí je výjimka — sousední číslo se neshoduje se žádnou číslicí, proto
+   * se nezvýrazňuje nic a místo toho se to napíše slovy.
+   */
+  protected doplnkovaKZobrazeni(slosovani: VysledekSlosovani) {
+    const tiket = this.tiket();
+    const kod = tiket?.kodDoplnkoveHry;
+    if (tiket === undefined || kod == null) return null;
+
+    const vyhra = slosovani.vyhry.find((v) => v.zdroj === 'doplnkova-hra');
+    const shodnych = vyhra === undefined ? 0 : (DELKA_SHODY[vyhra.poradi] ?? 0);
+
+    const tah = this.stav.tahy().find((t) => t.datum === slosovani.datum && t.hra === tiket.hra);
+    const vylosovane =
+      tah === undefined ? null : tah.hra === 'eurojackpot' ? tah.extra6 : (tah.sance?.cislice ?? null);
+
+    return {
+      nazev: tiket.hra === 'eurojackpot' ? 'Extra 6' : 'Šance',
+      // Shoda se počítá od konce, proto se index porovnává s délkou.
+      tvoje: [...kod].map((hodnota, i) => ({ hodnota, shoda: i >= kod.length - shodnych })),
+      vylosovane,
+      sousedni: vyhra?.poradi === 'sousedni-cislo',
+    };
   }
 
   protected popisVyhry(vyhra: Vyhra): string {

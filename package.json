@@ -11,10 +11,12 @@
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --build"
+    "typecheck": "tsc --build",
+    "vyherka": "npm run vyherka -w @kontrola-tiketu/fetcher --"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",
+    "tsx": "^4.23.13",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0"
   },

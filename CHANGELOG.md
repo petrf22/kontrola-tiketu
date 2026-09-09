@@ -25,6 +25,7 @@ co se změnilo v CLI na desktopu.
 - Seznam tiketů se souhrnem výhry a detail s rozpisem po sloupcích a jednotlivých losováních (aplikace)
 - Bilance tiketu: kolik stál a kolik zatím vynesl (aplikace, jádro)
 - Import výsledků losování ze souboru — aplikace si o ně sama nikam nechodí (aplikace)
+- Obrazovka „O aplikaci“ s číslem verze, historií změn a přehledem toho, co aplikace o uživateli neví (aplikace)
 - Šifrovaná databáze SQLCipher s klíčem v Android Keystore (aplikace)
 - Aplikace nemá oprávnění k síti, takže se provozovatel loterie nemá jak dozvědět, že zrovna ty sázíš nebo jsi vyhrál (aplikace)
 - Snímek pořízený pro rozpoznání textu žije jen v privátní cache, maže se i při chybě a do galerie se nedostane (aplikace)

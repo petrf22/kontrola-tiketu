@@ -30,6 +30,7 @@ export const HISTORIE: readonly Vydani[] = [
           'Seznam tiketů se souhrnem výhry a detail s rozpisem po sloupcích a jednotlivých losováních',
           'Bilance tiketu: kolik stál a kolik zatím vynesl',
           'Import výsledků losování ze souboru — aplikace si o ně sama nikam nechodí',
+          'Obrazovka „O aplikaci“ s číslem verze, historií změn a přehledem toho, co aplikace o uživateli neví',
           'Šifrovaná databáze SQLCipher s klíčem v Android Keystore',
           'Aplikace nemá oprávnění k síti, takže se provozovatel loterie nemá jak dozvědět, že zrovna ty sázíš nebo jsi vyhrál',
           'Snímek pořízený pro rozpoznání textu žije jen v privátní cache, maže se i při chybě a do galerie se nedostane',

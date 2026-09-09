@@ -31,5 +31,10 @@ export const routes: Routes = [
     loadComponent: () => import('./obrazovky/import-vysledku.js').then((m) => m.ImportVysledku),
     title: 'Výsledky losování',
   },
+  {
+    path: 'o-aplikaci',
+    loadComponent: () => import('./obrazovky/o-aplikaci.js').then((m) => m.OAplikaci),
+    title: 'O aplikaci',
+  },
   { path: '**', redirectTo: '' },
 ];

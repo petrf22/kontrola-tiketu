@@ -9,11 +9,28 @@ je jen rychlá orientace; při rozporu platí zadání.
 
 ## Stav repozitáře
 
-Zatím bez kódu — pouze `README.md`, `.gitignore` a zadání. Projekt je ve **fázi 0** (průzkum
-zdroje dat). Až vznikne kód, doplň sem skutečnou architekturu a ověřené příkazy.
+Fáze 0 a 1 hotové. Hotový je **zdroj dat** (`docs/data-source.md`) a **vyhodnocovací jádro**
+(`packages/jadro`). Fetcher ani aplikace zatím neexistují.
 
-Pozor: `.gitignore` je šablona pro Android Studio / Gradle a **neodpovídá zvolenému stacku** —
-při scaffoldingu doplň `node_modules/`, `dist/`, `www/`, `.angular/`.
+```
+packages/jadro/src/    model.ts, validace.ts, koncoveCislice.ts,
+                       eurojackpot.ts, sportka.ts, sance.ts, extra6.ts, vyhodnoceni.ts
+packages/jadro/test/   testy + fixtures/ s reálnými tahy z výherních listin
+data/sazby-extra6.json pevné částky Extra 6 (listina je nepublikuje)
+docs/data-source.md    výstup fáze 0
+```
+
+Ověřené příkazy (npm workspace, Node 24):
+
+```bash
+npm install          # po instalaci je potřeba npm approve-scripts esbuild
+npm test             # vitest, 115 testů
+npm run typecheck    # tsc --build, strict
+```
+
+Jádro je čistá knihovna: bez UI, bez I/O, bez sítě, bez běhových závislostí. Hlídá to
+`packages/jadro/test/bezIO.test.ts` — když do `src/` přidáš import z `node:`, `fetch`,
+`document` nebo `@angular`, test spadne. To je záměr, ne překážka.
 
 ## Účel a hlavní omezení
 
@@ -51,8 +68,8 @@ Nikdy nenavrhuj dotaz na server vázaný na konkrétní tiket nebo vsazená čí
 
 ## Pracovní postup
 
-- **Před psaním kódu ve fázi 1 předlož datový model a počkej na potvrzení.**
-- Commit po každé dokončené fázi, ne jeden velký na konec.
+- Commity průběžně a tematicky, ne jeden velký na konec.
+- **Částky v testech nikdy nevymýšlej** — vždy je opiš z fixtury, tedy z výherní listiny.
 - Fáze 0 končí zápisem do `docs/data-source.md` — teprve pak kód.
 - Výherní částky Eurojackpotu jsou totalizátorové: **nikdy natvrdo v kódu**, vždy z tabulky
   konkrétního tahu.

@@ -44,13 +44,20 @@ Absence síťového oprávnění v manifestu je ověřitelná záruka, že aplik
 
 ## Stav
 
-**Fáze 0 (průzkum zdroje dat) je uzavřená**, kód zatím neexistuje.
+**Hotový je průzkum zdroje dat a vyhodnocovací jádro.** Fetcher ani mobilní aplikace zatím
+neexistují.
 
-Zjištění jsou v [`docs/data-source.md`](docs/data-source.md): výsledky se čtou z veřejné
-výherní listiny na `allwyn.cz`, jeden dotaz pokryje celý týden a archiv sahá do roku 1994.
-JSON API, které používá jejich web, se nepoužije — je zakázané v `robots.txt`.
+- **Zdroj dat** — [`docs/data-source.md`](docs/data-source.md). Výsledky se čtou z veřejné
+  výherní listiny na `allwyn.cz`; jeden dotaz pokryje celý týden a archiv sahá do roku 1994.
+- **Vyhodnocovací jádro** — `packages/jadro`. Čistá knihovna bez UI, I/O a sítě. Umí
+  Eurojackpot i Sportku včetně Šance, Extra 6 a Bonusu. Testy jedou proti reálným tahům
+  z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher.
 
-Následuje fáze 1 — datový model a vyhodnocovací jádro. Zadání a postup jsou
+```bash
+npm install && npm test
+```
+
+Následuje fetcher a poté OCR a aplikace. Zadání a postup jsou
 v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 
 ## Co projekt nedělá

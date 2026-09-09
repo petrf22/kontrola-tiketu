@@ -18,8 +18,15 @@ android {
     }
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // R8 zapnutý schválně. Debug build maskuje, že si Capacitor, SQLCipher i ML Kit
+            // hledají třídy za běhu reflexí — bez ověření release buildu by se to zjistilo
+            // až u uživatele.
+            minifyEnabled true
+            shrinkResources true
+            // Na ověření R8 stačí ladicí klíč. Vlastní keystore má smysl generovat až
+            // s distribucí přes Play; je to trvalý artefakt, který je nutné zálohovat.
+            signingConfig signingConfigs.debug
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }

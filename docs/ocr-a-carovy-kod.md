@@ -26,9 +26,12 @@ napojení na zařízení naráží na dvě věci, které se nedají obejít bez 
 > (`app/src/app/data/snimekTiketu.ts`) s `finally` a s vyměnitelnými závislostmi, aby na to
 > šel napsat test. Hlídají to `app/test/snimekTiketu.test.ts` a `app/test/soukromi.test.ts`.
 >
-> Co to znamená v praxi: snímek tiketu leží v privátní cache aplikace řádově desítky
-> milisekund. Do cloudové zálohy se nedostane (`allowBackup="false"` a pravidla bez výjimek),
-> do galerie ani do MediaStore taky ne (`saveToGallery: false`, `CameraSource.Camera`).
+> Co to znamená v praxi, ověřeno na zařízení 9. 9. 2026: snímek vznikne v adresáři
+> `Android/data/cz.petrf22.kontrolatiketu/files/Pictures/`, tedy v prostoru privátním pro
+> aplikaci, a **do sekundy je smazaný** (`Camera.getPhoto` v 19:13:34,6 →
+> `Filesystem.deleteFile` v 19:13:35,1). Do cloudové zálohy se nedostane
+> (`allowBackup="false"` a pravidla bez výjimek), do galerie ani do MediaStore taky ne
+> (`saveToGallery: false` a odpověď pluginu potvrzuje `"saved": false`).
 
 ### Původní rozpor
 

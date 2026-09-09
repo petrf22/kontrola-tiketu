@@ -1,6 +1,6 @@
 import { Component, computed, inject, input } from '@angular/core';
 import { Router } from '@angular/router';
-import type { VysledekTiketu, Vyhra } from '@kontrola-tiketu/jadro';
+import type { Sloupec, VysledekSlosovani, VysledekTiketu, Vyhra } from '@kontrola-tiketu/jadro';
 import { Stav } from '../data/stav.js';
 
 const POPIS_VYHRADY: Readonly<Record<string, string>> = {
@@ -37,6 +37,31 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
         @for (slosovani of v.slosovani; track slosovani.datum) {
           <section>
             <h3>{{ slosovani.datum }}</h3>
+
+            <!--
+              Vsazená čísla se zvýrazněnými shodami. Bez nich se nedá zkontrolovat, jestli
+              aplikace tiket přečetla správně — a právě to je u naOCRovaného tiketu potřeba.
+            -->
+            <ol class="sloupce">
+              @for (radek of sloupceKZobrazeni(slosovani); track radek.index) {
+                <li>
+                  <span class="cisla">
+                    @for (c of radek.cisla; track $index) {
+                      <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
+                    }
+                  </span>
+                  @if (radek.eurocisla.length > 0) {
+                    <span class="cisla euro">
+                      @for (c of radek.eurocisla; track $index) {
+                        <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
+                      }
+                    </span>
+                  }
+                  <span class="poradi">{{ radek.popis }}</span>
+                </li>
+              }
+            </ol>
+
             @if (slosovani.vyhry.length === 0) {
               <p class="bez-vyhry">Bez výhry.</p>
             } @else {
@@ -78,6 +103,20 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
     section { margin-top: 1.25rem; }
     h3 { margin: 0 0 0.35rem; font-size: 0.95rem; }
     .bez-vyhry { margin: 0; color: var(--barva-text-tlumeny); font-size: 0.85rem; }
+    .sloupce { list-style: none; margin: 0 0 0.75rem; padding: 0; }
+    .sloupce li {
+      display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem;
+      padding: 0.3rem 0; border-bottom: 1px solid var(--barva-ram);
+    }
+    .cisla { display: flex; gap: 0.25rem; }
+    .cisla.euro { padding-left: 0.5rem; border-left: 1px solid var(--barva-ram); }
+    .cislo {
+      min-width: 1.9rem; padding: 0.15rem 0.3rem; border-radius: 4px;
+      background: var(--barva-plocha); text-align: center;
+      font-variant-numeric: tabular-nums; font-size: 0.9rem;
+    }
+    .cislo.shoda { background: var(--barva-duraz); color: #fff; font-weight: 600; }
+    .sloupce .poradi { margin-left: auto; font-size: 0.8rem; color: var(--barva-text-tlumeny); }
     .vyhry { list-style: none; margin: 0; padding: 0; }
     .vyhry li {
       display: grid; grid-template-columns: 1fr auto; gap: 0 1rem;
@@ -105,6 +144,47 @@ export class Detail {
     const tiket = this.tiket();
     return tiket === undefined ? null : this.stav.vyhodnot(tiket);
   });
+
+  /**
+   * Poskládá vsazená čísla s příznakem, jestli padla.
+   *
+   * U Sportky hraje sloupec v obou tazích, takže se shody sloučí — číslo se zvýrazní,
+   * když padlo aspoň v jednom. Kolik se trefilo v kterém tahu, je vidět v seznamu výher.
+   */
+  protected sloupceKZobrazeni(slosovani: VysledekSlosovani) {
+    const tiket = this.tiket();
+    if (tiket === undefined) return [];
+
+    return slosovani.sloupce.map((s) => {
+      const sloupec: Sloupec | undefined = tiket.sloupce[s.index];
+      const trefene = new Set<number>(
+        s.hra === 'eurojackpot'
+          ? s.vysledek.shoda.hlavniCisla
+          : s.vysledky.flatMap((v) => v.shoda.cisla),
+      );
+      const trefeneEuro = new Set<number>(
+        s.hra === 'eurojackpot' ? s.vysledek.shoda.euroCisla : [],
+      );
+
+      const oznac = (cisla: readonly number[], kde: ReadonlySet<number>) =>
+        cisla.map((hodnota) => ({ hodnota, shoda: kde.has(hodnota) }));
+
+      const poradi =
+        s.hra === 'eurojackpot'
+          ? s.vysledek.poradi
+          : s.vysledky.map((v) => v.poradi).filter((p) => p !== null)[0] ?? null;
+
+      return {
+        index: s.index,
+        cisla: oznac(sloupec?.cisla ?? [], trefene),
+        eurocisla: oznac(
+          sloupec !== undefined && sloupec.hra === 'eurojackpot' ? sloupec.eurocisla : [],
+          trefeneEuro,
+        ),
+        popis: poradi === null ? '—' : `pořadí ${poradi}`,
+      };
+    });
+  }
 
   protected popisVyhry(vyhra: Vyhra): string {
     const casti: string[] = [];

@@ -1,6 +1,6 @@
 {
   "name": "@kontrola-tiketu/ocr",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Čtení papírového tiketu: skládání rozpoznaného textu na sloupce a čtení čárového kódu. Bez UI, bez I/O, bez ML Kitu.",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@kontrola-tiketu/jadro",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "Datový model a vyhodnocovací jádro. Bez UI, bez I/O, bez sítě.",
   "type": "module",

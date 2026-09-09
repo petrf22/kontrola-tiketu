@@ -46,8 +46,9 @@ Absence síťového oprávnění v manifestu je ověřitelná záruka, že aplik
 
 ## Stav
 
-**Hotový je průzkum zdroje dat a vyhodnocovací jádro.** Fetcher ani mobilní aplikace zatím
-neexistují.
+**Verze 0.1.0** — hotové a ověřené na skutečném telefonu (Xiaomi 14T Pro, Android 16).
+Historie změn je v [`CHANGELOG.md`](CHANGELOG.md), postup vydání
+v [`docs/vydani.md`](docs/vydani.md).
 
 - **Zdroj dat** — [`docs/data-source.md`](docs/data-source.md). Výsledky se čtou z veřejné
   výherní listiny na `allwyn.cz`; jeden dotaz pokryje celý týden a archiv sahá do roku 1994.
@@ -81,13 +82,13 @@ používá. Co je jednou v archivu, se znovu nestahuje.
 
 ### Co ještě chybí
 
-Aby nevznikl mylný dojem, že je aplikace hotová:
+Aby nevznikl mylný dojem, že je všechno vyzkoušené:
 
-- **Sken kódu není ověřený na reálném tiketu.** Čtečka vrací payload jako řetězec, ne jako
-  bajty, takže se sériové číslo hledá vzorem místo na pevném offsetu. Obrazovka ho proto
-  jen předá do formuláře, kde ho zkontroluješ proti papíru.
-- **Nic z toho neběželo na skutečném telefonu.** Aplikace se sestaví a logika je pokrytá
-  testy, ale sken kódu, focení ani šifrovaná databáze na zařízení vyzkoušené nejsou.
+- **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
+  je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
+  a míří na uzavřený test, ne rovnou do produkce.
+- **Aplikace zatím není v Google Play.** Chybí podpisový klíč a veřejná adresa se zásadami
+  ochrany osobních údajů — viz [`docs/vydani.md`](docs/vydani.md).
 
 Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 

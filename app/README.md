@@ -1,59 +1,22 @@
-# KontrolaTiketuApp
+# app
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 22.1.7.
+Mobilní aplikace — Angular 22 + Capacitor 8, **bez oprávnění k síti**.
 
-## Development server
-
-To start a local development server, run:
-
-```bash
-ng serve
-```
-
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
-
-## Code scaffolding
-
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+Popis projektu je v [kořenovém README](../README.md), závazné zadání
+v [`zadani-kontrola-tiketu.md`](../zadani-kontrola-tiketu.md) a postup vydání
+v [`docs/vydani.md`](../docs/vydani.md).
 
 ```bash
-ng generate component component-name
+npx ng serve     # vývoj v prohlížeči (úložiště je jen v paměti, po zavření je pryč)
+npx ng build     # web do dist/
+
+export ANDROID_HOME=$HOME/Android/Sdk JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+npx cap sync android
+cd android && ./gradlew :app:assembleDebug
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+Testy se pouštějí z kořene repozitáře (`npm test`), ne odsud — `app/test/soukromi.test.ts`
+hlídá akceptační kritéria ze zadání a kontroluje i sestavené APK.
 
-```bash
-ng generate --help
-```
-
-## Building
-
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+**Nesahej na `android/app/src/main/AndroidManifest.xml` bez rozmyslu.** Odstranění `INTERNET`,
+`allowBackup="false"` a `FLAG_SECURE` v `MainActivity` jsou akceptační kritéria.

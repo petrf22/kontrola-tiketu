@@ -10,7 +10,7 @@ je jen rychlá orientace; při rozporu platí zadání.
 ## Stav repozitáře
 
 Hotový je **zdroj dat**, **vyhodnocovací jádro**, **fetcher**, **čtení tiketu** a **kostra
-aplikace se čtyřmi obrazovkami**.
+aplikace se šesti obrazovkami**.
 
 **Ověřené na skutečném telefonu** (Xiaomi 14T Pro, Android 16, 9. 9. 2026):
 
@@ -66,19 +66,24 @@ fetcher/src/           zdroje/allwyn-vyherka.ts (parser), zdroje/html.ts,
                        archiv.ts, robots.ts, stahovani.ts, obdobi.ts, vystup.ts, cli.ts, bin.ts
 fetcher/test/fixtures/ skutečné listiny v .html.gz — regresní korpus parseru
 app/src/app/data/      import.ts, uloziste.ts, stav.ts, tokeny.ts
-app/src/app/obrazovky/ seznam.ts, novy-tiket.ts, detail.ts, import-vysledku.ts
+app/src/app/obrazovky/ seznam.ts, novy-tiket.ts, sken.ts, sken-cisel.ts, detail.ts,
+                       import-vysledku.ts, o-aplikaci.ts
 app/android/           nativní projekt, zatvrzený manifest
 data/sazby-extra6.json pevné částky Extra 6 (listina je nepublikuje)
 data/vysledky.json     výsledky k importu, verzované v gitu (teď 2021–2026, 1190 tahů)
 docs/data-source.md    výstup fáze 0
+docs/vydani.md         podpis, Google Play, postup vydání — runbook i zápis rozhodnutí
+tools/verze/sync.mjs   generátor verze z VERSION + CHANGELOG.md
+tools/ikony/generuj.py generátor ikony, splashe a grafiky pro Play
 ```
 
 Ověřené příkazy (npm workspace, Node 24):
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 354 testů (jádro, ocr, fetcher i soukromí aplikace)
+npm test             # vitest, 424 testů (jádro, ocr, fetcher, soukromí aplikace i verze)
 npm run typecheck    # tsc --build, strict
+npm run verze        # přegeneruje verzi ze zdroje; musí projít bez změny souborů
 
 npm run vyherka -- stav
 npm run vyherka -- stahni --od 2026-35 --do 2026-37 [--hra sportka]
@@ -164,7 +169,20 @@ Nikdy nenavrhuj dotaz na server vázaný na konkrétní tiket nebo vsazená čí
 
 Čeština všude — dokumentace, commit zprávy, komentáře v kódu i komunikace s uživatelem.
 
-## Release
+## Verze a vydání
 
-Uživatelský příkaz `/release-gitlab` je psaný pro GitLab, ale `origin` je GitHub
-(`git@github.com:petrf22/kontrola-tiketu.git`). Před použitím ověř kroky, jinak použij `gh`.
+**Zdroj pravdy o verzi je kořenový `VERSION` a `CHANGELOG.md`.** Sedm souborů z nich generuje
+`npm run verze` — pět `package.json`, `versionCode`/`versionName` v `app/android/app/build.gradle`
+a `app/src/app/data/verze.generated.ts` pro obrazovku „O aplikaci“. **Needituj je ručně**;
+že sedí se zdrojem, hlídá `test/verze.test.ts`.
+
+`versionCode = major*10000 + minor*100 + patch`. Google Play už nikdy nepřijme nižší
+versionCode, než naposledy nahraný — proto ten vzorec a proto skript padá při přetečení.
+
+Vydání dělá projektový příkaz **`/vydat`**; celý postup a rozhodnutí kolem Play jsou
+v `docs/vydani.md`. Globální `/release-gitlab` na tenhle projekt nesedí (hledá
+`ClientApp/package.json` a `*.csproj`) — nepoužívej ho.
+
+Release build se podepisuje vlastním klíčem, když jsou v `~/.gradle/gradle.properties`
+property `KONTROLA_TIKETU_*`; jinak spadne na ladicí klíč, aby šel R8 ověřit i bez klíče.
+Artefakt pro Play dělá `./gradlew :app:publishableBundle`, který bez klíče **selže**.

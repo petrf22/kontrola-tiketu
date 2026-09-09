@@ -42,6 +42,14 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
           @if (!v.soucetJisty) { <span class="hvezda">*</span> }
         </p>
 
+        @if (v.bilanceKc !== null) {
+          <p class="bilance" [class.zisk]="v.bilanceKc > 0">
+            <span class="popisek">Bilance</span>
+            <strong>{{ v.bilanceKc > 0 ? '+' : '' }}{{ v.bilanceKc }} Kč</strong>
+            <span class="tazene">tiket stál {{ t.cenaKc }} Kč</span>
+          </p>
+        }
+
         @if (v.chybejicichSlosovani > 0) {
           <p class="varovani">
             Chybí výsledky {{ v.chybejicichSlosovani }} slosování, takže tohle není konečná
@@ -153,7 +161,13 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
       display: flex; align-items: baseline; gap: 0.5rem;
       font-size: 1.6rem; margin: 0.5rem 0; font-variant-numeric: tabular-nums;
     }
-    .soucet .popisek {
+    .bilance {
+      display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
+      margin: 0 0 0.5rem; font-size: 1.1rem; font-variant-numeric: tabular-nums;
+      color: var(--barva-text-tlumeny);
+    }
+    .bilance.zisk strong { color: var(--barva-ok); }
+    .soucet .popisek, .bilance .popisek {
       font-size: 0.85rem; font-weight: 400; color: var(--barva-text-tlumeny);
       text-transform: uppercase; letter-spacing: 0.05em;
     }

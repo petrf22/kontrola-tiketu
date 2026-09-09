@@ -46,6 +46,11 @@ interface Radek {
         </label>
       </div>
 
+      <label>Cena tiketu v Kč (nepovinné)
+        <input type="number" min="0" step="1" inputmode="numeric" placeholder="např. 400"
+          [value]="cena()" (input)="cena.set($any($event.target).value)" />
+      </label>
+
       <label>{{ hra() === 'eurojackpot' ? 'Extra 6' : 'Šance' }} — šest číslic (nepovinné)
         <input type="text" inputmode="numeric" maxlength="6" placeholder="např. 236412"
           [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
@@ -179,6 +184,11 @@ export class NovyTiket {
   );
   protected readonly pocet = signal(this.rozpoznane?.hlavicka.pocetSlosovani ?? 1);
   protected readonly doplnkova = signal(this.rozpoznane?.kodDoplnkoveHry ?? '');
+  protected readonly cena = signal(
+    this.rozpoznane?.cenaKc === null || this.rozpoznane?.cenaKc === undefined
+      ? ''
+      : String(this.rozpoznane.cenaKc),
+  );
   protected readonly radky = signal<Radek[]>(
     this.rozpoznane === null || this.rozpoznane.sloupce.length === 0
       ? [{ cisla: '', eurocisla: '' }]
@@ -213,6 +223,7 @@ export class NovyTiket {
       sloupce,
       slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: null },
       kodDoplnkoveHry: this.doplnkova().trim() === '' ? null : this.doplnkova().trim(),
+      cenaKc: this.cena().trim() === '' ? null : Number(this.cena()),
       vlozeno: new Date().toISOString(),
     };
   });

@@ -61,6 +61,13 @@ export interface VysledekTiketu {
   readonly tiketId: string;
   readonly slosovani: readonly VysledekSlosovani[];
   readonly celkemKc: number;
+  /**
+   * Výhra minus cena tiketu. `null`, když cena není známá.
+   *
+   * Záporná hodnota znamená ztrátu. Je to jen informace pro uživatele — na vyhodnocení
+   * výher nemá vliv.
+   */
+  readonly bilanceKc: number | null;
   /** Kolik slosování z rozsahu tiketu nebylo mezi dodanými tahy. */
   readonly chybejicichSlosovani: number;
   /**
@@ -238,10 +245,13 @@ export function vyhodnotTiket(
 
   const nejistych = slosovani.reduce((s, v) => s + v.nejistychVyher, 0);
 
+  const celkemKc = slosovani.reduce((s, v) => s + v.celkemKc, 0);
+
   return {
     tiketId: tiket.id,
     slosovani,
-    celkemKc: slosovani.reduce((s, v) => s + v.celkemKc, 0),
+    celkemKc,
+    bilanceKc: tiket.cenaKc === null ? null : celkemKc - tiket.cenaKc,
     chybejicichSlosovani: chybi,
     soucetJisty: chybi === 0 && nejistych === 0,
   };

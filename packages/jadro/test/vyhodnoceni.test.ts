@@ -27,6 +27,7 @@ function tiketEJ(over: Partial<Tiket> = {}): Tiket {
     sloupce: [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 36], eurocisla: [4, 3] }],
     slosovani: { prvni: '2026-09-08', pocet: 1, dny: null },
     kodDoplnkoveHry: null,
+    cenaKc: null,
     vlozeno: '2026-09-07T10:00:00Z',
     ...over,
   };
@@ -39,6 +40,7 @@ function tiketSP(over: Partial<Tiket> = {}): Tiket {
     sloupce: [{ hra: 'sportka', cisla: [21, 5, 37, 18, 34, 19] }],
     slosovani: { prvni: '2026-09-02', pocet: 1, dny: null },
     kodDoplnkoveHry: null,
+    cenaKc: null,
     vlozeno: '2026-09-01T10:00:00Z',
     ...over,
   };
@@ -245,5 +247,38 @@ describe('jistota součtu', () => {
     expect(v.celkemKc).toBe(0);
     expect(v.chybejicichSlosovani).toBe(1);
     expect(v.soucetJisty).toBe(false);
+  });
+});
+
+describe('bilance tiketu', () => {
+  it('spočítá výhru minus cenu', () => {
+    // 4+1 v tahu 8. 9. 2026 dává 5 780 Kč; tiket za 400 Kč tedy vydělal.
+    const t: Tiket = {
+      ...tiketEJ(),
+      sloupce: [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 1], eurocisla: [4, 1] }],
+      cenaKc: 400,
+    };
+    const v = vyhodnotTiket(t, TAHY_EJ, SAZBY);
+    expect(v.celkemKc).toBe(5780);
+    expect(v.bilanceKc).toBe(5380);
+  });
+
+  it('u prodělečného tiketu je bilance záporná', () => {
+    const t: Tiket = { ...tiketEJ({ sloupce: [{ hra: 'eurojackpot', cisla: [1, 2, 3, 4, 5], eurocisla: [11, 12] }] }), cenaKc: 400 };
+    const v = vyhodnotTiket(t, TAHY_EJ, SAZBY);
+    expect(v.celkemKc).toBe(0);
+    expect(v.bilanceKc).toBe(-400);
+  });
+
+  it('bez známé ceny je bilance null, ne nula', () => {
+    // Nula by tvrdila, že tiket byl zadarmo.
+    expect(vyhodnotTiket(tiketEJ(), TAHY_EJ, SAZBY).bilanceKc).toBeNull();
+  });
+
+  it('cena nemá vliv na vyhodnocení výher', () => {
+    const bez = vyhodnotTiket(tiketEJ(), TAHY_EJ, SAZBY);
+    const s = vyhodnotTiket({ ...tiketEJ(), cenaKc: 400 }, TAHY_EJ, SAZBY);
+    expect(s.celkemKc).toBe(bez.celkemKc);
+    expect(s.slosovani).toEqual(bez.slosovani);
   });
 });

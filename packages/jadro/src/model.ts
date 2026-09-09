@@ -157,6 +157,13 @@ export interface Tiket {
   readonly slosovani: RozsahSlosovani;
   /** Šest číslic Extra 6 (Eurojackpot) nebo Šance (Sportka); `null`, pokud nebyla vsazena. */
   readonly kodDoplnkoveHry: string | null;
+  /**
+   * Kolik tiket stál. `null`, když se nepodařilo přečíst a uživatel ho nedoplnil.
+   *
+   * Neslouží k vyhodnocení výhry — ta se počítá výhradně z tabulek tahů. Je to údaj pro
+   * uživatele, aby viděl, jak si stojí.
+   */
+  readonly cenaKc: number | null;
   readonly vlozeno: string;
 }
 

@@ -18,6 +18,7 @@ function smlouvaUloziste(jmeno: string, vyrob: () => Uloziste): void {
     sloupce: [{ hra: 'eurojackpot', cisla: [1, 2, 3, 4, 5], eurocisla: [1, 2] }],
     slosovani: { prvni: '2026-09-08', pocet: 1, dny: null },
     kodDoplnkoveHry: null,
+    cenaKc: null,
     vlozeno,
   });
 

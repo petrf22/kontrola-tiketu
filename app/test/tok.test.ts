@@ -23,6 +23,7 @@ function tiketEJ(cisla: number[], eurocisla: number[], extra6: string | null): T
     sloupce: [{ hra: 'eurojackpot', cisla, eurocisla }],
     slosovani: { prvni: '2026-09-08', pocet: 1, dny: null },
     kodDoplnkoveHry: extra6,
+    cenaKc: null,
     vlozeno: '2026-09-07T10:00:00Z',
   };
 }

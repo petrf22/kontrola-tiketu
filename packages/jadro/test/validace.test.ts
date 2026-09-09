@@ -100,6 +100,7 @@ describe('zkontrolujTiket', () => {
     sloupce: [{ hra: 'sportka', cisla: [1, 2, 3, 4, 5, 6] }],
     slosovani: { prvni: '2026-09-02', pocet: 1, dny: null },
     kodDoplnkoveHry: null,
+    cenaKc: null,
     vlozeno: '2026-09-01T10:00:00Z',
   };
 

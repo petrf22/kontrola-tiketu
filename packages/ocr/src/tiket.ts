@@ -10,6 +10,7 @@
 import type { Den, Hra, Sloupec, Tiket } from '@kontrola-tiketu/jadro';
 import { zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
 import { prectiCisla, type NactenaHodnota } from './cisla.js';
+import { prectiCenu } from './cena.js';
 import { prectiKodDoplnkoveHry } from './doplnkovaHra.js';
 import { slozRadky, type NastaveniSkladani } from './radky.js';
 import type { RozpoznanyText } from './model.js';
@@ -67,6 +68,8 @@ export interface VysledekCteni {
    * je v šifrovaném bloku — ale vytištěný na tiketu je.
    */
   readonly kodDoplnkoveHry: string | null;
+  /** Cena tiketu přečtená z tiketu, nebo `null`. */
+  readonly cenaKc: number | null;
   /** Řádky, které nevypadaly jako sloupec ani jako hlavička. Pro ladění a pro jistotu. */
   readonly nepouziteRadky: readonly string[];
 }
@@ -148,6 +151,7 @@ export function prectiTiket(
     hlavicka: prectiHlavicku(nepouzite),
     sloupce,
     kodDoplnkoveHry: prectiKodDoplnkoveHry(nepouzite, hra),
+    cenaKc: prectiCenu(nepouzite),
     nepouziteRadky: nepouzite,
   };
 }
@@ -169,6 +173,7 @@ export function naTiket(
   doplnky: {
     id: string;
     kodDoplnkoveHry?: string | null;
+    cenaKc?: number | null;
     dny?: readonly Den[] | null;
     vlozeno?: string;
   },
@@ -190,6 +195,7 @@ export function naTiket(
     },
     // Předaný kód má přednost před přečteným — volající může vědět víc.
     kodDoplnkoveHry: doplnky.kodDoplnkoveHry ?? vysledek.kodDoplnkoveHry,
+    cenaKc: doplnky.cenaKc ?? vysledek.cenaKc,
     vlozeno: doplnky.vlozeno ?? new Date().toISOString(),
   };
 }

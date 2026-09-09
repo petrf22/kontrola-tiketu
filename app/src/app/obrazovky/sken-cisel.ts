@@ -26,17 +26,18 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
         rozpoznané údaje pak potvrdíš ve formuláři.
       </p>
 
-      <fieldset>
-        <legend>Hra</legend>
-        <label><input type="radio" name="hra" [checked]="hra() === 'eurojackpot'"
-          (change)="hra.set('eurojackpot')" /> Eurojackpot</label>
-        <label><input type="radio" name="hra" [checked]="hra() === 'sportka'"
-          (change)="hra.set('sportka')" /> Sportka</label>
-      </fieldset>
-
-      <button type="button" [disabled]="pracuje()" (click)="vyfot()">
-        {{ pracuje() ? 'Rozpoznávám…' : 'Vyfotit tiket' }}
-      </button>
+      <!--
+        Volba hry a spuštění focení jsou jedno gesto. Uživatel drží konkrétní tiket, takže
+        vybírat hru a pak ještě mačkat „vyfotit“ je krok navíc bez užitku.
+      -->
+      <div class="volby">
+        <button type="button" [disabled]="pracuje()" (click)="vyfot('eurojackpot')">
+          @if (pracuje() === 'eurojackpot') { Rozpoznávám… } @else { Vyfotit Eurojackpot }
+        </button>
+        <button type="button" [disabled]="pracuje()" (click)="vyfot('sportka')">
+          @if (pracuje() === 'sportka') { Rozpoznávám… } @else { Vyfotit Sportku }
+        </button>
+      </div>
     }
 
     @if (chyba(); as text) {
@@ -46,13 +47,13 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
   styles: `
     .poznamka { color: var(--barva-text-tlumeny); font-size: 0.9rem; }
     .chyba { color: var(--barva-chyba); }
-    fieldset { border: 1px solid var(--barva-ram); margin: 1rem 0; }
-    label { display: block; font-size: 0.9rem; }
+    .volby { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.25rem; }
     button {
-      padding: 0.5rem 0.9rem; border: 1px solid var(--barva-ram); border-radius: 4px;
-      background: var(--barva-plocha); color: inherit; font: inherit; cursor: pointer;
+      padding: 0.85rem 1rem; border: 1px solid var(--barva-ram); border-radius: 6px;
+      background: var(--barva-plocha); color: inherit; font: inherit; font-size: 1rem;
+      cursor: pointer; text-align: center;
     }
-    button:disabled { opacity: 0.5; }
+    button:disabled { opacity: 0.5; cursor: default; }
   `,
 })
 export class SkenCisel {
@@ -61,15 +62,15 @@ export class SkenCisel {
   private readonly naskenovany = inject(NaskenovanyTiket);
 
   protected readonly naZarizeni = maTrvaleUloziste();
-  protected readonly hra = signal<Hra>('eurojackpot');
-  protected readonly pracuje = signal(false);
+  /** Která hra se právě rozpoznává; `null`, když se nic neděje. */
+  protected readonly pracuje = signal<Hra | null>(null);
   protected readonly chyba = signal<string | null>(null);
 
-  protected async vyfot(): Promise<void> {
+  protected async vyfot(hra: Hra): Promise<void> {
     this.chyba.set(null);
-    this.pracuje.set(true);
+    this.pracuje.set(hra);
     try {
-      const { cteni, serioveCislo } = await nactiTiketZeSnimku(this.hra(), zavislostiCapacitor);
+      const { cteni, serioveCislo } = await nactiTiketZeSnimku(hra, zavislostiCapacitor);
       if (cteni.sloupce.length === 0) {
         this.chyba.set('Na snímku se nepodařilo najít žádný sloupec. Zkus lepší světlo, nebo zadej čísla ručně.');
         return;
@@ -82,7 +83,7 @@ export class SkenCisel {
     } catch (potiz) {
       this.chyba.set(potiz instanceof Error ? potiz.message : String(potiz));
     } finally {
-      this.pracuje.set(false);
+      this.pracuje.set(null);
     }
   }
 }

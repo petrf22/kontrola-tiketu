@@ -8,6 +8,7 @@ dist/
 www/
 .angular/
 coverage/
+*.tsbuildinfo
 
 # Archiv stažených výherních listin.
 # POZOR: není to smetí. Je to trvalý archiv surového HTML, ze kterého se dá kdykoliv

@@ -16,18 +16,28 @@ aplikace se čtyřmi obrazovkami**.
 
 - instalace release buildu s R8, jediné oprávnění `CAMERA`,
 - otevření šifrované databáze (`Database keying operation returned:0`),
-- sken čárového kódu — **sériové číslo sedí na vytištěné na tiketu**,
-- čtení `Extra 6` z fotky.
+- **jedna fotka** dá šest sloupců, euročísla, `Extra 6`, cenu i sériové číslo z čárového kódu,
+- sériové číslo sedí na to vytištěné na tiketu,
+- import výsledků a vyhodnocení proti reálným tahům,
+- dočasný snímek žije půl sekundy a maže se i při chybě.
 
-**Zatím neověřené:** čtení čárového kódu z fotky celého tiketu (na ní je kód menší než při
-skenu nablízko), import výsledků a vyhodnocení na zařízení.
+Na telefonu běží **release build s R8** — ladicí přeposílá konzoli do logcatu a plugin čtečky
+tam loguje celý obsah kódu včetně čísla klubové karty.
 
 Snímání je sjednocené: **jedna fotka dá čísla, `Extra 6` i sériové číslo z kódu**
 (`readBarcodesFromImage` vrací tentýž typ `Barcode` včetně `bytes`). Obrazovka „Jen kód“
 zůstává pro případ, že fotka kód nezachytí nebo uživatel nechce pořizovat snímek vůbec.
 
-Podoba doplňkové hry na tiketu Eurojackpotu: `Extra 6: 845991`. Podoba Šance u Sportky
-ověřená není — vzor je proto volnější.
+Podoba doplňkové hry na tiketu Eurojackpotu: `Extra 6: 845991`, cena `400 Kč`. Podoba Šance
+u Sportky ověřená není — vzor je proto volnější.
+
+**Pozor u čtení částek:** skládání řádků podle rámečků může cenu spojit s okolím, takže se
+nesmí kotvit na konec řádku. Zároveň částka nesmí začít uprostřed jiného čísla — jinak
+z `07.09.2026 400 Kč` vyjde 2 026 400.
+
+**Starší listiny nemusí mít tabulku výher.** Místo ní stojí „Probíhá zpracování výsledků“ —
+v archivu je takových tahů 32, převážně z roku 2016. Parser je přečte s prázdnou tabulkou,
+ale jen když to listina sama říká; `preparsuj` navíc vadnou listinu přeskočí místo aby skončil.
 
 **Instalace přes `adb install` na Xiaomi** projde jen u ladicího buildu; release blokuje
 HyperOS (`INSTALL_FAILED_USER_RESTRICTED`) a je nutné ho otevřít ve správci souborů. Play
@@ -59,6 +69,7 @@ app/src/app/data/      import.ts, uloziste.ts, stav.ts, tokeny.ts
 app/src/app/obrazovky/ seznam.ts, novy-tiket.ts, detail.ts, import-vysledku.ts
 app/android/           nativní projekt, zatvrzený manifest
 data/sazby-extra6.json pevné částky Extra 6 (listina je nepublikuje)
+data/vysledky.json     výsledky k importu, verzované v gitu (teď 2021–2026, 1190 tahů)
 docs/data-source.md    výstup fáze 0
 ```
 

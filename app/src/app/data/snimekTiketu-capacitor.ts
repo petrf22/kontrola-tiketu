@@ -5,6 +5,7 @@
  * vrstva k pluginům. Díky tomu jde ta záruka otestovat bez zařízení.
  */
 
+import { BarcodeFormat, BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem } from '@capacitor/filesystem';
 import { TextRecognition } from '@capacitor-mlkit/text-recognition';
@@ -36,6 +37,18 @@ export const zavislostiCapacitor: Zavislosti = {
   rozpoznej: async (cesta): Promise<MlKitVysledek> => {
     // Latinka stačí — na tiketu jsou číslice a česká slova.
     return TextRecognition.processImage({ path: cesta });
+  },
+
+  /**
+   * Přečte čárový kód z téhož snímku, aby se nemuselo skenovat zvlášť.
+   * Omezeno na PDF417 — jiné kódy na tiketu nejsou a užší filtr je rychlejší.
+   */
+  prectiKody: async (cesta) => {
+    const vysledek = await BarcodeScanner.readBarcodesFromImage({
+      path: cesta,
+      formats: [BarcodeFormat.Pdf417],
+    });
+    return vysledek.barcodes;
   },
 
   ukliď: async (cesta) => {

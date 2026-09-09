@@ -8,6 +8,16 @@ import { nactiTiketZeSnimku, type Zavislosti } from '../src/app/data/snimekTiket
  * tyhle testy hlídají. Bez nich je odchylka jen slib.
  */
 
+/** Payload tiketu tak, jak ho čtečka vrací — znaménkové Java bajty. */
+const BAJTY_KODU: number[] = [
+  82, 66, 70, 49, 54, 77, 19, 0, 2, 0, 1,
+  ...Array.from({ length: 72 }, (_, i) => (i % 2 === 0 ? -(i + 1) : i + 1)),
+  2, 1, 0, 22, 1, 0,
+  ...[...'12345678901234567890'].map((z) => z.charCodeAt(0)),
+  11, 1,
+  ...[...'9876543210'].map((z) => z.charCodeAt(0)),
+];
+
 const VYSLEDEK: MlKitVysledek = {
   blocks: [
     {
@@ -30,6 +40,7 @@ function zavislosti(prepis: Partial<Zavislosti> = {}) {
   const zaklad: Zavislosti = {
     poriz: async () => '/data/user/0/cz.petrf22.kontrolatiketu/cache/snimek.jpg',
     rozpoznej: async () => VYSLEDEK,
+    prectiKody: async () => [{ bytes: BAJTY_KODU }],
     ukliď: async (cesta) => {
       smazano.push(cesta);
     },
@@ -93,5 +104,45 @@ describe('nactiTiketZeSnimku', () => {
     const { cteni } = await nactiTiketZeSnimku('eurojackpot', z);
     expect(cteni.sloupce).toEqual([]);
     expect(smazano).toHaveLength(1);
+  });
+});
+
+describe('čárový kód z téže fotky', () => {
+  it('přečte sériové číslo spolu s čísly, takže se neskenuje dvakrát', async () => {
+    const { z } = zavislosti();
+    const { cteni, serioveCislo } = await nactiTiketZeSnimku('eurojackpot', z);
+    expect(cteni.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
+    expect(serioveCislo).toBe('12345678901234567890');
+  });
+
+  it('když fotka kód nezachytí, čísla se nezahodí', async () => {
+    const { z } = zavislosti({ prectiKody: async () => [] });
+    const { cteni, serioveCislo } = await nactiTiketZeSnimku('eurojackpot', z);
+    expect(serioveCislo).toBeNull();
+    expect(cteni.sloupce).toHaveLength(1);
+  });
+
+  it('selhání čtečky kódů nesmí shodit celé rozpoznání', async () => {
+    const { z, smazano } = zavislosti({
+      prectiKody: async () => {
+        throw new Error('čtečka selhala');
+      },
+    });
+    const { cteni, serioveCislo } = await nactiTiketZeSnimku('eurojackpot', z);
+    expect(serioveCislo).toBeNull();
+    expect(cteni.sloupce).toHaveLength(1);
+    expect(smazano).toHaveLength(1); // úklid proběhl i tak
+  });
+
+  it('cizí kód na snímku se přeskočí', async () => {
+    const cizi = [...'NECOJINEHO'].map((z) => z.charCodeAt(0));
+    const { z } = zavislosti({ prectiKody: async () => [{ bytes: cizi }, { bytes: BAJTY_KODU }] });
+    expect((await nactiTiketZeSnimku('eurojackpot', z)).serioveCislo).toBe('12345678901234567890');
+  });
+
+  it('číslo klubové karty z fotky neprosákne', async () => {
+    const { z } = zavislosti();
+    const vysledek = await nactiTiketZeSnimku('eurojackpot', z);
+    expect(JSON.stringify(vysledek)).not.toContain('9876543210');
   });
 });

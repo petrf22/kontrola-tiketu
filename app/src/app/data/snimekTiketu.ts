@@ -14,7 +14,13 @@
  */
 
 import type { Hra } from '@kontrola-tiketu/jadro';
-import { prectiTiket, zMlKit, type MlKitVysledek, type VysledekCteni } from '@kontrola-tiketu/ocr';
+import {
+  prectiCarovyKod,
+  prectiTiket,
+  zMlKit,
+  type MlKitVysledek,
+  type VysledekCteni,
+} from '@kontrola-tiketu/ocr';
 
 /** Pořídí snímek a vrátí cestu k dočasnému souboru. */
 export type Porizovac = () => Promise<string>;
@@ -22,19 +28,60 @@ export type Porizovac = () => Promise<string>;
 /** Rozpozná text ve snímku na dané cestě. */
 export type Rozpoznavac = (cesta: string) => Promise<MlKitVysledek>;
 
+/**
+ * Přečte čárové kódy z téhož snímku.
+ *
+ * Popisuje se strukturálně, protože z celého výsledku čtečky nás zajímají jen bajty.
+ */
+export type CtenarKodu = (cesta: string) => Promise<readonly { readonly bytes?: number[] }[]>;
+
 /** Smaže dočasný soubor. Nesmí vyhodit výjimku, která by zakryla tu původní. */
 export type Uklizec = (cesta: string) => Promise<void>;
 
 export interface Zavislosti {
   readonly poriz: Porizovac;
   readonly rozpoznej: Rozpoznavac;
+  readonly prectiKody: CtenarKodu;
   readonly ukliď: Uklizec;
 }
 
 export interface VysledekSnimku {
   readonly cteni: VysledekCteni;
+  /**
+   * Sériové číslo z čárového kódu na témže snímku, nebo `null`, když se kód nenašel.
+   *
+   * Skenovat kód zvlášť je zbytečné — na tiketu je hned pod čísly, takže když je vidět
+   * celý tiket, je vidět i on.
+   */
+  readonly serioveCislo: string | null;
   /** Cesta k souboru, který byl mezitím smazán. Jen pro záznam v logu při ladění. */
   readonly docasnySoubor: string;
+}
+
+/**
+ * Vytáhne sériové číslo z prvního kódu, který dává smysl.
+ *
+ * Selhání se polyká záměrně: fotka nemusí kód zachytit a to není důvod zahodit přečtená
+ * čísla. Uživatel pak sériové číslo doplní naskenováním kódu zvlášť.
+ */
+async function zkusPrecistKod(
+  cesta: string,
+  prectiKody: CtenarKodu,
+): Promise<string | null> {
+  try {
+    for (const kod of await prectiKody(cesta)) {
+      if (kod.bytes === undefined || kod.bytes.length === 0) continue;
+      try {
+        // Bajty přicházejí jako znaménkové Java hodnoty, proto maskování.
+        return prectiCarovyKod(Uint8Array.from(kod.bytes, (b) => b & 0xff)).serioveCislo;
+      } catch {
+        continue; // cizí kód na snímku, zkusíme další
+      }
+    }
+  } catch {
+    return null;
+  }
+  return null;
 }
 
 /**
@@ -51,7 +98,11 @@ export async function nactiTiketZeSnimku(
   const cesta = await zavislosti.poriz();
   try {
     const vysledek = await zavislosti.rozpoznej(cesta);
-    return { cteni: prectiTiket(zMlKit(vysledek), hra), docasnySoubor: cesta };
+    return {
+      cteni: prectiTiket(zMlKit(vysledek), hra),
+      serioveCislo: await zkusPrecistKod(cesta, zavislosti.prectiKody),
+      docasnySoubor: cesta,
+    };
   } finally {
     // Selhání úklidu se nesmí propsat ven místo původní chyby — jinak by se ztratil důvod,
     // proč rozpoznávání selhalo. Zaznamená se a jde se dál.

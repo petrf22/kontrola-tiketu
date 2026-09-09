@@ -1,7 +1,7 @@
 import { Component, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import type { Hra } from '@kontrola-tiketu/jadro';
-import { NactenaCisla } from '../data/sken.js';
+import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { nactiTiketZeSnimku } from '../data/snimekTiketu.js';
 import { zavislostiCapacitor } from '../data/snimekTiketu-capacitor.js';
 import { maTrvaleUloziste } from '../data/tokeny.js';
@@ -21,8 +21,9 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
       <p class="poznamka">Focení funguje jen v aplikaci na telefonu. V prohlížeči zadej čísla ručně.</p>
     } @else {
       <p class="poznamka">
-        Vyfoť tiket tak, aby byly vidět všechny sloupce. Snímek se po rozpoznání smaže a do
-        galerie se neuloží. Rozpoznaná čísla pak potvrdíš ve formuláři.
+        Vyfoť celý tiket — čísla, řádek s doplňkovou hrou i čárový kód dole. Z jedné fotky se
+        přečte všechno najednou. Snímek se po rozpoznání smaže a do galerie se neuloží;
+        rozpoznané údaje pak potvrdíš ve formuláři.
       </p>
 
       <fieldset>
@@ -57,6 +58,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
 export class SkenCisel {
   private readonly router = inject(Router);
   private readonly nactena = inject(NactenaCisla);
+  private readonly naskenovany = inject(NaskenovanyTiket);
 
   protected readonly naZarizeni = maTrvaleUloziste();
   protected readonly hra = signal<Hra>('eurojackpot');
@@ -67,11 +69,14 @@ export class SkenCisel {
     this.chyba.set(null);
     this.pracuje.set(true);
     try {
-      const { cteni } = await nactiTiketZeSnimku(this.hra(), zavislostiCapacitor);
+      const { cteni, serioveCislo } = await nactiTiketZeSnimku(this.hra(), zavislostiCapacitor);
       if (cteni.sloupce.length === 0) {
         this.chyba.set('Na snímku se nepodařilo najít žádný sloupec. Zkus lepší světlo, nebo zadej čísla ručně.');
         return;
       }
+      // Kód bývá na tiketu hned pod čísly, takže ho jedna fotka zachytí spolu s nimi.
+      // Když se nenajde, nevadí — uživatel ho může doskenovat zvlášť.
+      if (serioveCislo !== null) this.naskenovany.uloz(serioveCislo);
       this.nactena.uloz(cteni);
       await this.router.navigate(['/tiket/novy']);
     } catch (potiz) {

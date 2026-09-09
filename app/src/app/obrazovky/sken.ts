@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   BarcodeFormat,
   BarcodeScanner,
@@ -21,6 +21,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
  */
 @Component({
   selector: 'app-sken',
+  imports: [RouterLink],
   template: `
     @if (!naZarizeni) {
       <p class="poznamka">
@@ -28,8 +29,9 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
       </p>
     } @else {
       <p class="poznamka">
-        Namiř kameru na čárový kód pod tiketem. Z kódu se přečte jen sériové číslo tiketu;
-        vsazená čísla v něm čitelná nejsou a číslo klubové karty se zahazuje.
+        Obvykle tuhle obrazovku nepotřebuješ — <a routerLink="/sken-cisel">vyfocení tiketu</a>
+        přečte čísla i čárový kód najednou. Hodí se, když fotka kód nezachytila, nebo když
+        nechceš pořizovat snímek vůbec: tady se nic neukládá ani dočasně.
       </p>
       @if (!skenuje()) {
         <button type="button" (click)="spust()">Spustit sken</button>

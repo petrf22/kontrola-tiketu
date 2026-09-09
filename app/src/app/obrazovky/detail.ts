@@ -1,6 +1,7 @@
-import { Component, computed, inject, input } from '@angular/core';
+import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import type { Sloupec, VysledekSlosovani, VysledekTiketu, Vyhra } from '@kontrola-tiketu/jadro';
+import { formatujDatum, formatujDatumCas, nazevDne } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
@@ -27,10 +28,15 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
     @if (tiket(); as t) {
       <h2>{{ t.hra === 'eurojackpot' ? 'Eurojackpot' : 'Sportka' }}</h2>
       <p class="popis">
-        {{ t.sloupce.length }} sloupců, {{ t.slosovani.pocet }} slosování od {{ t.slosovani.prvni }}.
+        {{ t.sloupce.length }} sloupců, {{ t.slosovani.pocet }} slosování od
+        {{ formatujDatum(t.slosovani.prvni) }}.
         @if (t.kodDoplnkoveHry) {
           <br />{{ t.hra === 'eurojackpot' ? 'Extra 6' : 'Šance' }}: {{ t.kodDoplnkoveHry }}
         }
+        @if (serioveCislo(); as cislo) {
+          <br />Sériové číslo z čárového kódu: <span class="serie">{{ cislo }}</span>
+        }
+        <br />Přidáno {{ formatujDatumCas(t.vlozeno) }}.
       </p>
 
       @if (vysledek(); as v) {
@@ -48,7 +54,7 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
 
         @for (slosovani of v.slosovani; track slosovani.datum) {
           <section>
-            <h3>{{ slosovani.datum }}</h3>
+            <h3>{{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}</h3>
 
             <!--
               Vsazená čísla se zvýrazněnými shodami. Bez nich se nedá zkontrolovat, jestli
@@ -116,7 +122,21 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
         }
       }
 
-      <button type="button" class="smazat" (click)="smaz()">Smazat tiket</button>
+      <p class="overeni">
+        Čísla si můžeš ověřit na
+        <a [href]="odkazNaVysledky()" target="_blank" rel="noopener noreferrer">stránkách Allwyn</a>.
+        Odkaz otevře prohlížeč — aplikace sama na síť nechodí a nemá k tomu ani oprávnění.
+      </p>
+
+      @if (!mazani()) {
+        <button type="button" class="smazat" (click)="mazani.set(true)">Smazat tiket</button>
+      } @else {
+        <div class="potvrzeni">
+          <p>Opravdu smazat tenhle tiket? Vrátit to nepůjde.</p>
+          <button type="button" class="smazat" (click)="smaz()">Ano, smazat</button>
+          <button type="button" (click)="mazani.set(false)">Ponechat</button>
+        </div>
+      }
     } @else {
       <p>Tiket nenalezen.</p>
     }
@@ -161,11 +181,21 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
     .castka { font-variant-numeric: tabular-nums; }
     .vyhrada { grid-column: 1 / -1; color: var(--barva-text-tlumeny); font-size: 0.75rem; }
     .poznamka { font-size: 0.8rem; color: var(--barva-text-tlumeny); }
-    .smazat {
-      margin-top: 2rem; padding: 0.45rem 0.8rem; border: 1px solid var(--barva-ram);
-      border-radius: 4px; background: transparent; color: var(--barva-chyba);
+    .serie { font-family: ui-monospace, monospace; letter-spacing: 0.04em; }
+    .overeni {
+      margin-top: 1.5rem; font-size: 0.8rem; color: var(--barva-text-tlumeny);
+    }
+    .smazat, .potvrzeni button {
+      margin-top: 0.5rem; padding: 0.45rem 0.8rem; border: 1px solid var(--barva-ram);
+      border-radius: 4px; background: transparent; color: inherit;
       font: inherit; cursor: pointer;
     }
+    .smazat { color: var(--barva-chyba); }
+    .potvrzeni {
+      margin-top: 1.5rem; padding: 0.75rem; border: 1px solid var(--barva-chyba);
+      border-radius: 4px; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+    }
+    .potvrzeni p { width: 100%; margin: 0; font-size: 0.9rem; }
   `,
 })
 export class Detail {
@@ -175,6 +205,34 @@ export class Detail {
   private readonly router = inject(Router);
 
   protected readonly tiket = computed(() => this.stav.tikety().find((t) => t.id === this.id()));
+
+  /** Rozdělané mazání. Dvoukrokové potvrzení místo systémového dialogu — ten blokuje webview. */
+  protected readonly mazani = signal(false);
+
+  protected readonly formatujDatum = formatujDatum;
+  protected readonly formatujDatumCas = formatujDatumCas;
+
+  /**
+   * Sériové číslo tiketu, pokud pochází z čárového kódu.
+   *
+   * Ručně zadaný tiket má vyrobené id, které uživateli nic neřekne, tak se nezobrazuje.
+   * Číslo klubové karty tu není a být nemůže — do modelu se nikdy nedostane.
+   */
+  protected readonly serioveCislo = computed(() => {
+    const id = this.tiket()?.id ?? '';
+    return /^\d{20}$/.test(id) ? id : null;
+  });
+
+  protected readonly odkazNaVysledky = computed(() =>
+    this.tiket()?.hra === 'sportka'
+      ? 'https://www.allwyn.cz/loterie/sportka/kontrola-a-vysledky'
+      : 'https://www.allwyn.cz/loterie/eurojackpot/kontrola-a-vysledky',
+  );
+
+  protected denSlosovani(slosovani: VysledekSlosovani): string {
+    const tah = this.stav.tahy().find((t) => t.datum === slosovani.datum);
+    return tah === undefined ? '' : ` (${nazevDne(tah.den)})`;
+  }
 
   protected readonly vysledek = computed<VysledekTiketu | null>(() => {
     const tiket = this.tiket();

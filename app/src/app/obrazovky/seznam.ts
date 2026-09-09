@@ -1,5 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { formatujDatum } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import type { Tiket } from '@kontrola-tiketu/jadro';
 
@@ -26,7 +27,7 @@ interface RadekSeznamu {
             <a [routerLink]="['/tiket', radek.tiket.id]">
               <span class="hra">{{ radek.tiket.hra === 'eurojackpot' ? 'Eurojackpot' : 'Sportka' }}</span>
               <span class="detail">
-                {{ radek.tiket.sloupce.length }}&nbsp;sl. &middot; od {{ radek.tiket.slosovani.prvni }}
+                {{ radek.tiket.sloupce.length }}&nbsp;sl. &middot; od {{ formatujDatum(radek.tiket.slosovani.prvni) }}
                 &middot; {{ radek.tiket.slosovani.pocet }}&nbsp;slos.
               </span>
               <span class="castka" [class.nejisty]="!radek.jisty">
@@ -64,6 +65,8 @@ interface RadekSeznamu {
 })
 export class Seznam {
   private readonly stav = inject(Stav);
+
+  protected readonly formatujDatum = formatujDatum;
 
   protected readonly radky = computed<RadekSeznamu[]>(() =>
     this.stav.tikety().map((tiket) => {

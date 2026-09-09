@@ -97,7 +97,7 @@ describe('shrnutiImportu', () => {
     const vysledek = nactiVysledky(soubor()) as UspesnyImport;
     const shrnuti = shrnutiImportu(vysledek);
     expect(shrnuti).toContain('3 tahů');
-    expect(shrnuti).toContain('2026-09-01');
+    expect(shrnuti).toContain('1. 9. 2026');
     expect(shrnuti).toContain('eurojackpot: 2');
     expect(shrnuti).toContain('sportka: 1');
   });

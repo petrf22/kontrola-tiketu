@@ -8,6 +8,7 @@
  */
 
 import { VERZE_FORMATU, type SazbyExtra6, type Tah } from '@kontrola-tiketu/jadro';
+import { formatujDatum } from './format.js';
 
 export interface UspesnyImport {
   readonly stav: 'ok';
@@ -125,6 +126,6 @@ export function shrnutiImportu(vysledek: UspesnyImport): string {
   const rozsah =
     vysledek.tahy.length === 0
       ? ''
-      : ` (${vysledek.tahy[0]!.datum} až ${vysledek.tahy.at(-1)!.datum})`;
+      : ` (${formatujDatum(vysledek.tahy[0]!.datum)} až ${formatujDatum(vysledek.tahy.at(-1)!.datum)})`;
   return `Načteno ${vysledek.tahy.length} tahů${rozsah} — ${casti.join(', ')}.`;
 }

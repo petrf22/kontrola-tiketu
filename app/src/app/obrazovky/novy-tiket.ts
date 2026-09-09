@@ -68,6 +68,14 @@ interface Radek {
         </p>
       }
 
+      @if (rozpoznanoZeSnimku && !serioveCislo) {
+        <p class="ze-snimku">
+          Z fotky se nepodařilo přečíst čárový kód, takže tiket nedostane sériové číslo
+          a nepůjde poznat, že jde o tentýž tiket, kdyby ses ho pokusil přidat znovu.
+          Můžeš <a routerLink="/sken">naskenovat samotný kód</a>, nebo to nechat být.
+        </p>
+      }
+
       @if (rozpoznanoZeSnimku) {
         <p class="ze-snimku">
           Čísla jsou rozpoznaná ze snímku — projdi je prosím proti papíru.

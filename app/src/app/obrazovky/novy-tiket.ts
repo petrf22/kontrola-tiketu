@@ -1,5 +1,5 @@
 import { Component, computed, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import {
   ROZSAHY,
   zkontrolujTiket,
@@ -25,6 +25,7 @@ interface Radek {
  */
 @Component({
   selector: 'app-novy-tiket',
+  imports: [RouterLink],
   template: `
     <form (submit)="uloz($event)">
       <fieldset>
@@ -49,6 +50,23 @@ interface Radek {
         <input type="text" inputmode="numeric" maxlength="6" placeholder="např. 236412"
           [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
       </label>
+
+      @if (serioveCislo) {
+        <p class="ze-skenu">
+          <strong>Sériové číslo z čárového kódu:</strong>
+          <span class="cislo">{{ serioveCislo }}</span><br />
+          Porovnej ho prosím s číslem vytištěným na tiketu. Slouží jen k tomu, aby se tentýž
+          tiket nezaložil dvakrát.<br />
+          <span class="tlumene">
+            Vsazená čísla ani kód doplňkové hry se z čárového kódu přečíst nedají — jsou
+            v jeho šifrované části.
+          </span>
+          @if (!rozpoznanoZeSnimku) {
+            <br /><a routerLink="/sken-cisel">Vyfotit čísla z tiketu</a>
+            <span class="tlumene"> — sériové číslo zůstane zachované.</span>
+          }
+        </p>
+      }
 
       @if (rozpoznanoZeSnimku) {
         <p class="ze-snimku">
@@ -111,18 +129,28 @@ interface Radek {
     .ulozit { background: var(--barva-duraz); color: #fff; border-color: transparent; }
     .ulozit:disabled { opacity: 0.45; cursor: not-allowed; }
     .problemy { margin: 0; padding-left: 1.1rem; color: var(--barva-chyba); font-size: 0.85rem; }
-    .ze-snimku {
+    .ze-snimku, .ze-skenu {
       margin: 0; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
-      border-left: 3px solid var(--barva-duraz); font-size: 0.85rem;
+      border-left: 3px solid var(--barva-duraz); font-size: 0.85rem; line-height: 1.5;
     }
+    .cislo {
+      font-family: ui-monospace, monospace; font-size: 1rem;
+      letter-spacing: 0.06em; word-break: break-all;
+    }
+    .tlumene { color: var(--barva-text-tlumeny); }
   `,
 })
 export class NovyTiket {
   private readonly stav = inject(Stav);
   private readonly router = inject(Router);
 
-  /** Sériové číslo z naskenovaného čárového kódu, pokud uživatel přišel ze skenu. */
-  private readonly serioveCislo = inject(NaskenovanyTiket).vyzvedni();
+  /**
+   * Sériové číslo z naskenovaného čárového kódu, pokud uživatel přišel ze skenu.
+   * Zobrazuje se, aby bylo vidět, že sken vyšel, a šlo ho porovnat s papírem.
+   * (Číslo klubové karty se z kódu nikdy nečte — není ani v návratovém typu.)
+   */
+  private readonly naskenovany = inject(NaskenovanyTiket);
+  protected readonly serioveCislo = this.naskenovany.precti();
 
   /** Čísla rozpoznaná ze snímku. Jsou jen návrh — uživatel je tu potvrzuje a opravuje. */
   private readonly rozpoznane = inject(NactenaCisla).vyzvedni();
@@ -204,6 +232,8 @@ export class NovyTiket {
     if (this.problemy().length > 0) return;
     const tiket = this.navrh();
     await this.stav.ulozTiket(tiket);
+    // Průchozí údaje ze skenu už splnily účel.
+    this.naskenovany.zapomen();
     await this.router.navigate(['/tiket', tiket.id]);
   }
 }

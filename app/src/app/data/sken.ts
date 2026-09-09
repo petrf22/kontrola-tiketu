@@ -15,11 +15,19 @@ export class NaskenovanyTiket {
     this.serioveCislo.set(cislo);
   }
 
-  /** Vyzvedne a zároveň zapomene. */
-  vyzvedni(): string | null {
-    const cislo = this.serioveCislo();
+  /**
+   * Přečte, ale nezapomene.
+   *
+   * Uživatel může ze skenu kódu odejít vyfotit čísla a vrátit se — sériové číslo musí cestu
+   * přežít, jinak by o něj přišel a tiket by dostal náhradní identifikátor.
+   */
+  precti(): string | null {
+    return this.serioveCislo();
+  }
+
+  /** Zavolat po uložení tiketu. Průchozí údaj nemá přežívat déle, než je potřeba. */
+  zapomen(): void {
     this.serioveCislo.set(null);
-    return cislo;
   }
 }
 

@@ -35,3 +35,27 @@ describe('prectiCenu', () => {
     expect(prectiCenu(['0 Kč'])).toBeNull();
   });
 });
+
+describe('cena spojená s dalším textem', () => {
+  it('najde částku i uprostřed řádku', () => {
+    // Skládání řádků podle rámečků může cenu spojit s tím, co je na tiketu vedle ní.
+    expect(prectiCenu(['07.09.2026 400 Kč CISLO LICENCE:'])).toBe(400);
+    expect(prectiCenu(['400 Kč 11:55:58'])).toBe(400);
+  });
+
+  it('pořád nesebere číslo bez Kč', () => {
+    expect(prectiCenu(['07.09.2026 11:55:58 13706201'])).toBeNull();
+  });
+});
+
+describe('částka nesmí začít uprostřed jiného čísla', () => {
+  it('na řádku s datem nesebere letopočet', () => {
+    // Bez téhle pojistky vyšlo z „07.09.2026 400 Kč“ číslo 2 026 400.
+    expect(prectiCenu(['07.09.2026 400 Kč'])).toBe(400);
+    expect(prectiCenu(['08.09.2026 1 200 Kč'])).toBe(1200);
+  });
+
+  it('nedělitelná mezera v oddělovači tisíců projde', () => {
+    expect(prectiCenu(['1\u00a0200 Kč'])).toBe(1200);
+  });
+});

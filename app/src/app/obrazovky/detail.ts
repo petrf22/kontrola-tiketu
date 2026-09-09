@@ -33,14 +33,11 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
         @if (t.kodDoplnkoveHry) {
           <br />{{ t.hra === 'eurojackpot' ? 'Extra 6' : 'Šance' }}: {{ t.kodDoplnkoveHry }}
         }
-        @if (serioveCislo(); as cislo) {
-          <br />Sériové číslo z čárového kódu: <span class="serie">{{ cislo }}</span>
-        }
-        <br />Přidáno {{ formatujDatumCas(t.vlozeno) }}.
       </p>
 
       @if (vysledek(); as v) {
         <p class="soucet" [class.nejisty]="!v.soucetJisty">
+          <span class="popisek">Výhra</span>
           <strong>{{ v.celkemKc }} Kč</strong>
           @if (!v.soucetJisty) { <span class="hvezda">*</span> }
         </p>
@@ -122,6 +119,15 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
         }
       }
 
+      <dl class="puvod">
+        @if (serioveCislo(); as cislo) {
+          <dt>Sériové číslo z čárového kódu</dt>
+          <dd class="serie">{{ cislo }}</dd>
+        }
+        <dt>Přidáno</dt>
+        <dd>{{ formatujDatumCas(t.vlozeno) }}</dd>
+      </dl>
+
       <p class="overeni">
         Čísla si můžeš ověřit na
         <a [href]="odkazNaVysledky()" target="_blank" rel="noopener noreferrer">stránkách Allwyn</a>.
@@ -143,7 +149,14 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
   `,
   styles: `
     .popis { color: var(--barva-text-tlumeny); font-size: 0.85rem; }
-    .soucet { font-size: 1.6rem; margin: 0.5rem 0; font-variant-numeric: tabular-nums; }
+    .soucet {
+      display: flex; align-items: baseline; gap: 0.5rem;
+      font-size: 1.6rem; margin: 0.5rem 0; font-variant-numeric: tabular-nums;
+    }
+    .soucet .popisek {
+      font-size: 0.85rem; font-weight: 400; color: var(--barva-text-tlumeny);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
     .soucet.nejisty strong { color: var(--barva-text-tlumeny); }
     .varovani {
       padding: 0.6rem 0.75rem; background: var(--barva-plocha);
@@ -182,6 +195,12 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
     .vyhrada { grid-column: 1 / -1; color: var(--barva-text-tlumeny); font-size: 0.75rem; }
     .poznamka { font-size: 0.8rem; color: var(--barva-text-tlumeny); }
     .serie { font-family: ui-monospace, monospace; letter-spacing: 0.04em; }
+    .puvod {
+      margin: 1.75rem 0 0; padding-top: 0.75rem;
+      border-top: 1px solid var(--barva-ram); font-size: 0.8rem;
+    }
+    .puvod dt { color: var(--barva-text-tlumeny); }
+    .puvod dd { margin: 0 0 0.5rem; }
     .overeni {
       margin-top: 1.5rem; font-size: 0.8rem; color: var(--barva-text-tlumeny);
     }

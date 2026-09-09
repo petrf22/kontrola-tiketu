@@ -9,7 +9,7 @@ export const routes: Routes = [
   {
     path: 'tiket/novy',
     loadComponent: () => import('./obrazovky/novy-tiket.js').then((m) => m.NovyTiket),
-    title: 'Nový tiket',
+    title: 'Zadat tiket ručně',
   },
   {
     path: 'sken',

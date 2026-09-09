@@ -12,7 +12,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { Hra, SazbyExtra6, Tah } from '@kontrola-tiketu/jadro';
-import { jeVArchivu, nactiZArchivu, seznamArchivu, ulozDoArchivu } from './archiv.js';
+import { jeVArchivu, nactiZArchivu, seznamArchivu, ulozDoArchivu, type Souradnice } from './archiv.js';
 import { ChybaObdobi, formatujTyden, parsujTyden, tydnyOdDo, type Tyden } from './obdobi.js';
 import { Klient, ZakazanoRobots } from './stahovani.js';
 import { jePrazdna, parsujListinu, sestavUrl, ZAKLADNI_URL } from './zdroje/allwyn-vyherka.js';
@@ -30,10 +30,12 @@ const VYCHOZI_ARCHIV = join(KOREN_REPA, 'fetcher', '.cache');
 export const NAPOVEDA = `Stahování a zpracování veřejných výherních listin Allwyn.
 
   vyherka stahni --od 2026-01 --do 2026-37 [--hra sportka] [--archiv CESTA]
-  vyherka preparsuj --out vysledky.json [--archiv CESTA] [--sazby data/sazby-extra6.json]
+  vyherka preparsuj --out vysledky.json [--od RRRR-TT] [--do RRRR-TT]
+                    [--hra sportka] [--archiv CESTA] [--sazby data/sazby-extra6.json]
   vyherka stav [--archiv CESTA]
 
 Týden se zadává jako RRRR-TT. Bez --hra se pracuje s oběma hrami.
+U preparsuj omezují --od a --do, které listiny z archivu se zpracují.
 Uzavřený týden, který už v archivu je, se znovu nestahuje.
 `;
 
@@ -136,10 +138,35 @@ async function nactiSazby(cesta: string | null): Promise<SazbyExtra6[]> {
   return obsah.sazby ?? [];
 }
 
+/** Pořadové číslo týdne pro porovnávání rozsahů. */
+function klicTydne({ rok, tyden }: Tyden): number {
+  return rok * 100 + tyden;
+}
+
+/** Které listiny z archivu se mají zpracovat podle zadaných her a období. */
+export function vyberZArchivu(
+  zaznamy: readonly Souradnice[],
+  hry: readonly Hra[],
+  od: Tyden | null,
+  doTydne: Tyden | null,
+): Souradnice[] {
+  return zaznamy
+    .filter((z) => hry.includes(z.hra))
+    .filter((z) => od === null || klicTydne(z) >= klicTydne(od))
+    .filter((z) => doTydne === null || klicTydne(z) <= klicTydne(doTydne));
+}
+
 async function preparsuj(a: Argumenty): Promise<void> {
-  const zaznamy = (await seznamArchivu(a.archiv)).filter((z) => a.hry.includes(z.hra));
-  if (zaznamy.length === 0) {
+  const vsechny = await seznamArchivu(a.archiv);
+  const zaznamy = vyberZArchivu(vsechny, a.hry, a.od, a.do);
+
+  if (vsechny.length === 0) {
     throw new ChybaArgumentu(`Archiv ${a.archiv} je prázdný. Nejdřív spusť „stahni“.`);
+  }
+  if (zaznamy.length === 0) {
+    throw new ChybaArgumentu(
+      `V archivu ${a.archiv} není nic, co by odpovídalo zadanému období a hrám.`,
+    );
   }
 
   const tahy: Tah[] = [];

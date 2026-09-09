@@ -306,6 +306,20 @@ takže pojistkou je **vlastní archiv**, ne alternativní web.
 Jednorázové naplnění při prodlevě 2 s trvá **~1,3 hodiny**. Průběžný provoz je pak
 **2 dotazy týdně** (jeden na hru), tedy ~104 za rok.
 
+### Velikost výstupního JSON (změřeno, ne odhadnuto)
+
+Změřeno na vzorku osmi reálných tahů (3 Eurojackpot, 5 Sportka včetně Šance):
+
+| | na tah | celá historie (~5 400 tahů) |
+|---|---|---|
+| přehledně (odsazeně) | 3 525 B | **~19 MB** |
+| kompaktně | 1 695 B | ~9 MB |
+| gzip | 324 B | ~1,8 MB |
+
+Celá historie v jednom přehledném souboru je tedy na git i na import do telefonu zbytečně
+velká. Proto `preparsuj` umí omezit období — pro běžné použití stačí posledních pár měsíců,
+což jsou desítky kilobajtů.
+
 ### Archivuje se surové HTML, ne jen vyparsovaná data
 
 Pravděpodobnější než zmizení zdroje je chyba ve vlastním parseru. Se syrovou zálohou se přeparsuje

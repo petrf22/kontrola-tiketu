@@ -9,13 +9,14 @@ je jen rychlá orientace; při rozporu platí zadání.
 
 ## Stav repozitáře
 
-Fáze 0 a 1 hotové. Hotový je **zdroj dat** (`docs/data-source.md`) a **vyhodnocovací jádro**
-(`packages/jadro`). Fetcher ani aplikace zatím neexistují.
+Hotový je **zdroj dat**, **vyhodnocovací jádro** a **fetcher**. Aplikace zatím neexistuje.
 
 ```
 packages/jadro/src/    model.ts, validace.ts, koncoveCislice.ts,
                        eurojackpot.ts, sportka.ts, sance.ts, extra6.ts, vyhodnoceni.ts
-packages/jadro/test/   testy + fixtures/ s reálnými tahy z výherních listin
+fetcher/src/           zdroje/allwyn-vyherka.ts (parser), zdroje/html.ts,
+                       archiv.ts, robots.ts, stahovani.ts, obdobi.ts, vystup.ts, cli.ts, bin.ts
+fetcher/test/fixtures/ skutečné listiny v .html.gz — regresní korpus parseru
 data/sazby-extra6.json pevné částky Extra 6 (listina je nepublikuje)
 docs/data-source.md    výstup fáze 0
 ```
@@ -24,13 +25,25 @@ Ověřené příkazy (npm workspace, Node 24):
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 115 testů
+npm test             # vitest, 197 testů
 npm run typecheck    # tsc --build, strict
+
+npm run vyherka -- stav
+npm run vyherka -- stahni --od 2026-35 --do 2026-37 [--hra sportka]
+npm run vyherka -- preparsuj --out vysledky.json --sazby "$PWD/data/sazby-extra6.json"
 ```
+
+Pozor: přes npm workspace běží CLI s cwd ve `fetcher/`, takže **relativní cesty v argumentech
+míří tam**. Výchozí archiv je proti tomu odolný (odvozuje se od umístění zdrojáku), u vlastních
+cest použij absolutní.
 
 Jádro je čistá knihovna: bez UI, bez I/O, bez sítě, bez běhových závislostí. Hlídá to
 `packages/jadro/test/bezIO.test.ts` — když do `src/` přidáš import z `node:`, `fetch`,
 `document` nebo `@angular`, test spadne. To je záměr, ne překážka.
+
+Fetcher má dva oddělené režimy: `stahni` je **jediné místo v projektu, které chodí na síť**,
+`preparsuj` nesahá na síť vůbec. Když opravuješ parser, pracuj vždy proti archivu nebo fixturám —
+nikdy nestahuj znovu to, co už je stažené.
 
 ## Účel a hlavní omezení
 

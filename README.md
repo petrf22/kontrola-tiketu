@@ -52,12 +52,25 @@ neexistují.
 - **Vyhodnocovací jádro** — `packages/jadro`. Čistá knihovna bez UI, I/O a sítě. Umí
   Eurojackpot i Sportku včetně Šance, Extra 6 a Bonusu. Testy jedou proti reálným tahům
   z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher.
+- **Fetcher** — `fetcher`. CLI, které stáhne veřejné výherní listiny do lokálního archivu
+  a převede je na JSON pro aplikaci.
 
 ```bash
-npm install && npm test
+npm install
+npm test
+
+# stažení výsledků za období do archivu (jediné, co chodí na síť)
+npm run vyherka -- stahni --od 2026-35 --do 2026-37
+
+# převod archivu na JSON pro aplikaci (bez sítě)
+npm run vyherka -- preparsuj --out vysledky.json --sazby "$PWD/data/sazby-extra6.json"
 ```
 
-Následuje fetcher a poté OCR a aplikace. Zadání a postup jsou
+Fetcher stahuje jeden dotaz na hru a týden, posílá poctivý User-Agent, drží dvousekundovou
+prodlevu a respektuje `robots.txt` — právě kvůli němu se nepoužívá JSON API, které web sám
+používá. Co je jednou v archivu, se znovu nestahuje.
+
+Následuje OCR a mobilní aplikace. Zadání a postup jsou
 v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 
 ## Co projekt nedělá

@@ -2,10 +2,14 @@
   "name": "@kontrola-tiketu/ocr",
   "version": "0.0.0",
   "private": true,
-  "description": "Skládání rozpoznaného textu tiketu na sloupce. Bez UI, bez I/O, bez ML Kitu.",
+  "description": "Čtení papírového tiketu: skládání rozpoznaného textu na sloupce a čtení čárového kódu. Bez UI, bez I/O, bez ML Kitu.",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
-  "exports": { ".": "./src/index.ts" },
-  "dependencies": { "@kontrola-tiketu/jadro": "*" }
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@kontrola-tiketu/jadro": "*"
+  }
 }

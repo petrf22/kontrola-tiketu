@@ -9,14 +9,28 @@ je jen rychlá orientace; při rozporu platí zadání.
 
 ## Stav repozitáře
 
-Hotový je **zdroj dat**, **vyhodnocovací jádro** a **fetcher**. Aplikace zatím neexistuje.
+Hotový je **zdroj dat**, **vyhodnocovací jádro**, **fetcher**, **čtení tiketu** a **kostra
+aplikace se čtyřmi obrazovkami**.
+
+**Dvě věci ze zadání ale hotové nejsou a nesmí se na ně zapomenout:**
+
+1. **Nic se neukládá.** Aplikace používá `UlozisteVPameti` — po zavření je pryč všechno.
+   Zadání žádá SQLCipher s klíčem v Android Keystore. Rozhraní `Uloziste` na to čeká,
+   obrazovky se měnit nebudou. Do té doby je aplikace jen ukázka.
+2. **Kamera a OCR nejsou zapojené.** Logika je hotová a otestovaná v `packages/ocr`,
+   ale pluginy `@capacitor-mlkit/*` nainstalované nejsou a obrazovka skenu neexistuje.
+   Ověřit to půjde jen na zařízení.
 
 ```
-packages/jadro/src/    model.ts, validace.ts, koncoveCislice.ts,
+packages/jadro/src/    model.ts, validace.ts, koncoveCislice.ts, slucovani.ts,
                        eurojackpot.ts, sportka.ts, sance.ts, extra6.ts, vyhodnoceni.ts
+packages/ocr/src/      radky.ts (párování podle rámečků), cisla.ts, tiket.ts, carovyKod.ts
 fetcher/src/           zdroje/allwyn-vyherka.ts (parser), zdroje/html.ts,
                        archiv.ts, robots.ts, stahovani.ts, obdobi.ts, vystup.ts, cli.ts, bin.ts
 fetcher/test/fixtures/ skutečné listiny v .html.gz — regresní korpus parseru
+app/src/app/data/      import.ts, uloziste.ts, stav.ts, tokeny.ts
+app/src/app/obrazovky/ seznam.ts, novy-tiket.ts, detail.ts, import-vysledku.ts
+app/android/           nativní projekt, zatvrzený manifest
 data/sazby-extra6.json pevné částky Extra 6 (listina je nepublikuje)
 docs/data-source.md    výstup fáze 0
 ```
@@ -25,7 +39,7 @@ Ověřené příkazy (npm workspace, Node 24):
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 197 testů
+npm test             # vitest, 318 testů (jádro, ocr, fetcher i soukromí aplikace)
 npm run typecheck    # tsc --build, strict
 
 npm run vyherka -- stav
@@ -44,6 +58,24 @@ Jádro je čistá knihovna: bez UI, bez I/O, bez sítě, bez běhových závislo
 Fetcher má dva oddělené režimy: `stahni` je **jediné místo v projektu, které chodí na síť**,
 `preparsuj` nesahá na síť vůbec. Když opravuješ parser, pracuj vždy proti archivu nebo fixturám —
 nikdy nestahuj znovu to, co už je stažené.
+
+Aplikace (Angular 22 + Capacitor 8, balík `app`):
+
+```bash
+cd app && npx ng serve                    # vývoj v prohlížeči
+cd app && npx ng build                    # web do dist/
+export ANDROID_HOME=$HOME/Android/Sdk JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
+cd app && npx cap sync android
+cd app/android && ./gradlew :app:assembleDebug
+```
+
+Knihovny `jadro` a `ocr` vidí aplikace přes `paths` v `app/tsconfig.json` jako vlastní zdrojáky,
+takže není potřeba mezikrok se sestavením knihoven.
+
+**Nesahej na `app/android/app/src/main/AndroidManifest.xml` bez rozmyslu.** Odstranění INTERNET
+přes `tools:node="remove"`, `allowBackup="false"` a FLAG_SECURE v `MainActivity` jsou akceptační
+kritéria ze zadání. Hlídá je `app/test/soukromi.test.ts`, který navíc kontroluje sestavené APK
+přes `aapt2`, když existuje.
 
 ## Účel a hlavní omezení
 

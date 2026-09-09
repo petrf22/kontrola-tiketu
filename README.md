@@ -54,6 +54,11 @@ neexistují.
   z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher.
 - **Fetcher** — `fetcher`. CLI, které stáhne veřejné výherní listiny do lokálního archivu
   a převede je na JSON pro aplikaci.
+- **Čtení tiketu** — `packages/ocr`. Skládá rozpoznaný text na sloupce (páruje levou a pravou
+  část řádku podle rámečků, snese nakloněný snímek) a čte sériové číslo z čárového kódu.
+  Nezávisí na ML Kitu, takže jde otestovat bez zařízení.
+- **Aplikace** — `app`. Angular + Capacitor. Seznam tiketů, ruční zadání, import výsledků
+  a detail vyhodnocení. Android projekt je zatvrzený podle požadavků na soukromí.
 
 ```bash
 npm install
@@ -70,8 +75,17 @@ Fetcher stahuje jeden dotaz na hru a týden, posílá poctivý User-Agent, drž�
 prodlevu a respektuje `robots.txt` — právě kvůli němu se nepoužívá JSON API, které web sám
 používá. Co je jednou v archivu, se znovu nestahuje.
 
-Následuje OCR a mobilní aplikace. Zadání a postup jsou
-v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
+### Co ještě chybí
+
+Aby nevznikl mylný dojem, že je aplikace hotová:
+
+- **Nic se zatím neukládá.** Data drží jen v paměti a po zavření aplikace jsou pryč.
+  Šifrované úložiště (SQLCipher, klíč v Android Keystore) je další krok — dokud není,
+  je lepší o data přijít než je nechat nešifrovaná na disku.
+- **Kamera a OCR nejsou zapojené.** Logika je hotová a otestovaná, ale samotné rozpoznávání
+  na zařízení ještě chybí. Tikety se zatím zadávají ručně.
+
+Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 
 ## Co projekt nedělá
 

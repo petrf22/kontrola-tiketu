@@ -1,11 +1,20 @@
 import { InjectionToken } from '@angular/core';
+import { Capacitor } from '@capacitor/core';
+import { UlozisteSqlite } from './uloziste-sqlite.js';
 import { UlozisteVPameti, type Uloziste } from './uloziste.js';
 
 /**
- * Úložiště se vstřikuje, aby šlo vyměnit za šifrované, aniž by se sáhlo na obrazovky.
- * Výchozí je paměťové — nic nezapisuje na disk, dokud není hotové šifrované.
+ * Na zařízení šifrovaná databáze, v prohlížeči paměť.
+ *
+ * V prohlížeči se schválně nepoužívá žádné trvalé úložiště. IndexedDB ani localStorage
+ * nejsou šifrované a tikety do nich nepatří — vývoj v prohlížeči si vystačí s pamětí.
  */
 export const ULOZISTE = new InjectionToken<Uloziste>('uloziste', {
   providedIn: 'root',
-  factory: () => new UlozisteVPameti(),
+  factory: () => (Capacitor.isNativePlatform() ? new UlozisteSqlite() : new UlozisteVPameti()),
 });
+
+/** Běží aplikace na zařízení, kde se data opravdu uloží? */
+export function maTrvaleUloziste(): boolean {
+  return Capacitor.isNativePlatform();
+}

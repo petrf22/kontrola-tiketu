@@ -45,3 +45,12 @@ footer {
   font-size: 0.8rem;
   color: var(--barva-text-tlumeny);
 }
+
+.poplach {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.75rem;
+  border-left: 3px solid var(--barva-chyba);
+  background: var(--barva-plocha);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}

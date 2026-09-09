@@ -125,9 +125,23 @@ describe('sestavené APK', () => {
 
   const lzeOverit = existsSync(apk) && aapt2 !== undefined;
 
-  it.skipIf(!lzeOverit)('neobsahuje jedinou síťovou permission', () => {
+  /**
+   * Kontroluje se, že jediné oprávnění je kamera — ne jen že chybí ty síťové.
+   *
+   * Původní volnější verze tohohle testu prošla i ve chvíli, kdy si SQLite plugin přitáhl
+   * USE_BIOMETRIC a USE_FINGERPRINT. Zadání připouští jednu jedinou permission, tak ať to
+   * test hlídá doslova.
+   */
+  it.skipIf(!lzeOverit)('má jediné oprávnění, a tím je kamera', () => {
     const vypis = execFileSync(aapt2!, ['dump', 'permissions', apk], { encoding: 'utf8' });
-    expect(vypis).not.toMatch(/INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE/);
-    expect(vypis).toMatch(/android\.permission\.CAMERA/);
+
+    const balik = /package: (\S+)/.exec(vypis)?.[1] ?? '';
+    const pozadovana = [...vypis.matchAll(/uses-permission: name='([^']+)'/g)]
+      .map((m) => m[1]!)
+      // Capacitor si generuje vlastní podpisové oprávnění pro interní broadcast,
+      // není systémové a nic nezpřístupňuje ven.
+      .filter((p) => !p.startsWith(balik));
+
+    expect(pozadovana).toEqual(['android.permission.CAMERA']);
   });
 });

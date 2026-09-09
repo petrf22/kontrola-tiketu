@@ -14,7 +14,7 @@ import {
   type Tiket,
   type VysledekTiketu,
 } from '@kontrola-tiketu/jadro';
-import { ULOZISTE } from './tokeny.js';
+import { maTrvaleUloziste, ULOZISTE } from './tokeny.js';
 import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js';
 
 @Injectable({ providedIn: 'root' })
@@ -26,10 +26,26 @@ export class Stav {
   readonly sazby = signal<readonly SazbyExtra6[]>([]);
   readonly nacteno = signal(false);
 
+  /** Proč se úložiště nepodařilo otevřít. `null`, když je všechno v pořádku. */
+  readonly chybaUloziste = signal<string | null>(null);
+
+  /** Uloží se data doopravdy, nebo jen do paměti do zavření aplikace? */
+  readonly trvaleUloziste = maTrvaleUloziste();
+
   /** Do kdy má aplikace výsledky. Uživatel tak ví, jestli má smysl něco doimportovat. */
   readonly vysledkyDo = computed(() => this.tahy().at(-1)?.datum ?? null);
 
   async nacti(): Promise<void> {
+    try {
+      await this.uloziste.pripoj?.();
+    } catch (chyba) {
+      this.chybaUloziste.set(
+        `Nepodařilo se otevřít šifrovanou databázi: ${chyba instanceof Error ? chyba.message : String(chyba)}`,
+      );
+      this.nacteno.set(true);
+      return;
+    }
+
     const [tikety, tahy, sazby] = await Promise.all([
       this.uloziste.nactiTikety(),
       this.uloziste.nactiTahy(),

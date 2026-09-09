@@ -9,6 +9,14 @@
 import type { SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
 
 export interface Uloziste {
+  /**
+   * Otevře úložiště. Volá se jednou před vším ostatním.
+   *
+   * Když selže, aplikace se nesmí tvářit, že funguje — nešifrované náhradní úložiště by
+   * bylo horší než hlášená chyba.
+   */
+  pripoj?(): Promise<void>;
+
   nactiTikety(): Promise<Tiket[]>;
   ulozTiket(tiket: Tiket): Promise<void>;
   smazTiket(id: string): Promise<void>;

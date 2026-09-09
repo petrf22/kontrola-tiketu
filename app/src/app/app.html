@@ -11,6 +11,18 @@
   <a routerLink="/import" routerLinkActive="aktivni">Výsledky</a>
 </nav>
 
+@if (stav.chybaUloziste(); as chyba) {
+  <p class="poplach">
+    {{ chyba }}<br />
+    Dokud se to nespraví, aplikace nic neuloží. Nešifrované náhradní úložiště schválně nemá.
+  </p>
+} @else if (!stav.trvaleUloziste) {
+  <p class="poplach">
+    Běžíš v prohlížeči, kde se nic neukládá — po zavření stránky bude vše pryč.
+    Trvalé a šifrované úložiště funguje jen v aplikaci na telefonu.
+  </p>
+}
+
 <main>
   <router-outlet />
 </main>

@@ -7,7 +7,9 @@ import {
   prectiSerioveCisloZTextu,
 } from '../src/index.js';
 
-const SERIOVE_CISLO = '12396064434434021234';
+// Zjevně vymyšlené hodnoty. Test ověřuje tvar a chování, ne konkrétní čísla, takže
+// nemá smysl sem tahat nic, co by se dalo splést s údaji ze skutečného tiketu.
+const SERIOVE_CISLO = '12345678901234567890';
 const CISLO_KLUBOVE_KARTY = '9876543210';
 
 /**
@@ -100,7 +102,7 @@ describe('lokalniId', () => {
   });
 
   it('různé tikety mají různé id', () => {
-    const jiny = payload({ serioveCislo: '99996064434434021234' });
+    const jiny = payload({ serioveCislo: '99999999999999999999' });
     expect(lokalniId(prectiCarovyKod(payload()))).not.toBe(lokalniId(prectiCarovyKod(jiny)));
   });
 });

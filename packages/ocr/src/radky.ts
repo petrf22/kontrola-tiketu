@@ -55,8 +55,8 @@ export function odhadniSklon(utrzky: readonly RozpoznanyText[]): number {
   const stredy = utrzky.map((u) => stred(u.ramecek));
   const blizko = typickaVyska(utrzky) * 0.3;
 
-  let nejlepsiUhel = 0;
   let nejlepsiSkore = -1;
+  let nejlepsiUhly: number[] = [];
 
   for (let uhel = -MEZ_SKLONU; uhel <= MEZ_SKLONU; uhel += KROK_SKLONU) {
     const tangens = Math.tan((uhel * Math.PI) / 180);
@@ -69,14 +69,18 @@ export function odhadniSklon(utrzky: readonly RozpoznanyText[]): number {
       }
     }
 
-    // Při shodě vyhrává úhel bližší nule — nenakláněj snímek víc, než je nutné.
-    if (skore > nejlepsiSkore || (skore === nejlepsiSkore && Math.abs(uhel) < Math.abs(nejlepsiUhel))) {
+    if (skore > nejlepsiSkore) {
       nejlepsiSkore = skore;
-      nejlepsiUhel = uhel;
+      nejlepsiUhly = [uhel];
+    } else if (skore === nejlepsiSkore) {
+      nejlepsiUhly.push(uhel);
     }
   }
 
-  return nejlepsiUhel;
+  // Tolerance je schválně velkorysá, takže nejlepší skóre mívá celý pás úhlů. Správný sklon
+  // leží uprostřed toho pásu — kdyby se bral první nebo ten nejbližší nule, odhad by
+  // soustavně ujížděl k okraji.
+  return nejlepsiUhly.length === 0 ? 0 : median(nejlepsiUhly);
 }
 
 function typickaVyska(utrzky: readonly RozpoznanyText[]): number {

@@ -77,11 +77,17 @@ describe('nakloněný snímek', () => {
     ]);
   });
 
-  it('odhadne sklon ze vstupu s přesností na stupeň', () => {
-    for (const sklon of [-8, -3, 0, 3, 8]) {
+  it('odhadne sklon ze vstupu přesně', () => {
+    for (const sklon of [-12, -8, -3, -0.5, 0, 3, 8, 12]) {
       const odhad = odhadniSklon(tiketEJ(TIKET, { sklonStupnu: sklon }));
-      expect(Math.abs(odhad - sklon), `${sklon}°`).toBeLessThan(1);
+      expect(Math.abs(odhad - sklon), `${sklon}°`).toBeLessThanOrEqual(0.5);
     }
+  });
+
+  it('trefí střed pásu shodně skórujících úhlů, ne jeho okraj', () => {
+    // Tolerance je velkorysá, takže nejlepší skóre mívá celý pás úhlů. Kdyby se bral
+    // okraj, odhad by soustavně ujížděl — dřív takhle vycházelo 8° jako 7°.
+    expect(odhadniSklon(tiketEJ(TIKET, { sklonStupnu: 8 }))).toBe(8);
   });
 
   it('dá přednost úhlu, který uvedl rozpoznávač', () => {
@@ -109,4 +115,25 @@ describe('odolnost proti slévání řádků', () => {
     }));
     expect(slozRadky(schody, { sklonStupnu: 0 }).length).toBeGreaterThan(1);
   });
+});
+
+describe('celý tiket i s hlavičkou a oddělovači', () => {
+  const CELY = [
+    ['SLOSOVÁNÍ: 1 (ÚT)', '08.09.2026'],
+    ['------------------------------------------------'],
+    ['1: 23 30 33 37 47', '02 03 NT'],
+    ['2: 02 22 37 39 40', '02 12 NT'],
+    ['3: 04 06 07 12 33', '01 11 NT'],
+    ['------------------------------------------------'],
+  ];
+
+  for (const sklon of [-8, -4, 0, 4, 8]) {
+    it(`řádky různé šířky se nespletou při náklonu ${sklon}°`, () => {
+      const radky = slozRadky(tiketEJ(CELY, { sklonStupnu: sklon }));
+      expect(radky).toHaveLength(6);
+      expect(radky[0]?.text).toBe('SLOSOVÁNÍ: 1 (ÚT) 08.09.2026');
+      expect(radky[2]?.text).toBe('1: 23 30 33 37 47 02 03 NT');
+      expect(radky[4]?.text).toBe('3: 04 06 07 12 33 01 11 NT');
+    });
+  }
 });

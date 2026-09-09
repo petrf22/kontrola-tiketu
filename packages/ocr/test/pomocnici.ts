@@ -21,11 +21,12 @@ export function tiketEJ(
     const pozice = [40, 400];
     casti.forEach((text, j) => {
       const x = pozice[j] ?? 40 + j * 120;
-      const stredY = 100 + i * roztec + x * tangens;
-      utrzky.push({
-        text,
-        ramecek: { x, y: stredY - vyska / 2, sirka: text.length * 12, vyska },
-      });
+      const sirka = text.length * 12;
+      // Náklon se musí odvíjet od STŘEDU rámečku, ne od levého okraje. Skládání řádků
+      // pracuje se středy, takže jinak by si útržky různé šířky v jednom řádku neseděly
+      // a fixtura by testovala něco, co na papíře nenastane.
+      const stredY = 100 + i * roztec + (x + sirka / 2) * tangens;
+      utrzky.push({ text, ramecek: { x, y: stredY - vyska / 2, sirka, vyska } });
     });
   });
 

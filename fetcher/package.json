@@ -1,0 +1,11 @@
+{
+  "name": "@kontrola-tiketu/fetcher",
+  "version": "0.0.0",
+  "private": true,
+  "description": "CLI: stahuje veřejné výherní listiny Allwyn a převádí je na JSON pro aplikaci.",
+  "type": "module",
+  "bin": { "vyherka": "./src/cli.ts" },
+  "dependencies": {
+    "@kontrola-tiketu/jadro": "*"
+  }
+}

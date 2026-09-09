@@ -5,7 +5,8 @@
   "description": "Offline kontrola papírových tiketů Allwyn (Eurojackpot, Sportka)",
   "license": "UNLICENSED",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "fetcher"
   ],
   "scripts": {
     "test": "vitest run",

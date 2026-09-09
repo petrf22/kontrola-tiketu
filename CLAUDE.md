@@ -12,10 +12,31 @@ je jen rychlá orientace; při rozporu platí zadání.
 Hotový je **zdroj dat**, **vyhodnocovací jádro**, **fetcher**, **čtení tiketu** a **kostra
 aplikace se čtyřmi obrazovkami**.
 
-**Co je ověřené na skutečném telefonu** (Xiaomi 14T Pro, Android 16, 9. 9. 2026): instalace
-release buildu s R8, jediné oprávnění `CAMERA`, otevření šifrované databáze
-(`Database keying operation returned:0`) a sken čárového kódu. Neověřené zůstává focení
-tiketu, import a vyhodnocení na zařízení.
+**Ověřené na skutečném telefonu** (Xiaomi 14T Pro, Android 16, 9. 9. 2026):
+
+- instalace release buildu s R8, jediné oprávnění `CAMERA`,
+- otevření šifrované databáze (`Database keying operation returned:0`),
+- sken čárového kódu — **sériové číslo sedí na vytištěné na tiketu**,
+- čtení `Extra 6` z fotky.
+
+**Zatím neověřené:** čtení čárového kódu z fotky celého tiketu (na ní je kód menší než při
+skenu nablízko), import výsledků a vyhodnocení na zařízení.
+
+Snímání je sjednocené: **jedna fotka dá čísla, `Extra 6` i sériové číslo z kódu**
+(`readBarcodesFromImage` vrací tentýž typ `Barcode` včetně `bytes`). Obrazovka „Jen kód“
+zůstává pro případ, že fotka kód nezachytí nebo uživatel nechce pořizovat snímek vůbec.
+
+Podoba doplňkové hry na tiketu Eurojackpotu: `Extra 6: 845991`. Podoba Šance u Sportky
+ověřená není — vzor je proto volnější.
+
+**Instalace přes `adb install` na Xiaomi** projde jen u ladicího buildu; release blokuje
+HyperOS (`INSTALL_FAILED_USER_RESTRICTED`) a je nutné ho otevřít ve správci souborů. Play
+Protect navíc u velkých APK vypršel — proto jsou APK rozdělené podle architektur
+(arm64-v8a ~25 MB).
+
+**Ladicí build přeposílá konzoli do logcatu**, a plugin čtečky si tam loguje celý obsah
+načteného kódu včetně čísla klubové karty. V release buildu je to vypnuté. Na ostrý provoz
+používej release.
 
 **Věci, na které se nesmí zapomenout:**
 

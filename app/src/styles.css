@@ -1,1 +1,37 @@
-/* You can add global styles to this file, and also import other style files */
+/*
+  Barvy jsou definované pro světlý i tmavý režim. Tiket se kontroluje často večer doma,
+  takže tmavý režim není ozdoba.
+*/
+:root {
+  color-scheme: light dark;
+  --barva-pozadi: #fbfbfa;
+  --barva-plocha: #f1f0ee;
+  --barva-ram: #d9d7d2;
+  --barva-text: #1b1a18;
+  --barva-text-tlumeny: #6b6862;
+  --barva-duraz: #8a5a2b;
+  --barva-ok: #3f7a4a;
+  --barva-chyba: #a33a2c;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --barva-pozadi: #181715;
+    --barva-plocha: #232220;
+    --barva-ram: #3a3835;
+    --barva-text: #eceae6;
+    --barva-text-tlumeny: #9a958c;
+    --barva-duraz: #c98f4f;
+    --barva-ok: #7fb389;
+    --barva-chyba: #e0796a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--barva-pozadi);
+  color: var(--barva-text);
+  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}

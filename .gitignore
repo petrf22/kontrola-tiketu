@@ -1,34 +1,43 @@
-# Gradle files
-.gradle/
-build/
-
-# Local configuration file (sdk path, etc)
-local.properties
-
-# Log/OS Files
+# Node / npm
+node_modules/
+npm-debug.log*
 *.log
 
-# Android Studio generated files and folders
-captures/
-.externalNativeBuild/
-.cxx/
-*.aab
+# Build výstupy
+dist/
+www/
+.angular/
+coverage/
+
+# Archiv stažených výherních listin.
+# POZOR: není to smetí. Je to trvalý archiv surového HTML, ze kterého se dá kdykoliv
+# přeparsovat bez dotazu na síť — pojistka pro případ, že Allwyn adresu změní nebo
+# stránky zavře. Do gitu se nedává jen kvůli velikosti (~114 MB), ale patří do domácí
+# zálohy. Verzovaný v gitu je až vyparsovaný data/vysledky.json.
+# Podrobnosti: docs/data-source.md, sekce „Odolnost zdroje".
+fetcher/.cache/
+
+# Lokální konfigurace
+.env
+.env.*
+*.local
+
+# Android / Capacitor
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
 *.apk
-output-metadata.json
+*.aab
+*.hprof
 
-# IntelliJ
-*.iml
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-render.experimental.xml
-
-# Keystore files
+# Podpisové klíče — nikdy do repozitáře
 *.jks
 *.keystore
 
-# Google Services (e.g. APIs or Firebase)
-google-services.json
-
-# Android Profiling
-*.hprof
+# Editory a OS
+.idea/
+.vscode/
+*.iml
+.DS_Store

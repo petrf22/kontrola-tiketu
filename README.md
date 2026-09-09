@@ -21,9 +21,10 @@ proti němu.
 
 Dvě oddělené komponenty, které spolu nekomunikují po síti:
 
-1. **Fetcher výsledků** — CLI nástroj na desktopu. Stáhne výsledky losování a tabulky výher
-   hromadně za zadané období, bez ohledu na to, jaké tikety držíte. Výstupem je JSON soubor.
-   Server se tak dozví jen to, že si někdo zobrazil veřejné výsledky.
+1. **Fetcher výsledků** — CLI nástroj na desktopu. Čte veřejnou výherní listinu Allwyn
+   a stáhne výsledky losování i tabulky výher hromadně za zadané období, bez ohledu na to, jaké
+   tikety držíte. Výstupem je JSON soubor. Server se tak dozví jen to, že si někdo zobrazil
+   veřejné výsledky — jeden dotaz na hru a týden, stejný pro kohokoliv.
 
 2. **Mobilní aplikace** — Angular + Capacitor, **bez oprávnění k síti**. JSON s výsledky se
    načte importem souboru, čísla z tiketu se rozpoznají OCR přímo na zařízení a vyhodnocení
@@ -43,8 +44,14 @@ Absence síťového oprávnění v manifestu je ověřitelná záruka, že aplik
 
 ## Stav
 
-Projekt je na začátku — probíhá průzkum zdroje dat, kód zatím neexistuje.
-Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
+**Fáze 0 (průzkum zdroje dat) je uzavřená**, kód zatím neexistuje.
+
+Zjištění jsou v [`docs/data-source.md`](docs/data-source.md): výsledky se čtou z veřejné
+výherní listiny na `allwyn.cz`, jeden dotaz pokryje celý týden a archiv sahá do roku 1994.
+JSON API, které používá jejich web, se nepoužije — je zakázané v `robots.txt`.
+
+Následuje fáze 1 — datový model a vyhodnocovací jádro. Zadání a postup jsou
+v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 
 ## Co projekt nedělá
 

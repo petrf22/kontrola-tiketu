@@ -1,5 +1,17 @@
 apply plugin: 'com.android.application'
 
+// --- Podepisování release buildu (docs/vydani.md, "Podpisový klíč") -------------------------
+// Hesla se berou z Gradle properties (~/.gradle/gradle.properties, nebo -P na příkazové řádce),
+// nikdy natvrdo z repozitáře. Když kterákoli hodnota chybí, signingConfig se vůbec nezaloží
+// a release build spadne zpátky na ladicí klíč, místo aby selhal — sestavit release APK s R8
+// a ověřit ho musí jít i na stroji, kde klíč není. Tvrdá varianta, která bez klíče selže, jsou
+// tasky publishableBundle/publishableApk níž; ty se pouštějí, když artefakt jde ven.
+def releaseStoreFile = findProperty('KONTROLA_TIKETU_STORE_FILE')
+def releaseStorePassword = findProperty('KONTROLA_TIKETU_STORE_PASSWORD')
+def releaseKeyAlias = findProperty('KONTROLA_TIKETU_KEY_ALIAS')
+def releaseKeyPassword = findProperty('KONTROLA_TIKETU_KEY_PASSWORD')
+def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
+
 android {
     namespace = "cz.petrf22.kontrolatiketu"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -17,9 +29,22 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        if (hasReleaseSigning) {
+            release {
+                storeFile file(releaseStoreFile)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
+    }
+
     // Nativní knihovny (SQLCipher, ML Kit) tvoří většinu velikosti a každá architektura
     // je v balíku zvlášť. Rozdělením vznikne APK pro každou zvlášť, takže se do telefonu
     // dostane jen ta jeho. Play Bundle dělá totéž; tohle je jeho obdoba pro sideload.
+    // Na bundleRelease se rozdělení nevztahuje — AAB si splity řeší sám a tohle nastavení
+    // ignoruje. Play tedy dostane AAB, telefon mimo Play arm64 APK.
     splits {
         abi {
             enable true
@@ -36,9 +61,13 @@ android {
             // až u uživatele.
             minifyEnabled true
             shrinkResources true
-            // Na ověření R8 stačí ladicí klíč. Vlastní keystore má smysl generovat až
-            // s distribucí přes Play; je to trvalý artefakt, který je nutné zálohovat.
-            signingConfig signingConfigs.debug
+            // Vlastní klíč, když je k dispozici, jinak ladicí — na ověření R8 stačí.
+            // Zpátky na ladicí klíč se smí spadnout jen tady; publishableBundle to nedovolí.
+            signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
+            // Záměrně tu NENÍ `ndk { debugSymbolLevel }`, které má předloha. Nahrání
+            // ladicích symbolů zapíná v Play Console čitelné nativní pády, a to je přesně
+            // ten druh dat o uživateli, který zadání zakazuje ("žádné analytics, crash
+            // reporting ani telemetrie, ani v dev buildu"). Viz docs/vydani.md.
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -71,4 +100,134 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// --- Publikace: podepsaný a OVĚŘENÝ artefakt (docs/vydani.md, "Podpisový klíč") -------------
+// Na rozdíl od bundleRelease/assembleRelease, které musí projít i bez klíče (viz komentář
+// u hasReleaseSigning nahoře), publishableBundle/publishableApk bez klíče SELŽOU — a to dřív,
+// než se spustí zdlouhavý R8 build, ne až po něm.
+
+/** Spustí externí nástroj a vrátí návratový kód spolu s celým výpisem. */
+def spustNastroj(List<String> prikaz) {
+    def proces = new ProcessBuilder(prikaz).redirectErrorStream(true).start()
+    def vypis = proces.inputStream.getText('UTF-8')
+    proces.waitFor()
+    return [kod: proces.exitValue(), vypis: vypis]
+}
+
+/** Kořen Android SDK: nejdřív sdk.dir z local.properties, pak proměnné prostředí. */
+def androidSdkDir() {
+    def vlastnosti = new Properties()
+    def local = rootProject.file('local.properties')
+    if (local.exists()) {
+        local.withInputStream { vlastnosti.load(it) }
+    }
+    def adresar = vlastnosti.getProperty('sdk.dir') ?: System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT')
+    if (!adresar) {
+        throw new GradleException(
+            'Nenašel jsem Android SDK — chybí sdk.dir v app/android/local.properties i ANDROID_HOME.')
+    }
+    return new File(adresar)
+}
+
+/** apksigner z nejnovějších nainstalovaných build-tools. */
+def apksignerPath() {
+    def buildTools = new File(androidSdkDir(), 'build-tools')
+    def nejnovejsi = buildTools.listFiles()?.findAll { it.directory }?.sort { it.name }?.reverse()
+    def nalezeny = nejnovejsi?.collect { new File(it, 'apksigner') }?.find { it.isFile() }
+    if (!nalezeny) {
+        throw new GradleException("apksigner nenalezen v ${buildTools} — doinstaluj build-tools.")
+    }
+    return nalezeny
+}
+
+/** jarsigner z JDK, kterým běží Gradle. */
+def jarsignerPath() {
+    def java = System.getenv('JAVA_HOME') ?: System.getProperty('java.home')
+    def nalezeny = new File(java, 'bin/jarsigner')
+    if (!nalezeny.isFile()) {
+        throw new GradleException("jarsigner nenalezen v ${nalezeny} — zkontroluj JAVA_HOME.")
+    }
+    return nalezeny
+}
+
+tasks.register('checkReleaseSigning') {
+    group = 'publishing'
+    description = 'Ověří, že jsou k dispozici všechny KONTROLA_TIKETU_* podpisové property a keystore existuje.'
+    def chybejici = [
+        'KONTROLA_TIKETU_STORE_FILE': releaseStoreFile,
+        'KONTROLA_TIKETU_STORE_PASSWORD': releaseStorePassword,
+        'KONTROLA_TIKETU_KEY_ALIAS': releaseKeyAlias,
+        'KONTROLA_TIKETU_KEY_PASSWORD': releaseKeyPassword,
+    ].findAll { !it.value }.keySet()
+    def keystore = releaseStoreFile ? file(releaseStoreFile) : null
+    doLast {
+        if (!chybejici.isEmpty()) {
+            throw new GradleException(
+                "Chybí podpisové property: ${chybejici.join(', ')} — viz docs/vydani.md, \"Podpisový klíč\".")
+        }
+        if (!keystore.isFile()) {
+            throw new GradleException("KONTROLA_TIKETU_STORE_FILE ('${keystore}') neukazuje na existující soubor.")
+        }
+        logger.lifecycle("Podpisový klíč k dispozici: ${keystore}")
+    }
+    // Vždycky znovu vyhodnotit — je to levná kontrola a "up-to-date" by tu skrylo zaniklý klíč.
+    outputs.upToDateWhen { false }
+}
+
+tasks.register('verifyBundleSignature') {
+    group = 'publishing'
+    description = 'Ověří podpis sestaveného AAB.'
+    dependsOn 'bundleRelease'
+    doLast {
+        def aab = layout.buildDirectory.file('outputs/bundle/release/app-release.aab').get().asFile
+        if (!aab.isFile()) {
+            throw new GradleException("Nenašel jsem ${aab} — bundleRelease nic nevyrobil?")
+        }
+        // Bez -strict: klíč je self-signed, přísný režim by hlásil chainNotValidated.
+        def vysledek = spustNastroj([jarsignerPath().toString(), '-verify', '-verbose:summary', '-certs', aab.toString()])
+        if (vysledek.kod != 0 || !vysledek.vypis.contains('jar verified')) {
+            throw new GradleException("${aab.name} není platně podepsaný:\n${vysledek.vypis}")
+        }
+        logger.lifecycle("Podpis ověřen: ${aab.name} (${(aab.length() / 1024 / 1024).round(1)} MB)")
+    }
+}
+
+tasks.register('verifyApkSignature') {
+    group = 'publishing'
+    description = 'Ověří podpis všech sestavených release APK.'
+    dependsOn 'assembleRelease'
+    doLast {
+        def adresar = layout.buildDirectory.dir('outputs/apk/release').get().asFile
+        def apky = adresar.listFiles()?.findAll { it.name.endsWith('.apk') }?.sort { it.name }
+        if (!apky) {
+            throw new GradleException("V ${adresar} není žádné APK — assembleRelease nic nevyrobil?")
+        }
+        def apksigner = apksignerPath().toString()
+        apky.each { apk ->
+            def vysledek = spustNastroj([apksigner, 'verify', '--print-certs', apk.toString()])
+            if (vysledek.kod != 0) {
+                throw new GradleException("${apk.name} není platně podepsané:\n${vysledek.vypis}")
+            }
+            logger.lifecycle("Podpis ověřen: ${apk.name} (${(apk.length() / 1024 / 1024).round(1)} MB)")
+        }
+    }
+}
+
+tasks.register('publishableBundle') {
+    group = 'publishing'
+    description = 'Podepsaný a ověřený AAB pro Google Play — na rozdíl od bundleRelease bez klíče selže.'
+    dependsOn 'checkReleaseSigning', 'bundleRelease', 'verifyBundleSignature'
+}
+
+tasks.register('publishableApk') {
+    group = 'publishing'
+    description = 'Podepsaná a ověřená APK pro sideload — na rozdíl od assembleRelease bez klíče selžou.'
+    dependsOn 'checkReleaseSigning', 'assembleRelease', 'verifyApkSignature'
+}
+
+// Kontrola klíče musí doběhnout PŘED zdlouhavým R8 buildem, ne až po něm.
+afterEvaluate {
+    tasks.named('bundleRelease') { mustRunAfter 'checkReleaseSigning' }
+    tasks.named('assembleRelease') { mustRunAfter 'checkReleaseSigning' }
 }

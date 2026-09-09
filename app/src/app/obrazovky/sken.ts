@@ -5,7 +5,7 @@ import {
   BarcodeScanner,
   type Barcode,
 } from '@capacitor-mlkit/barcode-scanning';
-import { prectiSerioveCisloZTextu } from '@kontrola-tiketu/ocr';
+import { ChybaCarovehoKodu, prectiCarovyKod } from '@kontrola-tiketu/ocr';
 import { NaskenovanyTiket } from '../data/sken.js';
 import { maTrvaleUloziste } from '../data/tokeny.js';
 
@@ -93,12 +93,24 @@ export class Sken {
   }
 
   private async zpracuj(kod: Barcode, odeberPosluchac: () => Promise<void>): Promise<void> {
-    const serioveCislo =
-      kod.rawValue === undefined ? null : prectiSerioveCisloZTextu(kod.rawValue);
+    // Čtečka vrací rawValue jako undefined, protože payload tiketu není platný text.
+    // Bajty ale dodá, a ty jsou přesně to, co je potřeba — struktura pak sedí na offsety
+    // ze zadání. Přicházejí jako znaménkové Java bajty, proto maskování na 0–255.
+    const bajty = kod.bytes;
+    if (bajty === undefined || bajty.length === 0) {
+      this.chyba.set('Kód se přečetl, ale bez dat. Zkus lepší záběr.');
+      return;
+    }
 
-    if (serioveCislo === null) {
-      // Nekončíme sken — uživatel může zkusit lepší záběr.
-      this.chyba.set('Tohle nevypadá na tiket Allwyn. Zkus lepší záběr, nebo zadej tiket ručně.');
+    let serioveCislo: string | null = null;
+    try {
+      serioveCislo = prectiCarovyKod(Uint8Array.from(bajty, (b) => b & 0xff)).serioveCislo;
+    } catch (potiz) {
+      this.chyba.set(
+        potiz instanceof ChybaCarovehoKodu
+          ? `Kód se přečetl, ale nevypadá jako tiket Allwyn: ${potiz.message}`
+          : String(potiz),
+      );
       return;
     }
 

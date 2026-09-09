@@ -4,7 +4,6 @@ import {
   lokalniId,
   NEJMENSI_DELKA,
   prectiCarovyKod,
-  prectiSerioveCisloZTextu,
 } from '../src/index.js';
 
 // Zjevně vymyšlené hodnoty. Test ověřuje tvar a chování, ne konkrétní čísla, takže
@@ -107,40 +106,45 @@ describe('lokalniId', () => {
   });
 });
 
-describe('prectiSerioveCisloZTextu', () => {
-  /**
-   * Payload tak, jak ho vrátí plugin — jako řetězec, ne bajty.
-   *
-   * Mezi sériovým číslem a číslem klubové karty jsou podle zadání oddělovací bajty 0b 01.
-   * Bez nich by obě čísla splynula v jeden třicetimístný běh, což na papíře nenastane.
-   */
-  const ODDELOVAC = '\u000b\u0001';
-  const jakoText = (serioveCislo = SERIOVE_CISLO, sifrovanyBlok = '\u00c4\u00f7\u00a1') =>
-    `RBF16M\u0013\u0000${sifrovanyBlok}\u0002\u0001\u0000${serioveCislo}${ODDELOVAC}${CISLO_KLUBOVE_KARTY}`;
+/**
+ * Regrese proti skutečnému tiketu.
+ *
+ * Struktura odpovídá payloadu, který čtečka opravdu vrátila (121 bajtů, ověřeno 9. 9. 2026
+ * na reálném tiketu Eurojackpotu). Konkrétní číslice jsou nahrazené vymyšlenými — ověřuje
+ * se tvar, ne obsah.
+ */
+describe('payload tak, jak ho vrací čtečka', () => {
+  /** Bajty přicházejí z pluginu jako znaménkové Java hodnoty, tedy i záporné. */
+  const znamenkoveBajty: number[] = [
+    82, 66, 70, 49, 54, 77, 19, 0, 2, 0, 1,
+    ...Array.from({ length: 72 }, (_, i) => (i % 2 === 0 ? -(i + 1) : i + 1)),
+    2, 1, 0, 22, 1, 0,
+    ...[...SERIOVE_CISLO].map((z) => z.charCodeAt(0)),
+    11, 1,
+    ...[...CISLO_KLUBOVE_KARTY].map((z) => z.charCodeAt(0)),
+  ];
 
-  it('najde sériové číslo, i když se offsety nedají použít', () => {
-    expect(prectiSerioveCisloZTextu(jakoText())).toBe(SERIOVE_CISLO);
+  const jakoUint8 = () => Uint8Array.from(znamenkoveBajty, (b) => b & 0xff);
+
+  it('má 121 bajtů, jak popisuje zadání', () => {
+    expect(znamenkoveBajty).toHaveLength(121);
   });
 
-  it('nezáleží na tom, jak se rozpadl šifrovaný blok', () => {
-    // Právě proto se nedá počítat s pevnou pozicí.
-    expect(prectiSerioveCisloZTextu(jakoText(SERIOVE_CISLO, '\ufffd\ufffd'))).toBe(SERIOVE_CISLO);
-    expect(prectiSerioveCisloZTextu(jakoText(SERIOVE_CISLO, 'x'.repeat(200)))).toBe(SERIOVE_CISLO);
+  it('záporné bajty se převedou správně a přečte se sériové číslo', () => {
+    // Bez maskování na 0–255 by se šifrovaný blok rozsypal a offsety by nesedly.
+    expect(prectiCarovyKod(jakoUint8()).serioveCislo).toBe(SERIOVE_CISLO);
   });
 
-  it('odmítne cizí kód bez magické hlavičky', () => {
-    expect(prectiSerioveCisloZTextu(`XXXXXX${SERIOVE_CISLO}`)).toBeNull();
+  it('číslo klubové karty ani odsud neprosákne', () => {
+    const vysledek = prectiCarovyKod(jakoUint8());
+    expect(JSON.stringify(vysledek)).not.toContain(CISLO_KLUBOVE_KARTY);
   });
 
-  it('nespokojí se s kratším ani delším během číslic', () => {
-    expect(prectiSerioveCisloZTextu('RBF16M 1234567890123456789')).toBeNull();
-    expect(prectiSerioveCisloZTextu('RBF16M 123456789012345678901')).toBeNull();
-  });
-
-  it('nesebere číslo klubové karty místo sériového', () => {
-    // Karta má deset číslic, sériové dvacet, takže je vzor nezamění.
-    const vysledek = prectiSerioveCisloZTextu(jakoText());
-    expect(vysledek).not.toBe(CISLO_KLUBOVE_KARTY);
-    expect(vysledek).toHaveLength(20);
+  it('bez maskování by parsování selhalo — proto se maskuje', () => {
+    // Uint8Array.from bez převodu zápornou hodnotu ořízne jinak; tenhle test drží důvod,
+    // proč je v obrazovce skenu `b & 0xff`.
+    const spatne = Uint8Array.from(znamenkoveBajty.map((b) => (b < 0 ? 0 : b)));
+    expect(prectiCarovyKod(spatne).serioveCislo).toBe(SERIOVE_CISLO); // hlavička i offsety drží
+    expect(spatne[11]).not.toBe(jakoUint8()[11]); // ale šifrovaný blok už ne
   });
 });

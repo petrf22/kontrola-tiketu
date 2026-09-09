@@ -64,26 +64,38 @@ otázka několika řádků.
 
 ---
 
-## Blokátor: čtečka kódů nevrací syrové bajty
+## Vyřešeno: čtečka syrové bajty vrací
 
-`@capacitor-mlkit/barcode-scanning` vrací v `Barcode` jen `rawValue: string`, ne `rawBytes`.
-Payload tiketu je přitom binární — 72 bajtů šifrovaného bloku s vysokou entropií.
+**Původně jsem tvrdil, že `@capacitor-mlkit/barcode-scanning` vrací jen `rawValue: string`,
+a postavil na tom obcházení, které sériové číslo hledalo vzorem místo na pevném offsetu.
+Byl to omyl** — vznikl z neúplného hledání v typech pluginu (`rawBytes` místo `bytes`).
 
-Důsledek: **na offsety popsané v zadání se nedá spolehnout.** Při převodu bajtů na řetězec
-se blok může rozpadnout na jiný počet znaků a sériové číslo pak neleží na offsetu 89.
+Skutečnost, ověřená 9. 9. 2026 na reálném tiketu Eurojackpotu:
 
-Řešení v `prectiSerioveCisloZTextu`: sériové číslo se hledá **vzorem** — právě dvacet číslic
-za magickou hlavičkou `RBF16M`, ohraničených nečíslicemi. Číslo klubové karty má deset číslic,
-takže se nezamění.
+| pole | co obsahuje |
+|---|---|
+| `rawValue` | **`undefined`** — payload není platný text, ML Kit ho jako řetězec nevrátí |
+| `bytes` | **celý payload**, `number[]` se znaménkovými Java bajty |
+| `format` | `PDF_417` |
 
-> **Neověřeno na reálném tiketu.** Dokud se sken nevyzkouší, ber výsledek jako návrh.
-> Obrazovka skenu proto sériové číslo jen předává do formuláře, kde ho jde zkontrolovat
-> proti tomu, co je vytištěné na papíře.
+Bajty na strukturu ze zadání sedí **přesně**:
 
-Funkce `prectiCarovyKod` pracující s bajty zůstává — je přesnější a použije se, kdyby se
-objevil plugin, který bajty vrací.
+```
+délka          121 bajtů        ← zadání uvádí 121
+offset   0     "RBF16M"
+offset   6     13 00 02 00 01
+offset  11     72 bajtů šifrovaného bloku
+offset  83     02 01 00 16 01 00
+offset  89     20 číslic ASCII  ← sériové číslo
+offset 109     0b 01
+offset 111     10 číslic ASCII  ← číslo klubové karty, zahazuje se
+```
 
----
+Používá se tedy `prectiCarovyKod`, který pracuje s bajty a offsety podle zadání. Obcházení
+vzorem bylo odstraněno — dead code postavený na špatném předpokladu je horší než žádný.
+
+**Pozor na jednu věc:** bajty přicházejí jako **znaménkové** Java hodnoty, takže se musí
+maskovat (`b & 0xff`). Bez toho se šifrovaný blok rozsype a offsety přestanou sedět.
 
 ## Co je při skenu dodržené
 

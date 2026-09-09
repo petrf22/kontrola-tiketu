@@ -164,13 +164,24 @@ describe('snímek tiketu se neukládá natrvalo', () => {
  * sestavené není, test se přeskočí — nechceme nutit build při každém běhu testů.
  */
 describe('sestavené APK', () => {
-  const apk = join(KOREN, 'android/app/build/outputs/apk/debug/app-debug.apk');
+  // Po rozdělení podle architektur vzniká víc APK; ověří se to, které je po ruce.
+  // Sáhne se i po release, protože právě ten se instaluje na telefon.
+  const apk = ['release', 'debug']
+    .flatMap((varianta) => {
+      const adresar = join(KOREN, `android/app/build/outputs/apk/${varianta}`);
+      return existsSync(adresar)
+        ? readdirSync(adresar)
+            .filter((j) => j.endsWith('.apk'))
+            .map((j) => join(adresar, j))
+        : [];
+    })
+    .find(existsSync) ?? '';
   const buildTools = join(homedir(), 'Android/Sdk/build-tools');
   const aapt2 = existsSync(buildTools)
     ? readdirSync(buildTools).sort().reverse().map((v) => join(buildTools, v, 'aapt2')).find(existsSync)
     : undefined;
 
-  const lzeOverit = existsSync(apk) && aapt2 !== undefined;
+  const lzeOverit = apk !== '' && existsSync(apk) && aapt2 !== undefined;
 
   /**
    * Kontroluje se, že jediné oprávnění je kamera — ne jen že chybí ty síťové.

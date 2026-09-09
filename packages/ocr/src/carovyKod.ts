@@ -83,24 +83,3 @@ export function prectiCarovyKod(payload: Uint8Array): PrectenyKod {
 export function lokalniId(kod: PrectenyKod): string {
   return kod.serioveCislo;
 }
-
-/**
- * Přečte sériové číslo z textové podoby payloadu.
- *
- * Proč to nestačí číst přes offsety: dostupný plugin čtečky vrací jen `rawValue` jako
- * řetězec, ne syrové bajty. Šifrovaný blok má vysokou entropii, takže se při převodu na
- * text může rozpadnout na jiný počet znaků a offsety přestanou sedět. Sériové číslo se
- * proto hledá vzorem — dvacet číslic za magickou hlavičkou.
- *
- * !!! Neověřeno na reálném tiketu. Dokud se to nepotvrdí naskenováním, ber výsledek jako
- * návrh a nech uživatele sériové číslo potvrdit proti tomu, co má vytištěné na papíře.
- */
-export function prectiSerioveCisloZTextu(rawValue: string): string | null {
-  const zacatek = rawValue.indexOf(MAGIC);
-  if (zacatek === -1) return null;
-
-  // Za hlavičkou a šifrovaným blokem; hledá se právě dvacetimístný běh číslic, ne delší.
-  const zbytek = rawValue.slice(zacatek + MAGIC.length);
-  const nalez = /(?<!\d)(\d{20})(?!\d)/.exec(zbytek);
-  return nalez?.[1] ?? null;
-}

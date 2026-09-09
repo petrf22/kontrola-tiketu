@@ -75,9 +75,15 @@ describe('nactiVysledky — vadný soubor', () => {
     expect(duvod(soubor({ tahy: [{ hra: 'keno', datum: '2026-09-01' }] }))).toMatch(/neznámou hru/);
   });
 
-  it('pozná tah bez tabulky výher — bez ní se nedá spočítat výhra', () => {
+  it('pozná tah, kterému pole s tabulkou výher úplně chybí', () => {
+    const { poradi, ...bezPole } = EJ_2026_09_01;
+    expect(duvod(soubor({ tahy: [bezPole] }))).toMatch(/tabulku výher/);
+  });
+
+  it('prázdnou tabulku přijme — u starších tahů ji Allwyn nezveřejnil', () => {
+    // Vyhodnocení pak řekne „pořadí znám, částku ne“ místo aby tah zmizel.
     const bezTabulky = { ...EJ_2026_09_01, poradi: [] };
-    expect(duvod(soubor({ tahy: [bezTabulky] }))).toMatch(/tabulku výher/);
+    expect(nactiVysledky(soubor({ tahy: [bezTabulky] })).stav).toBe('ok');
   });
 
   it('pozná Sportku bez dvojice tahů', () => {

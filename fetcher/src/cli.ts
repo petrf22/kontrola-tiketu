@@ -171,6 +171,7 @@ async function preparsuj(a: Argumenty): Promise<void> {
 
   const tahy: Tah[] = [];
   let prazdnych = 0;
+  const nepovedene: string[] = [];
 
   for (const zaznam of zaznamy) {
     const html = await nactiZArchivu(a.archiv, zaznam);
@@ -179,7 +180,21 @@ async function preparsuj(a: Argumenty): Promise<void> {
       prazdnych += 1;
       continue;
     }
-    tahy.push(...parsujListinu(html));
+    try {
+      tahy.push(...parsujListinu(html));
+    } catch (chyba) {
+      // Jedna vadná listina nesmí shodit celý běh. Nad archivem o tisících položek
+      // by to znamenalo, že se kvůli jednomu týdnu nedostaneš k ničemu.
+      nepovedene.push(
+        `${zaznam.hra} ${formatujTyden(zaznam)}: ${chyba instanceof Error ? chyba.message : String(chyba)}`,
+      );
+    }
+  }
+
+  if (nepovedene.length > 0) {
+    console.error(`Nepodařilo se přečíst ${nepovedene.length} listin:`);
+    for (const radek of nepovedene.slice(0, 10)) console.error(`  ${radek}`);
+    if (nepovedene.length > 10) console.error(`  … a dalších ${nepovedene.length - 10}`);
   }
 
   const obdobi =

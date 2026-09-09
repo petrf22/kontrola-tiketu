@@ -51,7 +51,10 @@ function zkontrolujTah(tah: unknown, poradi: number): string | null {
     if (!Array.isArray(tah['cisla']) || !Array.isArray(tah['eurocisla'])) {
       return `${kde} (${tah['datum']}) nemá vylosovaná čísla.`;
     }
-    if (!Array.isArray(tah['poradi']) || tah['poradi'].length === 0) {
+    // Prázdná tabulka je legitimní: u některých starších tahů Allwyn výsledky nezveřejnil.
+    // Jádro pak řekne „tohle pořadí jsi trefil, ale částku neznám“. Chybějící pole ale
+    // znamená cizí nebo poškozený soubor.
+    if (!Array.isArray(tah['poradi'])) {
       return `${kde} (${tah['datum']}) nemá tabulku výher. Bez ní se nedá spočítat výhra.`;
     }
   } else {

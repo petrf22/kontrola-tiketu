@@ -218,3 +218,27 @@ describe('poškozený vstup', () => {
     expect(() => parsujListinu(poskozena)).toThrow(/12 pořadí/);
   });
 });
+
+describe('listina bez zveřejněné tabulky výher', () => {
+  /**
+   * Skutečný stav z archivu: 5. 2. 2016 má tažená čísla, ale místo tabulky výher větu
+   * „Probíhá zpracování výsledků.“ U starých tahů to zůstává natrvalo.
+   */
+  const bezTabulky = listina('eurojackpot-2026-37')
+    .replace(/<!-- vyhry -->[\s\S]*?<\/table>/, '<!-- vyhry --> Probíhá zpracování výsledků. </table>');
+
+  it('tah se přečte i bez tabulky, místo aby se zahodil', () => {
+    const tahy = parsujListinu(bezTabulky) as TahEurojackpot[];
+    expect(tahy).toHaveLength(1);
+    expect(tahy[0]?.cisla).toEqual([47, 14, 27, 34, 36]);
+    expect(tahy[0]?.poradi).toEqual([]);
+  });
+
+  it('prázdná tabulka se přijme jen tehdy, když to listina sama říká', () => {
+    // Kdyby se přijímala vždy, tichá změna šablony by vyrobila tahy bez částek
+    // a nikdo by si toho nevšiml.
+    const podezrele = listina('eurojackpot-2026-37')
+      .replace(/<!-- vyhry -->[\s\S]*?<\/table>/, '<!-- vyhry --> </table>');
+    expect(() => parsujListinu(podezrele)).toThrow(/12 pořadí/);
+  });
+});

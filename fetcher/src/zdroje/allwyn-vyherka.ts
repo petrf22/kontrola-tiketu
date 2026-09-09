@@ -54,6 +54,16 @@ const SANCE_KLICE: Readonly<Record<string, PoradiKoncoveCislice>> = {
 };
 
 const NADPIS_SEKCE = /(SPORTKA|ŠANCE|EUROJACKPOT)\s+(NEDĚLE|PONDĚLÍ|ÚTERÝ|STŘEDA|ČTVRTEK|PÁTEK|SOBOTA)/g;
+
+/**
+ * Listina, u které Allwyn tabulku výher nezveřejnil.
+ *
+ * Není to chyba ani poškozený soubor — tažená čísla tam jsou, jen místo tabulky stojí tahle
+ * věta. U starých tahů to zůstává natrvalo. Tah se proto přečte s prázdnou tabulkou; jádro
+ * pak umí říct „tohle pořadí jsi trefil, ale částku neznám“, což je pravdivější než tah
+ * zahodit a tvářit se, že se nelosovalo.
+ */
+const BEZ_TABULKY = 'Probíhá zpracování výsledků';
 const NADPIS_TYDNE = /(\d+)\. SÁZKOVÝ TÝDEN ROK (\d{4})/g;
 
 /** Sestaví adresu listiny. Jeden dotaz vrací všechny tahy daného týdne. */
@@ -119,6 +129,8 @@ function najdiSekce(html: string): Sekce[] {
 function radkyTabulky(usek: string, kotva: string, kde: string): Poradi[] {
   const zaKotvou = usek.split(kotva)[1];
   if (zaKotvou === undefined) {
+    // Chybějící kotva u listiny bez tabulky není chyba — tabulka prostě není.
+    if (usek.includes(BEZ_TABULKY)) return [];
     throw new ChybaParsovani(`${kde}: v listině chybí kotva ${kotva}.`);
   }
   const tabulka = zaKotvou.split('</table>')[0] ?? '';
@@ -154,7 +166,11 @@ function parsujEurojackpot(sekce: Sekce): TahEurojackpot {
 
   const poradi = radkyTabulky(sekce.obsah, '<!-- vyhry -->', datum);
   const klice = poradi.map((p) => p.klic);
-  if (klice.join(',') !== PORADI_EJ.join(',')) {
+  const bezTabulky = poradi.length === 0 && sekce.obsah.includes(BEZ_TABULKY);
+
+  // Prázdná tabulka se přijme, jen když to listina sama říká. Jinak by tichá změna
+  // šablony vyrobila tahy bez částek a nikdo by si toho nevšiml.
+  if (!bezTabulky && klice.join(',') !== PORADI_EJ.join(',')) {
     throw new ChybaParsovani(`${datum}: čekáno 12 pořadí I–XII, nalezeno ${klice.join(',')}.`);
   }
 
@@ -176,7 +192,9 @@ function parsujEurojackpot(sekce: Sekce): TahEurojackpot {
 function parsujTahSportky(usek: string, kotva: string, cisla: string[], poradiTahu: 1 | 2): SportkaTah {
   const poradi = radkyTabulky(usek, kotva, `Sportka, ${poradiTahu}. tah`);
   const klice = poradi.map((p) => p.klic);
-  if (klice.join(',') !== PORADI_SPORTKA.join(',')) {
+  const bezTabulky = poradi.length === 0 && usek.includes(BEZ_TABULKY);
+
+  if (!bezTabulky && klice.join(',') !== PORADI_SPORTKA.join(',')) {
     throw new ChybaParsovani(`Sportka, ${poradiTahu}. tah: nečekaná pořadí ${klice.join(',')}.`);
   }
   return {

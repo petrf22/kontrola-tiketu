@@ -5,6 +5,9 @@
       "path": "./packages/jadro"
     },
     {
+      "path": "./packages/ocr"
+    },
+    {
       "path": "./fetcher"
     }
   ]

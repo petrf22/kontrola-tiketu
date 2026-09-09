@@ -6,7 +6,8 @@
   "license": "UNLICENSED",
   "workspaces": [
     "packages/*",
-    "fetcher"
+    "fetcher",
+    "app"
   ],
   "scripts": {
     "test": "vitest run",

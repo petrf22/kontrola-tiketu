@@ -8,6 +8,7 @@ import {
   type Tiket,
 } from '@kontrola-tiketu/jadro';
 import { prectiCisla } from '@kontrola-tiketu/ocr';
+import { NaskenovanyTiket } from '../data/sken.js';
 import { Stav } from '../data/stav.js';
 
 interface Radek {
@@ -107,6 +108,9 @@ export class NovyTiket {
   private readonly stav = inject(Stav);
   private readonly router = inject(Router);
 
+  /** Sériové číslo z naskenovaného čárového kódu, pokud uživatel přišel ze skenu. */
+  private readonly serioveCislo = inject(NaskenovanyTiket).vyzvedni();
+
   protected readonly hra = signal<Hra>('eurojackpot');
   protected readonly prvni = signal(new Date().toISOString().slice(0, 10));
   protected readonly pocet = signal(1);
@@ -126,8 +130,11 @@ export class NovyTiket {
     );
 
     return {
-      // Ručně zadaný tiket nemá sériové číslo z čárového kódu, tak si vyrobí vlastní id.
-      id: `rucni-${this.prvni()}-${sloupce.map((s) => s.cisla.join('.')).join('_')}`,
+      // Sériové číslo z kódu je nejlepší identifikátor — díky němu druhý sken téhož tiketu
+      // nevytvoří duplicitu. Ručně zadaný tiket ho nemá, tak si vyrobí vlastní.
+      id:
+        this.serioveCislo ??
+        `rucni-${this.prvni()}-${sloupce.map((s) => s.cisla.join('.')).join('_')}`,
       hra,
       sloupce,
       slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: null },

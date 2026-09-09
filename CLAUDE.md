@@ -14,12 +14,13 @@ aplikace se čtyřmi obrazovkami**.
 
 **Dvě věci ze zadání ale hotové nejsou a nesmí se na ně zapomenout:**
 
-1. **Nic se neukládá.** Aplikace používá `UlozisteVPameti` — po zavření je pryč všechno.
-   Zadání žádá SQLCipher s klíčem v Android Keystore. Rozhraní `Uloziste` na to čeká,
-   obrazovky se měnit nebudou. Do té doby je aplikace jen ukázka.
-2. **Kamera a OCR nejsou zapojené.** Logika je hotová a otestovaná v `packages/ocr`,
-   ale pluginy `@capacitor-mlkit/*` nainstalované nejsou a obrazovka skenu neexistuje.
-   Ověřit to půjde jen na zařízení.
+1. **OCR je zablokované.** `@capacitor-mlkit/text-recognition` vyžaduje snímek uložený na
+   disk, což jde proti akceptačnímu kritériu „snímky se nikdy neukládají do cache“. Plugin
+   je proto odinstalovaný. Logika v `packages/ocr` je hotová a čeká — `zMlKit` přijme výstup
+   ML Kitu, ať přijde odkudkoliv. **Než to začneš řešit, přečti si `docs/ocr-a-carovy-kod.md`
+   a nech rozhodnout uživatele** — jsou tam tři možnosti a jedna z nich mění zadání.
+2. **Sken kódu není ověřený na reálném tiketu.** Čtečka vrací `rawValue` jako řetězec, ne
+   bajty, takže offsety ze zadání nesedí a sériové číslo se hledá vzorem.
 
 ```
 packages/jadro/src/    model.ts, validace.ts, koncoveCislice.ts, slucovani.ts,
@@ -39,7 +40,7 @@ Ověřené příkazy (npm workspace, Node 24):
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 318 testů (jádro, ocr, fetcher i soukromí aplikace)
+npm test             # vitest, 346 testů (jádro, ocr, fetcher i soukromí aplikace)
 npm run typecheck    # tsc --build, strict
 
 npm run vyherka -- stav

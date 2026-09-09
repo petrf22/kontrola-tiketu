@@ -111,6 +111,34 @@ describe('žádná telemetrie', () => {
   });
 });
 
+describe('sken nesahá na síť', () => {
+  const obrazovka = cti('src/app/obrazovky/sken.ts');
+
+  it('používá proudový režim, ne modul stahovaný z Google Play', () => {
+    // BarcodeScanner.scan() jede přes play-services-code-scanner, který se stahuje ze sítě.
+    expect(obrazovka).toMatch(/startScan\(/);
+    expect(obrazovka).not.toMatch(/BarcodeScanner\.scan\(/);
+    expect(obrazovka).not.toMatch(/installGoogleBarcodeScannerModule/);
+  });
+
+  it('čtečka má model přibalený v aplikaci, ne stahovaný z Play', () => {
+    const gradle = readFileSync(
+      join(KOREN, '../node_modules/@capacitor-mlkit/barcode-scanning/android/build.gradle'),
+      'utf8',
+    );
+    expect(gradle).toMatch(/com\.google\.mlkit:barcode-scanning/);
+    expect(gradle).not.toMatch(/play-services-mlkit-barcode-scanning/);
+  });
+
+  it('rozpoznávání textu není zapojené — vyžaduje uložený snímek', () => {
+    // Podrobnosti v docs/ocr-a-carovy-kod.md. Až se to vyřeší, tenhle test se změní.
+    const balik = JSON.parse(cti('package.json')) as { dependencies?: Record<string, string> };
+    expect(Object.keys(balik.dependencies ?? {})).not.toContain(
+      '@capacitor-mlkit/text-recognition',
+    );
+  });
+});
+
 /**
  * Kontrola nad sestavenou aplikací. Manifest ve zdrojácích může být v pořádku a přesto se
  * do APK dostane oprávnění ze závislosti, takže tohle je ta skutečná záruka. Když APK

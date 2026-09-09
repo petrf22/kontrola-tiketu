@@ -57,8 +57,10 @@ neexistují.
 - **Čtení tiketu** — `packages/ocr`. Skládá rozpoznaný text na sloupce (páruje levou a pravou
   část řádku podle rámečků, snese nakloněný snímek) a čte sériové číslo z čárového kódu.
   Nezávisí na ML Kitu, takže jde otestovat bez zařízení.
-- **Aplikace** — `app`. Angular + Capacitor. Seznam tiketů, ruční zadání, import výsledků
-  a detail vyhodnocení. Android projekt je zatvrzený podle požadavků na soukromí.
+- **Aplikace** — `app`. Angular + Capacitor. Seznam tiketů, sken čárového kódu, ruční zadání,
+  import výsledků a detail vyhodnocení. Data drží šifrovaná databáze (SQLCipher, klíč
+  v Android Keystore). Android projekt je zatvrzený podle požadavků na soukromí — sestavené
+  APK má jediné oprávnění `CAMERA`, ověřeno testem.
 
 ```bash
 npm install
@@ -79,11 +81,14 @@ používá. Co je jednou v archivu, se znovu nestahuje.
 
 Aby nevznikl mylný dojem, že je aplikace hotová:
 
-- **Nic se zatím neukládá.** Data drží jen v paměti a po zavření aplikace jsou pryč.
-  Šifrované úložiště (SQLCipher, klíč v Android Keystore) je další krok — dokud není,
-  je lepší o data přijít než je nechat nešifrovaná na disku.
-- **Kamera a OCR nejsou zapojené.** Logika je hotová a otestovaná, ale samotné rozpoznávání
-  na zařízení ještě chybí. Tikety se zatím zadávají ručně.
+- **Sken kódu není ověřený na reálném tiketu.** Čtečka vrací payload jako řetězec, ne jako
+  bajty, takže se sériové číslo hledá vzorem místo na pevném offsetu. Obrazovka ho proto
+  jen předá do formuláře, kde ho zkontroluješ proti papíru.
+- **Rozpoznávání čísel z tiketu (OCR) je zablokované.** Dostupný plugin ML Kitu vyžaduje
+  snímek uložený na disk, což jde proti požadavku zpracovávat snímky jen ve streamu.
+  Čísla se zatím opisují ručně. Sken čárového kódu zapojený je a sériové číslo z něj
+  vyplní identifikátor tiketu. Podrobnosti a možnosti řešení jsou
+  v [`docs/ocr-a-carovy-kod.md`](docs/ocr-a-carovy-kod.md).
 
 Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 

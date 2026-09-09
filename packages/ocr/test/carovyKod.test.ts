@@ -4,6 +4,7 @@ import {
   lokalniId,
   NEJMENSI_DELKA,
   prectiCarovyKod,
+  prectiSerioveCisloZTextu,
 } from '../src/index.js';
 
 const SERIOVE_CISLO = '12396064434434021234';
@@ -101,5 +102,43 @@ describe('lokalniId', () => {
   it('různé tikety mají různé id', () => {
     const jiny = payload({ serioveCislo: '99996064434434021234' });
     expect(lokalniId(prectiCarovyKod(payload()))).not.toBe(lokalniId(prectiCarovyKod(jiny)));
+  });
+});
+
+describe('prectiSerioveCisloZTextu', () => {
+  /**
+   * Payload tak, jak ho vrátí plugin — jako řetězec, ne bajty.
+   *
+   * Mezi sériovým číslem a číslem klubové karty jsou podle zadání oddělovací bajty 0b 01.
+   * Bez nich by obě čísla splynula v jeden třicetimístný běh, což na papíře nenastane.
+   */
+  const ODDELOVAC = '\u000b\u0001';
+  const jakoText = (serioveCislo = SERIOVE_CISLO, sifrovanyBlok = '\u00c4\u00f7\u00a1') =>
+    `RBF16M\u0013\u0000${sifrovanyBlok}\u0002\u0001\u0000${serioveCislo}${ODDELOVAC}${CISLO_KLUBOVE_KARTY}`;
+
+  it('najde sériové číslo, i když se offsety nedají použít', () => {
+    expect(prectiSerioveCisloZTextu(jakoText())).toBe(SERIOVE_CISLO);
+  });
+
+  it('nezáleží na tom, jak se rozpadl šifrovaný blok', () => {
+    // Právě proto se nedá počítat s pevnou pozicí.
+    expect(prectiSerioveCisloZTextu(jakoText(SERIOVE_CISLO, '\ufffd\ufffd'))).toBe(SERIOVE_CISLO);
+    expect(prectiSerioveCisloZTextu(jakoText(SERIOVE_CISLO, 'x'.repeat(200)))).toBe(SERIOVE_CISLO);
+  });
+
+  it('odmítne cizí kód bez magické hlavičky', () => {
+    expect(prectiSerioveCisloZTextu(`XXXXXX${SERIOVE_CISLO}`)).toBeNull();
+  });
+
+  it('nespokojí se s kratším ani delším během číslic', () => {
+    expect(prectiSerioveCisloZTextu('RBF16M 1234567890123456789')).toBeNull();
+    expect(prectiSerioveCisloZTextu('RBF16M 123456789012345678901')).toBeNull();
+  });
+
+  it('nesebere číslo klubové karty místo sériového', () => {
+    // Karta má deset číslic, sériové dvacet, takže je vzor nezamění.
+    const vysledek = prectiSerioveCisloZTextu(jakoText());
+    expect(vysledek).not.toBe(CISLO_KLUBOVE_KARTY);
+    expect(vysledek).toHaveLength(20);
   });
 });

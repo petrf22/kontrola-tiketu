@@ -15,10 +15,15 @@ const ZAKAZANE = [
   /localStorage/,
   /\bdocument\b/,
   /\bwindow\b/,
-  /@angular/,
-  /@capacitor/,
-  /mlkit/i,
+  /from\s+['"]@angular/,
+  /from\s+['"]@capacitor/,
 ];
+
+/*
+  Zakazuje se IMPORT z ML Kitu, ne zmínka o něm. Modul mlkit.ts popisuje tvar výstupu
+  pluginu strukturálně právě proto, aby na něm nemusel záviset — a knihovna tak zůstala
+  testovatelná bez zařízení. Původní pravidlo hlídalo výskyt slova a tenhle rozdíl neumělo.
+*/
 
 function zdrojaky(): { jmeno: string; obsah: string }[] {
   return readdirSync(SRC)

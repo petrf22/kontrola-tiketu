@@ -12,6 +12,11 @@ export const routes: Routes = [
     title: 'Nový tiket',
   },
   {
+    path: 'sken',
+    loadComponent: () => import('./obrazovky/sken.js').then((m) => m.Sken),
+    title: 'Sken tiketu',
+  },
+  {
     path: 'tiket/:id',
     loadComponent: () => import('./obrazovky/detail.js').then((m) => m.Detail),
     title: 'Vyhodnocení tiketu',

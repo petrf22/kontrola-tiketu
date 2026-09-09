@@ -35,3 +35,17 @@ body {
   color: var(--barva-text);
   font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
+
+/*
+  Při proudovém skenu se obraz z kamery vykresluje POD webview, takže musí být průhledné.
+  Bez tohohle uživatel uvidí jen bílou plochu.
+*/
+body.skenuje {
+  background: transparent !important;
+}
+
+body.skenuje app-root > header,
+body.skenuje app-root > nav,
+body.skenuje app-root > footer {
+  visibility: hidden;
+}

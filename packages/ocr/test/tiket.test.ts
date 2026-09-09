@@ -162,3 +162,33 @@ describe('naTiket', () => {
     expect(hodnoceni.slosovani[0]?.sloupce).toHaveLength(3);
   });
 });
+
+describe('kód doplňkové hry ze snímku', () => {
+  const S_EXTRA6 = [
+    ['SLOSOVÁNÍ: 1 (ÚT)', '08.09.2026'],
+    ['1: 23 30 33 37 47', '02 03 NT'],
+    ['Extra 6: 845991'],
+  ];
+
+  it('přečte se spolu se sloupci', () => {
+    const vysledek = prectiTiket(tiketEJ(S_EXTRA6), 'eurojackpot');
+    expect(vysledek.kodDoplnkoveHry).toBe('845991');
+    expect(vysledek.sloupce).toHaveLength(1);
+  });
+
+  it('bez řádku Extra 6 zůstane null, ne vymyšlený kód', () => {
+    const vysledek = prectiTiket(tiketEJ(CELY_TIKET), 'eurojackpot');
+    expect(vysledek.kodDoplnkoveHry).toBeNull();
+  });
+
+  it('naTiket ho převezme, když se nepředá jiný', () => {
+    const vysledek = prectiTiket(tiketEJ(S_EXTRA6), 'eurojackpot');
+    expect(naTiket(vysledek, { id: 'a' }).kodDoplnkoveHry).toBe('845991');
+  });
+
+  it('předaný kód má přednost před přečteným', () => {
+    // Volající může vědět víc — třeba že uživatel kód právě opravil.
+    const vysledek = prectiTiket(tiketEJ(S_EXTRA6), 'eurojackpot');
+    expect(naTiket(vysledek, { id: 'a', kodDoplnkoveHry: '000000' }).kodDoplnkoveHry).toBe('000000');
+  });
+});

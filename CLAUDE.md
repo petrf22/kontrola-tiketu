@@ -12,14 +12,17 @@ je jen rychlá orientace; při rozporu platí zadání.
 Hotový je **zdroj dat**, **vyhodnocovací jádro**, **fetcher**, **čtení tiketu** a **kostra
 aplikace se čtyřmi obrazovkami**.
 
-**Dvě věci ze zadání ale hotové nejsou a nesmí se na ně zapomenout:**
+**Co je ověřené na skutečném telefonu** (Xiaomi 14T Pro, Android 16, 9. 9. 2026): instalace
+release buildu s R8, jediné oprávnění `CAMERA`, otevření šifrované databáze
+(`Database keying operation returned:0`) a sken čárového kódu. Neověřené zůstává focení
+tiketu, import a vyhodnocení na zařízení.
 
-1. **Nic z aplikace neběželo na skutečném telefonu.** Sestaví se a logika je pokrytá testy,
-   ale sken, focení ani šifrovaná databáze na zařízení vyzkoušené nejsou.
-2. **Sken kódu je ověřený na reálném tiketu** (9. 9. 2026). Čtečka vrací `rawValue` jako
+**Věci, na které se nesmí zapomenout:**
+
+1. **Sken kódu je ověřený na reálném tiketu** (9. 9. 2026). Čtečka vrací `rawValue` jako
    `undefined`, ale `bytes` dodá — a ty na offsety ze zadání sedí přesně. Bajty jsou
    znaménkové, takže se musí maskovat `& 0xff`.
-3. **Snímek pro OCR se ukládá do privátní cache** — vědomá odchylka od zadání, odsouhlasená
+2. **Snímek pro OCR se ukládá do privátní cache** — vědomá odchylka od zadání, odsouhlasená
    9. 9. 2026. Podmínkou je, že vždycky zmizí a nikdy neskončí v galerii. **Nesahej na
    `snimekTiketu.ts` tak, abys porušil `finally`**; ta záruka je celý důvod, proč je ten
    postup oddělený od napojení na pluginy. Viz `docs/ocr-a-carovy-kod.md`.

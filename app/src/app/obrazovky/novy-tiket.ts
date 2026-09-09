@@ -132,7 +132,7 @@ export class NovyTiket {
     this.rozpoznane?.hlavicka.datum ?? new Date().toISOString().slice(0, 10),
   );
   protected readonly pocet = signal(this.rozpoznane?.hlavicka.pocetSlosovani ?? 1);
-  protected readonly doplnkova = signal('');
+  protected readonly doplnkova = signal(this.rozpoznane?.kodDoplnkoveHry ?? '');
   protected readonly radky = signal<Radek[]>(
     this.rozpoznane === null || this.rozpoznane.sloupce.length === 0
       ? [{ cisla: '', eurocisla: '' }]

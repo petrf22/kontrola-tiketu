@@ -10,6 +10,7 @@
 import type { Den, Hra, Sloupec, Tiket } from '@kontrola-tiketu/jadro';
 import { zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
 import { prectiCisla, type NactenaHodnota } from './cisla.js';
+import { prectiKodDoplnkoveHry } from './doplnkovaHra.js';
 import { slozRadky, type NastaveniSkladani } from './radky.js';
 import type { RozpoznanyText } from './model.js';
 
@@ -61,6 +62,11 @@ export interface VysledekCteni {
   readonly hra: Hra;
   readonly hlavicka: Hlavicka;
   readonly sloupce: readonly NactenySloupec[];
+  /**
+   * Kód doplňkové hry přečtený z tiketu, nebo `null`. Z čárového kódu ho vzít nejde —
+   * je v šifrovaném bloku — ale vytištěný na tiketu je.
+   */
+  readonly kodDoplnkoveHry: string | null;
   /** Řádky, které nevypadaly jako sloupec ani jako hlavička. Pro ladění a pro jistotu. */
   readonly nepouziteRadky: readonly string[];
 }
@@ -141,6 +147,7 @@ export function prectiTiket(
     hra,
     hlavicka: prectiHlavicku(nepouzite),
     sloupce,
+    kodDoplnkoveHry: prectiKodDoplnkoveHry(nepouzite, hra),
     nepouziteRadky: nepouzite,
   };
 }
@@ -181,7 +188,8 @@ export function naTiket(
       pocet: vysledek.hlavicka.pocetSlosovani ?? 1,
       dny: doplnky.dny ?? null,
     },
-    kodDoplnkoveHry: doplnky.kodDoplnkoveHry ?? null,
+    // Předaný kód má přednost před přečteným — volající může vědět víc.
+    kodDoplnkoveHry: doplnky.kodDoplnkoveHry ?? vysledek.kodDoplnkoveHry,
     vlozeno: doplnky.vlozeno ?? new Date().toISOString(),
   };
 }

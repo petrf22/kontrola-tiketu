@@ -19,18 +19,26 @@ proti němu.
 
 ## Jak to funguje
 
-Dvě oddělené komponenty, které spolu nekomunikují po síti:
+Tři části. Žádná z nich nikdy neposílá vsazená čísla ani nic, co by identifikovalo tiket:
 
-1. **Fetcher výsledků** — CLI nástroj na desktopu. Čte veřejnou výherní listinu Allwyn
-   a stáhne výsledky losování i tabulky výher hromadně za zadané období, bez ohledu na to, jaké
-   tikety držíte. Výstupem je JSON soubor. Server se tak dozví jen to, že si někdo zobrazil
-   veřejné výsledky — jeden dotaz na hru a týden, stejný pro kohokoliv.
+1. **Backend** — PHP na levném sdíleném hostingu ([`docs/backend.md`](docs/backend.md)).
+   Cronem hlídá veřejnou výherní listinu Allwyn, ale jen když to dává smysl: v den losování
+   se ptá každou hodinu, dokud výsledky nemá, v den bez losování vůbec. Z listin staví
+   soubory s výsledky a vystavuje je jako statické soubory. Allwyn se dozví jen to, že si
+   někdo zobrazil veřejné výsledky.
 
-2. **Mobilní aplikace** — Angular + Capacitor, **bez oprávnění k síti**. JSON s výsledky se
-   načte importem souboru, čísla z tiketu se rozpoznají OCR přímo na zařízení a vyhodnocení
-   proběhne lokálně.
+2. **Mobilní aplikace** — Angular + Capacitor. Po otevření si od backendu stáhne **všechny**
+   výsledky (pro každého stejně, bez parametrů a identifikátorů), čísla z tiketu rozpozná OCR
+   přímo na zařízení a vyhodnocení proběhne lokálně. Spojit se umí jedině se serverem
+   výsledků — jinam systém TLS spojení nepustí.
 
-Absence síťového oprávnění v manifestu je ověřitelná záruka, že aplikace nemůže nic vynést.
+3. **Fetcher výsledků** — CLI na desktopu, původní cesta. Stáhne listiny do archivu a převede
+   je na JSON, který jde do aplikace naimportovat souborem. Slouží dál jako záloha a jako
+   zdroj archivu, kterým se naplní backend.
+
+Dřív aplikace neměla oprávnění k síti vůbec a výsledky se nosily jen souborem. Pro kontrolu
+dvakrát týdně to bylo nepoužitelné, a zadání pro takový případ síť připouští s tvrdým
+pravidlem: stahuje se vždy všechno, nikdy dotaz vázaný na konkrétní tiket.
 
 ## Soukromí
 
@@ -41,7 +49,11 @@ Absence síťového oprávnění v manifestu je ověřitelná záruka, že aplik
 - čárový kód se čte ve streamu, snímek se nikam neukládá
 - snímek pro rozpoznání čísel jde do privátní cache aplikace a hned se maže; do galerie se
   nedostane nikdy ([proč tahle výjimka](docs/ocr-a-carovy-kod.md))
-- jediné oprávnění je přístup ke kameře
+- oprávnění jsou jen dvě: kamera a internet kvůli výsledkům
+- síťový allowlist: TLS spojení projde jedině na server výsledků, takže ani knihovny třetích
+  stran (ML Kit vtahuje Googlí vrstvu pro odesílání záznamů, ta je navíc odstraněná) nemají
+  kam posílat
+- na síť sahá jediný modul aplikace a ten o tiketech neví — hlídá to test
 - číslo klubové karty, které je v čárovém kódu tiketu čitelné, se zahazuje
 
 ## Stav
@@ -57,19 +69,22 @@ v [`docs/vydani.md`](docs/vydani.md).
   z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher.
 - **Fetcher** — `fetcher`. CLI, které stáhne veřejné výherní listiny do lokálního archivu
   a převede je na JSON pro aplikaci.
+- **Backend** — `backend`. PHP 8.2 bez běhových závislostí: rozvrh dotazů, archiv listin ve
+  formátu fetcheru, SQLite a publikace do statických souborů. Parser je port z fetcheru;
+  že ze stejného archivu vyrobí bajt po bajtu totéž, hlídá `npm test`.
 - **Čtení tiketu** — `packages/ocr`. Skládá rozpoznaný text na sloupce (páruje levou a pravou
   část řádku podle rámečků, snese nakloněný snímek) a čte sériové číslo z čárového kódu.
   Nezávisí na ML Kitu, takže jde otestovat bez zařízení.
 - **Aplikace** — `app`. Angular + Capacitor. Seznam tiketů, sken čárového kódu, ruční zadání,
-  import výsledků a detail vyhodnocení. Data drží šifrovaná databáze (SQLCipher, klíč
-  v Android Keystore). Android projekt je zatvrzený podle požadavků na soukromí — sestavené
-  APK má jediné oprávnění `CAMERA`, ověřeno testem.
+  stažení i import výsledků a detail vyhodnocení. Data drží šifrovaná databáze (SQLCipher,
+  klíč v Android Keystore). Android projekt je zatvrzený podle požadavků na soukromí —
+  sestavené APK má právě `CAMERA` a `INTERNET` se síťovým allowlistem, ověřeno testem.
 
 ```bash
 npm install
 npm test
 
-# stažení výsledků za období do archivu (jediné, co chodí na síť)
+# stažení výsledků za období do archivu
 npm run vyherka -- stahni --od 2026-35 --do 2026-37
 
 # převod archivu na JSON pro aplikaci (bez sítě)
@@ -87,8 +102,9 @@ Aby nevznikl mylný dojem, že je všechno vyzkoušené:
 - **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
   je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
   a míří na uzavřený test, ne rovnou do produkce.
-- **Aplikace zatím není v Google Play.** Chybí podpisový klíč a veřejná adresa se zásadami
-  ochrany osobních údajů — viz [`docs/vydani.md`](docs/vydani.md).
+- **Aplikace zatím není v Google Play** — viz [`docs/vydani.md`](docs/vydani.md).
+- **Backend zatím není nasazený.** Adresa v aplikaci je zástupná (`.invalid`) a síťový
+  allowlist se ještě neověřoval na telefonu. Do té doby funguje import souboru.
 
 Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 

@@ -159,7 +159,8 @@ podle všeho nespadá, ale posuzovatel to musí poznat na první pohled, jinak h
 - **neumožňuje sázet ani nic kupovat** — tiket si člověk koupil na pobočce, aplikace na něj
   jen kouká,
 - **nepřijímá ani nevyplácí peníze**, nemá platby ani in-app nákupy,
-- **nepropojuje se s provozovatelem** — nemá oprávnění k síti,
+- **nepropojuje se s provozovatelem** — na síť chodí jen na vlastní server projektu pro
+  veřejné výsledky a systém jí spojení jinam nepustí (`network_security_config`),
 - **nesimuluje hazard**, nemá žádnou hru ani náhodu.
 
 Do dlouhého popisu i do formulářů to musí být napsané výslovně. V popisu se vyhni formulacím,
@@ -193,50 +194,63 @@ fungovat a Play na to sáhne při první další aktualizaci.**
 
 ### Data safety
 
-Odpověď je **„žádná data se neshromažďují ani nesdílejí“**. U téhle aplikace to není tvrzení,
-ale ověřitelný fakt — v manifestu chybí `INTERNET` a kdokoli si to přečte v nahraném balíčku
-(`aapt2 dump permissions`).
+Aplikace od stahování výsledků z backendu (docs/backend.md) na síť chodí, ale **žádná data
+uživatele neodesílá**: jen `GET` na veřejné soubory, pro všechny stejný, bez parametrů,
+identifikátorů a cookies. Vsazená čísla, sériová čísla ani výsledky vyhodnocení telefon
+neopouštějí.
 
 | Otázka | Odpověď |
 |---|---|
 | Shromažďuje aplikace data? | Ne |
 | Sdílí aplikace data se třetími stranami? | Ne |
-| Šifrování při přenosu | Neaplikovatelné — aplikace nekomunikuje po síti |
+| Šifrování při přenosu | Ano — výhradně HTTPS a jen na server výsledků |
 | Mazání dat na žádost | Data jsou jen na zařízení, smaže je odinstalace |
+
+**Před prvním nahráním s internetem ověřit v Play Console** aktuální výklad: server hostingu
+může do access logu zapsat IP adresu a čas stažení. Aplikace ji nijak nevyužívá a s tiketem
+se spojit nedá; kdyby ji Play přesto počítal jako shromažďovaný údaj, jednodušší než ji
+deklarovat je access log na hostingu vypnout (docs/backend.md, Nasazení, krok 7).
 
 Fotoaparát se používá **výhradně na zařízení**: snímek pro rozpoznání textu žije v privátní
 cache aplikace a maže se i při chybě (viz [`ocr-a-carovy-kod.md`](ocr-a-carovy-kod.md)).
 Do galerie se nedostane a nikam se neodesílá. Číslo klubové karty, které je v čárovém kódu
 tiketu čitelné, se zahazuje.
 
-### Past: v manifestu je Googlí datatransport, a je to v pořádku
+### Past: ML Kit vtahuje Googlí datatransport
 
-Kdo se podívá do manifestu sestaveného balíčku, najde tam komponenty, které tam nikdo
-nepsal — zjištěno při vydání 0.1.1:
+Kdo se podívá do sloučeného manifestu, najde komponenty, které tam nikdo nepsal — zjištěno
+při vydání 0.1.1:
 
 ```
+service  com.google.android.datatransport.runtime.backends.TransportBackendDiscovery   (backend CCT)
 service  com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
-receiver androidx.profileinstaller.ProfileInstallReceiver
+receiver com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver
 ```
 
 Vtahuje je **ML Kit** jako tranzitivní závislost; `datatransport` je Googlí přenosová vrstva
 pro odesílání záznamů (Firelog). Zní to jako telemetrie, kterou zadání zakazuje.
 
-**Odeslat ale nemá jak: aplikace nemá `INTERNET`.** Přesně kvůli tomuhle je absence síťového
-oprávnění akceptační kritérium — je to záruka, kterou nejde obejít závislostí, na kterou se
-zapomnělo. `android:permission="android.permission.BIND_JOB_SERVICE"` a `DUMP` u těchhle
-komponent nejsou oprávnění, o která aplikace žádá; omezují, kdo je smí spouštět.
+Do verze 0.1.1 ji neutralizovala absence `INTERNET`. Od stahování výsledků aplikace
+`INTERNET` má, takže záruku drží dvě jiné věci:
 
-Ověřit je to na sestaveném balíčku takhle — musí vyjít jen `CAMERA` a vlastní
-`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`:
+1. **Všechny tři komponenty jsou ze sloučeného manifestu odstraněné** (`tools:node="remove"`
+   v `AndroidManifest.xml`). Bez registrace backendu CCT nemá vrstva kam posílat.
+2. **`network_security_config`** pustí TLS jedině na doménu serveru výsledků; spojení na
+   `firebaselogging-pa.googleapis.com` ani nikam jinam neprojde ověřením certifikátu.
+
+Ověřit to jde na sestaveném balíčku — oprávnění musí být jen `CAMERA`, `INTERNET` a vlastní
+`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`, a v manifestu nesmí být nic z `datatransport`:
 
 ```bash
 aapt2 dump permissions app-arm64-v8a-release.apk
+aapt2 dump xmltree --file AndroidManifest.xml app-arm64-v8a-release.apk | grep -c datatransport   # 0
 ```
 
-Hlídá to `app/test/soukromi.test.ts`. **Kdyby někdo `INTERNET` kdy přidal, tahle komponenta
-začne fungovat** — to je ten skutečný důvod, proč se oprávnění odstraňuje přes
-`tools:node="remove"` a ne jen „nepřidává“.
+Obojí hlídá `app/test/soukromi.test.ts`, včetně toho, že doména v allowlistu je přesně ta,
+na kterou aplikace posílá dotazy.
+
+**Na telefonu je potřeba ověřit**, že sken kódu i rozpoznání textu fungují i bez těchhle
+komponent, a že spojení na jinou doménu opravdu selže (viz Kontrolní seznam).
 
 ### Texty pro store listing
 
@@ -245,7 +259,7 @@ Verzované tady, ne jen v Play Console.
 **Krátký popis** (max 80 znaků):
 
 ```
-Zkontroluj tiket Eurojackpotu a Sportky offline. Nic se nikam neodesílá.
+Zkontroluj tiket Eurojackpotu a Sportky v telefonu. Tikety se nikam neodesílají.
 ```
 
 **Dlouhý popis** (max 4000 znaků):
@@ -254,8 +268,9 @@ Zkontroluj tiket Eurojackpotu a Sportky offline. Nic se nikam neodesílá.
 Zkontrolujte si papírový tiket Eurojackpotu nebo Sportky přímo v telefonu — bez toho, aby se
 kdokoli dozvěděl, že sázíte nebo že jste vyhráli.
 
-Aplikace nemá oprávnění k přístupu na internet. Není to opomenutí, ale záměr: bez něj nemůže
-nic odeslat, ať by chtěla, nebo ne. Ověřit si to můžete v seznamu oprávnění aplikace.
+Vsazená čísla ani sériová čísla tiketů telefon neopouštějí. Na internet aplikace chodí jen
+pro veřejné výsledky losování — stáhne je celé, pro každého stejně, a vyhodnotí až u vás.
+Spojit se umí jedině se serverem výsledků; k jiné adrese jí systém spojení nepustí.
 
 CO APLIKACE UMÍ
 • Vyfoťte tiket a aplikace z něj přečte vsazená čísla, doplňkovou hru i sériové číslo
@@ -265,16 +280,16 @@ CO APLIKACE UMÍ
 • Drží tikety v šifrované databázi, klíč je v Android Keystore
 
 JAK SE DOSTANOU DOVNITŘ VÝSLEDKY
-Výsledky losování se do aplikace nahrají souborem, který si připravíte na počítači
-z veřejně publikované výherní listiny. Aplikace si o ně sama nikam nechodí, takže se nikdo
-nedozví, který tiket zrovna kontrolujete.
+Po otevření si aplikace stáhne výsledky losování ze serveru projektu, který je hlídá na
+veřejné výherní listině. Stahuje vždy všechno, ne jen to, co se týká vašich tiketů — nikdo
+se tak nedozví, který tiket zrovna kontrolujete. Výsledky jde nahrát i souborem.
 
 SOUKROMÍ
 • Žádná analytika, žádný crash reporting, žádná telemetrie
 • Nic se nedostane do cloudové zálohy
 • Obrazovky jsou chráněné proti náhledům v přepínači aplikací
 • Snímek pořízený kvůli rozpoznání čísel se hned maže a do galerie se nedostane
-• Jediné oprávnění, o které aplikace žádá, je fotoaparát
+• Žádá jen o fotoaparát a o internet kvůli výsledkům losování
 
 CO APLIKACE NENÍ
 Není to sázková aplikace. Nedá se v ní sázet, kupovat tikety ani platit. Nepropojuje se
@@ -355,16 +370,27 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 ## Kontrolní seznam před nahráním
 
 - [ ] `npm test` prochází — hlavně `soukromi.test.ts`, který ověřuje i sestavené APK
-      přes `aapt2`, že má jediné oprávnění `CAMERA`
+      přes `aapt2`, že má právě `CAMERA` a `INTERNET` a žádný `datatransport`, a `sit.test.ts`
 - [ ] `npm run verze` nezmění žádný soubor
 - [ ] `versionCode` v `output-metadata.json` je vyšší než naposledy nahraný do Play
 - [ ] `publishableBundle` doběhl a vypsal „Podpis ověřen“
-- [ ] aplikace nainstalovaná z release APK na telefonu funguje: fotka tiketu, import
-      výsledků, vyhodnocení
+- [ ] aplikace nainstalovaná z release APK na telefonu funguje: fotka tiketu, sken kódu,
+      stažení výsledků po otevření i tlačítkem, import souboru, vyhodnocení
+- [ ] v režimu letadlo se aplikace otevře bez chyby a stažení ohlásí, že server není dostupný
 - [ ] obrazovka „O aplikaci“ ukazuje správné číslo verze
-- [ ] `AndroidManifest.xml` nemá `INTERNET` — zkontrolovat i v nahrávaném balíčku
+- [ ] doména v `app/src/app/data/adresa-backendu.ts` je skutečná (ne `.invalid`), backend na ní
+      běží a `curl -sI …/v1/manifest.json` vrací `text/plain` (docs/backend.md)
 
 ## Co vydání ještě blokuje
+
+- **Doména backendu.** V aplikaci i v `network_security_config.xml` je zatím zástupná
+  `vysledky.kontrola-tiketu.invalid`. Bez skutečné domény a nasazeného backendu stažení
+  výsledků nefunguje (import souboru ano).
+- **Síťový allowlist a ML Kit bez `datatransport` na telefonu.** Prázdné `<trust-anchors />`
+  v `base-config` je podle schématu platné, ale na zařízení se ještě neověřovalo. Ověřit, že
+  stažení z backendu projde, spojení jinam selže a sken i rozpoznání textu fungují.
+  Kdyby prázdné trust-anchors Android odmítl, náhradou je pinning na certifikát domény
+  (`<certificates src="@raw/…" />`).
 
 - ~~Podpisový klíč~~ — vytvořen 10. 9. 2026, otisk výše. **Zálohovat mimo tenhle počítač;
   bez něj se aplikace se stejným `applicationId` už nikdy nevydá.**

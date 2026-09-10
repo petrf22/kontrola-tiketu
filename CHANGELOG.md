@@ -21,6 +21,13 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 - Backend v PHP pro levný sdílený hosting: sám hlídá nová losování a vystavuje výsledky jako statické soubory, které si aplikace stáhne celé — bez jediné informace o tom, jaké tikety kdo drží (backend)
 - Rozvrh dotazů na Allwyn: v den losování se backend ptá každou hodinu, jen dokud výsledek i s tabulkou výher nemá; v den bez losování neudělá jediný dotaz (backend)
 - Parser výherní listiny přepsaný do PHP; že ze stejných listin vyrobí bajt po bajtu totéž co fetcher, hlídají testy nad celým archivem (backend, fetcher)
+- Výsledky losování se po otevření aplikace stáhnou samy a na obrazovce výsledků je tlačítko „Stáhnout výsledky“; import souboru zůstává jako záloha (aplikace)
+- Aplikace stahuje vždy všechny výsledky, pro každého stejně — na server nejde žádné vsazené číslo, sériové číslo tiketu ani nic, podle čeho by se dalo poznat, kdo se ptá (aplikace)
+- V patičce je vidět, kdy server naposledy kontroloval losování a jestli se u některé hry ještě čeká na tabulku výher (aplikace)
+
+### Změněno
+- Aplikace žádá o přístup k internetu, ale spojit se umí jedině se serverem výsledků — jinam systém šifrované spojení nepustí; Googlí vrstva pro odesílání záznamů z ML Kitu je z aplikace odstraněná (aplikace)
+- Import výsledků ukládá jen nové tahy místo přepisu celého seznamu (aplikace)
 
 ## [0.1.1] – 2026-09-10
 

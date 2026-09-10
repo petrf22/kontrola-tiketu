@@ -330,9 +330,10 @@ Fetcher proto bude mít dva režimy: `stahni` (síť → archiv) a `preparsuj` (
 
 ### Změna adresy nevyžaduje aktualizaci aplikace
 
-Aplikace žádnou URL nezná — jejím jediným vstupem je importovaný JSON. Když Allwyn adresu změní
-nebo stránky zavře, **mění se jen fetcher na desktopu**. URL a parsovací kotvy proto žijí v jednom
-adaptéru, ne rozeseté po kódu.
+Aplikace URL Allwynu nezná — zná jen adresu vlastního backendu a čte JSON ve formátu fetcheru.
+Když Allwyn adresu změní nebo stránky zavře, **mění se jen fetcher a backend**, aplikace ne.
+URL a parsovací kotvy proto žijí v jednom adaptéru (a jeho PHP portu v `backend/src/Zdroj/`),
+ne rozeseté po kódu.
 
 ---
 

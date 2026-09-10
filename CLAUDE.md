@@ -9,12 +9,17 @@ je jen rychlá orientace; při rozporu platí zadání.
 
 ## Stav repozitáře
 
-Hotový je **zdroj dat**, **vyhodnocovací jádro**, **fetcher**, **čtení tiketu** a **kostra
-aplikace se šesti obrazovkami**.
+Hotový je **zdroj dat**, **vyhodnocovací jádro**, **fetcher**, **čtení tiketu**, **kostra
+aplikace se šesti obrazovkami** a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
+
+**Stahování výsledků zatím není na telefonu ověřené.** Adresa backendu je zástupná
+(`vysledky.kontrola-tiketu.invalid`), síťový allowlist s prázdnými `<trust-anchors />` a chod
+ML Kitu bez odstraněného `datatransport` se musí vyzkoušet na zařízení — viz `docs/vydani.md`,
+„Co vydání ještě blokuje“.
 
 **Ověřené na skutečném telefonu** (Xiaomi 14T Pro, Android 16, 9. 9. 2026):
 
-- instalace release buildu s R8, jediné oprávnění `CAMERA`,
+- instalace release buildu s R8 (tehdy s jediným oprávněním `CAMERA`),
 - otevření šifrované databáze (`Database keying operation returned:0`),
 - **jedna fotka** dá šest sloupců, euročísla, `Extra 6`, cenu i sériové číslo z čárového kódu,
 - sériové číslo sedí na to vytištěné na tiketu,
@@ -125,10 +130,16 @@ cd app/android && ./gradlew :app:assembleDebug
 Knihovny `jadro` a `ocr` vidí aplikace přes `paths` v `app/tsconfig.json` jako vlastní zdrojáky,
 takže není potřeba mezikrok se sestavením knihoven.
 
-**Nesahej na `app/android/app/src/main/AndroidManifest.xml` bez rozmyslu.** Odstranění INTERNET
-přes `tools:node="remove"`, `allowBackup="false"` a FLAG_SECURE v `MainActivity` jsou akceptační
-kritéria ze zadání. Hlídá je `app/test/soukromi.test.ts`, který navíc kontroluje sestavené APK
-přes `aapt2`, když existuje.
+**Nesahej na `app/android/app/src/main/AndroidManifest.xml` bez rozmyslu.** Právě dvě oprávnění
+(`CAMERA`, `INTERNET`), `network_security_config` (TLS jen na server výsledků), odstraněný Googlí
+`datatransport`, `allowBackup="false"` a FLAG_SECURE v `MainActivity` jsou akceptační kritéria.
+Hlídá je `app/test/soukromi.test.ts`, který navíc kontroluje sestavené APK přes `aapt2`, když
+existuje. **Doména backendu je na dvou místech** — `app/src/app/data/adresa-backendu.ts`
+a `network_security_config.xml` — a test hlídá, že sedí.
+
+Na síť v aplikaci sahá **jediný modul**, `app/src/app/data/stahovani.ts`, a ten nesmí
+importovat nic, co zná tikety. Hlídá to `app/test/sit.test.ts` — když přidáš `fetch`,
+`HttpClient` nebo `CapacitorHttp` jinam, test spadne. To je záměr, ne překážka.
 
 ## Účel a hlavní omezení
 
@@ -138,19 +149,23 @@ designové rozhodnutí se poměřuje proti němu, ne naopak.
 
 Sekce „Tvrdé požadavky na soukromí" v zadání jsou akceptační kritéria, ne doporučení
 (žádná telemetrie ani v dev buildu, `allowBackup="false"`, `FLAG_SECURE`, SQLCipher + Android
-Keystore, snímky z kamery se neukládají, jediná permission `CAMERA`).
+Keystore, snímky z kamery se neukládají). Kritérium „jediná permission `CAMERA`“ padlo
+10. 9. 2026 s přechodem na stahování výsledků — viz Architektura.
 
 ## Architektura
 
-Dvě komponenty, které spolu **nekomunikují po síti**:
+1. **Backend** (`backend/`, PHP na sdíleném hostingu) — cronem hlídá výherní listinu podle
+   rozvrhu, publikuje výsledky jako statické soubory (`manifest.json` + roční balíky ve formátu
+   fetcheru). Za běhu žádné PHP. Viz `docs/backend.md`.
+2. **Mobilní aplikace** — Angular + Capacitor. Stahuje od backendu **vždy všechny** balíky,
+   pro všechny stejně (GET bez parametrů, bez cookies, pevný User-Agent). OCR běží on-device
+   (ML Kit), vyhodnocení je lokální. Import souboru zůstává jako záloha.
+3. **Fetcher výsledků** — CLI na desktopu. Původní cesta přes soubor a zdroj archivu,
+   kterým se naplní backend.
 
-1. **Fetcher výsledků** — CLI na desktopu. Stahuje výsledky losování a tabulky výher hromadně
-   za období, nezávisle na tom, jaké tikety uživatel drží. Výstup: JSON.
-2. **Mobilní aplikace** — Angular + Capacitor, **bez `INTERNET` permission**. JSON se importuje
-   souborem, OCR běží on-device (ML Kit), vyhodnocení je lokální.
-
-Absence síťové permission v manifestu je ověřitelná záruka — je to funkce, ne opomenutí.
-Nikdy nenavrhuj dotaz na server vázaný na konkrétní tiket nebo vsazená čísla.
+Aplikace do 0.1.1 neměla `INTERNET` vůbec. Zadání síť připouští jen s tvrdým pravidlem, které
+platí dál doslova: **nikdy nenavrhuj dotaz na server vázaný na konkrétní tiket nebo vsazená
+čísla**, ani výběr balíků podle toho, co uživatel drží.
 
 **Stack: Angular + Capacitor**, ne nativní Kotlin (uživatel je Angular vývojář). Pluginy
 `@capacitor-mlkit/barcode-scanning` a `@capacitor-mlkit/text-recognition`.

@@ -42,6 +42,8 @@ Načte JSON s výsledky přes import souboru, čísla z tiketu získá OCR na za
 
 Pokud se ukáže, že import souboru je v praxi neúnosně nepohodlný, navrhni variantu se síťovou permission, ale s tvrdým pravidlem: stahují se **vždy všechny tahy za období**, nikdy dotaz vázaný na konkrétní tiket.
 
+> **Uplatněno 10. 9. 2026.** Import souboru se pro kontrolu dvakrát týdně ukázal jako nepoužitelný. Výsledky teď hlídá a publikuje backend v PHP a aplikace si je stahuje celé, pro všechny stejně (`docs/backend.md`). Kritérium „jediná permission je `CAMERA`“ tím padá. Je to slabší záruka než žádná síť vůbec, a proto ji nahrazují vymahatelné pojistky: oprávnění jsou právě `CAMERA` a `INTERNET`, TLS projde jedině na server výsledků, Googlí `datatransport` z ML Kitu je z manifestu odstraněný a na síť sahá jediný modul, který o tiketech neví. Hlídají to `app/test/soukromi.test.ts` a `app/test/sit.test.ts`.
+
 ## Fáze
 
 ### Fáze 0 — průzkum zdroje dat
@@ -98,7 +100,7 @@ Tohle jsou akceptační kritéria, ne doporučení:
 - `FLAG_SECURE` na aktivitách, aby nešly dělat screenshoty a náhledy v přepínači aplikací
 - lokální DB šifrovaná (SQLCipher), klíč v Android Keystore
 - snímky z kamery se zpracovávají ve streamu, nikdy se neukládají do MediaStore ani do cache
-- jediná permission je `CAMERA`, ve fázi 3 žádná síťová
+- jediná permission je `CAMERA`, ve fázi 3 žádná síťová *(nahrazeno, viz Architektura: `CAMERA` a `INTERNET` se síťovým allowlistem)*
 - notifikace nesmí obsahovat obsah tiketu ani výsledek vyhodnocení
 - číslo klubové karty z payloadu čárového kódu se zahazuje, neukládá se ani nezobrazuje
 

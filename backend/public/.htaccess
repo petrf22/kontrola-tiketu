@@ -1,0 +1,43 @@
+# Document root backendu. Servíruje se odsud jen /v1/*.json a robots.txt — nic jiného,
+# žádné PHP. Soubory v v1/ vyrábí `bin/vyherka tik` z cronu.
+#
+# Každý blok je v <IfModule>, aby chybějící modul na sdíleném hostingu neshodil celý web
+# chybou 500. Že hlavičky opravdu chodí, se ověří po nasazení (docs/backend.md).
+
+Options -Indexes
+DirectoryIndex disabled
+
+# Dočasné soubory publikace (.2026.json.xxxx.tmp) ani nic jiného s tečkou na začátku ven nesmí.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^(robots\.txt|v1/[a-z0-9-]+\.json)$ - [L]
+    RewriteRule ^ - [F]
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType "application/json; charset=utf-8" .json
+</IfModule>
+
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE application/json
+</IfModule>
+
+<IfModule mod_headers.c>
+    Header always set Strict-Transport-Security "max-age=31536000"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "no-referrer"
+    # Žádné cookies. Kdyby je hosting přidával sám, ať se k aplikaci nedostanou.
+    Header always unset Set-Cookie
+
+    <FilesMatch "\.json$">
+        # Klient se ptá vždy celým dotazem bez podmíněných hlaviček a nové pozná podle hashe
+        # v manifestu. Mezipaměť po cestě by mu jen podstrkovala staré soubory.
+        Header set Cache-Control "no-cache"
+        # Veřejná data; potřeba pro vývoj aplikace v prohlížeči.
+        Header set Access-Control-Allow-Origin "*"
+    </FilesMatch>
+</IfModule>

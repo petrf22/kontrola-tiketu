@@ -21,7 +21,7 @@ final class Konfigurace
      * @param string $verejne Adresář, ze kterého web servíruje `/v1/`.
      * @param string $sazby Soubor se sazbami Extra 6.
      * @param int $odRoku Od kterého roku se výsledky publikují.
-     * @param array<string, array{dny: list<string>, prvniDotaz: string}> $rozvrh Dny losování a čas prvního dotazu podle hry.
+     * @param array<string, array{dny: list<string>, prvniDotaz: string, oknoHodin: int}> $rozvrh Dny losování, čas prvního dotazu a délka hodinového okna podle hry.
      * @param string $denniDohaneni Kdy se jednou denně projdou otevřené týdny.
      * @param int $maxDotazuNaBeh Pojistka proti bušení do zdroje.
      */
@@ -55,13 +55,13 @@ final class Konfigurace
         }
         $vycisteny = [];
         foreach ($rozvrh as $hra => $nastaveni) {
-            if (!is_string($hra) || !is_array($nastaveni) || !is_array($nastaveni['dny'] ?? null)
-                || !is_string($nastaveni['prvniDotaz'] ?? null)) {
-                throw new \RuntimeException('Rozvrh hry musí mít „dny“ a „prvniDotaz“.');
+            if (!is_string($hra) || !is_array($nastaveni) || !is_array($nastaveni['dny'] ?? null)) {
+                throw new \RuntimeException('Rozvrh hry musí mít „dny“, „prvniDotaz“ a „oknoHodin“.');
             }
             $vycisteny[$hra] = [
                 'dny' => array_values(array_map(self::retezec(...), $nastaveni['dny'])),
-                'prvniDotaz' => $nastaveni['prvniDotaz'],
+                'prvniDotaz' => self::retezec($nastaveni['prvniDotaz'] ?? null),
+                'oknoHodin' => self::cislo($nastaveni['oknoHodin'] ?? null),
             ];
         }
 

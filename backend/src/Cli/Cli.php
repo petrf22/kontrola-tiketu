@@ -11,8 +11,13 @@ use KontrolaTiketu\Konfigurace;
 use KontrolaTiketu\Model;
 use KontrolaTiketu\Obdobi;
 use KontrolaTiketu\Preparsovani;
+use KontrolaTiketu\Sit\Klient;
+use KontrolaTiketu\Sit\Sit;
+use KontrolaTiketu\Sit\SitHttp;
+use KontrolaTiketu\Sit\ZakazanoRobots;
 use KontrolaTiketu\Soubory;
 use KontrolaTiketu\Vystup;
+use KontrolaTiketu\Zdroj\AllwynVyherka;
 
 /**
  * Příkazová řádka backendu. Spouští ji cron i člověk při nasazení.
@@ -27,11 +32,13 @@ final class Cli
     public const NAPOVEDA = <<<'TXT'
         Hlídání nových losování Allwyn a publikace výsledků pro aplikaci.
 
+          vyherka stahni --od 2026-01 --do 2026-37 [--hra sportka] [--archiv CESTA]
           vyherka preparsuj --out vysledky.json [--od RRRR-TT] [--do RRRR-TT]
                             [--hra sportka] [--archiv CESTA] [--sazby CESTA]
           vyherka stav [--archiv CESTA]
 
         Týden se zadává jako RRRR-TT. Bez --hra se pracuje s oběma hrami.
+        Týden, který už v archivu je, stahni znovu nestahuje.
         Výchozí cesty jsou v config/konfigurace.php.
         TXT;
 
@@ -48,6 +55,8 @@ final class Cli
         private readonly Konfigurace $konfigurace,
         ?\Closure $vystup = null,
         ?\Closure $hlaseni = null,
+        private readonly Sit $sit = new SitHttp(),
+        private readonly int $prodlevaMs = Klient::PRODLEVA_MS,
     ) {
         $this->vystup = $vystup ?? static function (string $radek): void {
             fwrite(STDOUT, $radek . "\n");
@@ -63,6 +72,7 @@ final class Cli
         try {
             $a = Argumenty::rozeber($argv, ['od', 'do', 'hra', 'archiv', 'out', 'sazby']);
             return match ($a->prikaz) {
+                'stahni' => $this->stahni($a),
                 'preparsuj' => $this->preparsuj($a),
                 'stav' => $this->stav($a),
                 default => throw new ChybaArgumentu("Neznámý příkaz „{$a->prikaz}“."),
@@ -70,10 +80,59 @@ final class Cli
         } catch (ChybaArgumentu | ChybaObdobi $chyba) {
             ($this->hlaseni)($chyba->getMessage() . "\n\n" . self::NAPOVEDA);
             return 2;
+        } catch (ZakazanoRobots $chyba) {
+            ($this->hlaseni)($chyba->getMessage());
+            return 3;
         } catch (\Throwable $chyba) {
             ($this->hlaseni)($chyba->getMessage());
             return 1;
         }
+    }
+
+    /**
+     * Ruční stažení období do archivu — při prvním naplnění nebo po výpadku. Běžný provoz
+     * obstarává `tik` z cronu.
+     */
+    private function stahni(Argumenty $a): int
+    {
+        $od = self::tyden($a->volba('od'));
+        $doTydne = self::tyden($a->volba('do'));
+        if ($od === null || $doTydne === null) {
+            throw new ChybaArgumentu('Příkaz stahni potřebuje --od a --do.');
+        }
+        $tydny = Obdobi::tydnyOdDo($od, $doTydne);
+        $archiv = $this->archiv($a);
+        $klient = new Klient($this->sit, $this->prodlevaMs);
+
+        ($this->hlaseni)('Ověřuji robots.txt na ' . AllwynVyherka::ZAKLADNI_URL . '…');
+        $klient->nactiRobots(AllwynVyherka::ZAKLADNI_URL);
+
+        $stazeno = 0;
+        $preskoceno = 0;
+        $prazdnych = 0;
+        foreach ($this->hry($a) as $hra) {
+            foreach ($tydny as $tyden) {
+                $souradnice = ['hra' => $hra, 'rok' => $tyden['rok'], 'tyden' => $tyden['tyden']];
+                if ($archiv->obsahuje($souradnice)) {
+                    $preskoceno += 1;
+                    continue;
+                }
+                $html = $klient->stahni(AllwynVyherka::sestavUrl($hra, $tyden['rok'], $tyden['tyden']));
+                $archiv->uloz($souradnice, $html);
+                $stazeno += 1;
+                if (AllwynVyherka::jePrazdna($html)) {
+                    $prazdnych += 1;
+                } else {
+                    ($this->hlaseni)("  {$hra} " . Obdobi::formatujTyden($tyden));
+                }
+            }
+        }
+
+        ($this->hlaseni)(
+            "Hotovo: {$stazeno} staženo (z toho {$prazdnych} prázdných), {$preskoceno} už bylo v archivu. "
+            . "Dotazů celkem: {$klient->pocetDotazu}.",
+        );
+        return 0;
     }
 
     private function preparsuj(Argumenty $a): int

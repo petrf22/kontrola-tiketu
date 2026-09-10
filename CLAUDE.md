@@ -171,9 +171,9 @@ Nikdy nenavrhuj dotaz na server vázaný na konkrétní tiket nebo vsazená čí
 
 ## Verze a vydání
 
-**Zdroj pravdy o verzi je kořenový `VERSION` a `CHANGELOG.md`.** Sedm souborů z nich generuje
-`npm run verze` — pět `package.json`, `versionCode`/`versionName` v `app/android/app/build.gradle`
-a `app/src/app/data/verze.generated.ts` pro obrazovku „O aplikaci“. **Needituj je ručně**;
+**Zdroj pravdy o verzi je kořenový `VERSION` a `CHANGELOG.md`.** Osm souborů z nich generuje
+`npm run verze` — pět `package.json`, `versionCode`/`versionName` v `app/android/app/build.gradle`,
+`app/src/app/data/verze.generated.ts` pro obrazovku „O aplikaci“ a `backend/src/Verze.php`. **Needituj je ručně**;
 že sedí se zdrojem, hlídá `test/verze.test.ts`.
 
 `versionCode = major*10000 + minor*100 + patch`. Google Play už nikdy nepřijme nižší

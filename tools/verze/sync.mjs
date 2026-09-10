@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Sjednocené verzování celého repozitáře (docs/vydani.md, sekce "Postup vydání").
 // Kořenové VERSION + CHANGELOG.md jsou jediný zdroj pravdy — tenhle skript z nich přepisuje
-// sedm commitovaných výstupů (pět package.json, versionCode/versionName v Android buildu
-// a historii změn pro obrazovku "O aplikaci"). Spouští se `npm run verze`.
+// osm commitovaných výstupů (pět package.json, versionCode/versionName v Android buildu,
+// historii změn pro obrazovku "O aplikaci" a verzi PHP backendu). Spouští se `npm run verze`.
 //
 // Že generované soubory skutečně sedí se zdrojem, hlídá test/verze.test.ts. V předloze
 // (~/pracovni/kvalita-cena) to dělá CI přes `git diff --exit-code`; tenhle projekt CI nemá,
@@ -20,7 +20,7 @@ const HLASKA = '// Generováno tools/verze/sync.mjs z kořenového VERSION — n
  * `build` je pro změny sestavování a vydávání — do repa patří, ale uživatel aplikace je
  * nemá jak poznat, tak se do historie v aplikaci nedostanou.
  */
-export const CASTI = ['aplikace', 'jádro', 'fetcher', 'build'];
+export const CASTI = ['aplikace', 'jádro', 'fetcher', 'backend', 'build'];
 
 /** package.json soubory, ve kterých se drží jedno společné číslo verze. */
 const BALICKY = [
@@ -33,6 +33,7 @@ const BALICKY = [
 
 const GRADLE = 'app/android/app/build.gradle';
 const HISTORIE_TS = 'app/src/app/data/verze.generated.ts';
+const VERZE_PHP = 'backend/src/Verze.php';
 
 const cti = (koren, relativni) => readFileSync(path.join(koren, relativni), 'utf8');
 
@@ -189,6 +190,7 @@ export function generuj(koren = KOREN) {
   }
 
   vystup.set(HISTORIE_TS, historieProAplikaci(verze, vydani));
+  vystup.set(VERZE_PHP, verzeBackendu(verze));
   return vystup;
 }
 
@@ -255,6 +257,27 @@ function historieProAplikaci(verze, vydani) {
     'export const HISTORIE: readonly Vydani[] = [\n' +
     `${telo}\n` +
     '];\n'
+  );
+}
+
+/**
+ * Verze PHP backendu. Composer pole "version" nedoporučuje, a backend verzi potřebuje
+ * za běhu — nese ji v User-Agentu, kterým se představuje Allwynu.
+ */
+function verzeBackendu(verze) {
+  return (
+    '<?php\n' +
+    '\n' +
+    '// Generováno tools/verze/sync.mjs z kořenového VERSION — needituj ručně.\n' +
+    '\n' +
+    'declare(strict_types=1);\n' +
+    '\n' +
+    'namespace KontrolaTiketu;\n' +
+    '\n' +
+    'final class Verze\n' +
+    '{\n' +
+    `    public const VERZE = '${verze}';\n` +
+    '}\n'
   );
 }
 

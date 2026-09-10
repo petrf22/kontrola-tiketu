@@ -17,7 +17,7 @@ Všechno ostatní se z nich generuje příkazem:
 npm run verze
 ```
 
-Skript `tools/verze/sync.mjs` přepíše sedm commitovaných souborů:
+Skript `tools/verze/sync.mjs` přepíše osm commitovaných souborů:
 
 | Soubor | Co |
 |---|---|
@@ -28,6 +28,7 @@ Skript `tools/verze/sync.mjs` přepíše sedm commitovaných souborů:
 | `packages/ocr/package.json` | `"version"` |
 | `app/android/app/build.gradle` | `versionCode` + `versionName` |
 | `app/src/app/data/verze.generated.ts` | verze a historie pro obrazovku „O aplikaci“ |
+| `backend/src/Verze.php` | verze PHP backendu, kterou nese jeho User-Agent |
 
 Ručně se needitují. Že sedí se zdrojem, hlídá `test/verze.test.ts` — předloha na to má CI
 (`sync.mjs` + `git diff --exit-code`), tenhle projekt CI nemá, tak je pojistka v testech.
@@ -301,8 +302,8 @@ Tenhle projekt je sólo a commituje se **přímo do `main`**, bez feature větv�
 1. Doplnit položky do `## [Nezveřejněno]` v `CHANGELOG.md` a přejmenovat sekci
    na `## [X.Y.Z] – RRRR-MM-DD`.
 2. Zapsat `X.Y.Z` do `VERSION`.
-3. `npm run verze` — přepíše sedm generovaných souborů.
-4. `git diff --stat` — musí ukázat právě těch sedm plus `VERSION` a `CHANGELOG.md`.
+3. `npm run verze` — přepíše osm generovaných souborů.
+4. `git diff --stat` — musí ukázat právě těch osm plus `VERSION` a `CHANGELOG.md`.
    Cokoli navíc znamená, že skript sáhl, kam neměl; zastavit se.
 5. `npm test` a `npm run typecheck`.
 6. Commit a tag:

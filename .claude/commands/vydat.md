@@ -46,7 +46,7 @@ npm run verze
 git diff --stat
 ```
 
-Musí se změnit právě těch sedm generovaných souborů plus `VERSION` a `CHANGELOG.md`.
+Musí se změnit právě těch osm generovaných souborů plus `VERSION` a `CHANGELOG.md`.
 **Cokoli navíc — zastav se a zeptej.**
 
 ## Krok 4: Kontrola

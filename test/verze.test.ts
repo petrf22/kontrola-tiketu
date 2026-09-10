@@ -18,11 +18,12 @@ const cti = (relativni: string) => readFileSync(join(KOREN, relativni), 'utf8');
 const GENEROVANE: Map<string, string> = generuj();
 
 describe('generované soubory sedí se zdrojem', () => {
-  it('generuje se právě sedm souborů', () => {
+  it('generuje se právě osm souborů', () => {
     expect([...GENEROVANE.keys()].sort()).toEqual([
       'app/android/app/build.gradle',
       'app/package.json',
       'app/src/app/data/verze.generated.ts',
+      'backend/src/Verze.php',
       'fetcher/package.json',
       'package.json',
       'packages/jadro/package.json',
@@ -160,7 +161,7 @@ describe('CHANGELOG.md tohoto repozitáře', () => {
 });
 
 describe('generátor proti podvrženému kořeni', () => {
-  /** Zkopíruje sedm generovaných souborů do dočasného adresáře a podstrčí vlastní zdroj. */
+  /** Zkopíruje osm generovaných souborů do dočasného adresáře a podstrčí vlastní zdroj. */
   function docasnyKoren(verze: string, changelog: string): string {
     const koren = mkdtempSync(join(tmpdir(), 'verze-test-'));
     for (const relativni of GENEROVANE.keys()) {
@@ -176,7 +177,7 @@ describe('generátor proti podvrženému kořeni', () => {
   const changelog = (verze: string) =>
     `# Změny\n\n## [${verze}] – 2026-09-09\n\n### Přidáno\n- Něco (aplikace)\n`;
 
-  it('zapíše novou verzi do všech sedmi souborů', () => {
+  it('zapíše novou verzi do všech osmi souborů', () => {
     const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
     const soubory: Map<string, string> = generuj(koren);
     for (const [relativni, obsah] of soubory) {
@@ -187,6 +188,7 @@ describe('generátor proti podvrženému kořeni', () => {
     expect(soubory.get('app/android/app/build.gradle')).toContain('versionCode 10203');
     expect(soubory.get('app/android/app/build.gradle')).toContain('versionName "1.2.3"');
     expect(soubory.get('app/src/app/data/verze.generated.ts')).toContain("VERZE = '1.2.3'");
+    expect(soubory.get('backend/src/Verze.php')).toContain("VERZE = '1.2.3'");
   });
 
   it('přepíše hlášku o generování, nezdvojí ji', () => {

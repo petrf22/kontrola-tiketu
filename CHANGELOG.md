@@ -10,9 +10,15 @@ z nich vznikají přes `npm run verze` — needituj je ručně.
 **Každá položka musí být na jednom řádku** — parser víceřádkové položky neumí a raději spadne,
 než by je tiše uřízl. Dlouhý řádek je tu žádoucí kompromis za jednoduchost skriptu.
 
-Suffix v závorce na konci položky říká, čeho se změna týká: `(aplikace)`, `(jádro)`, `(fetcher)`.
-Do historie v aplikaci se dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá,
-co se změnilo v CLI na desktopu.
+Suffix v závorce na konci položky říká, čeho se změna týká: `(aplikace)`, `(jádro)`,
+`(fetcher)`, `(build)`. Do historie v aplikaci se dostanou jen položky označené `aplikace` —
+uživatele mobilu nezajímá, co se změnilo v CLI na desktopu ani v sestavování. Vydání, ve kterém
+pro uživatele nic není, se v aplikaci neukáže vůbec.
+
+## [0.1.1] – 2026-09-10
+
+### Opraveno
+- Balíček AAB pro Google Play jde vůbec sestavit: rozdělení APK podle architektur se se sestavením bundlu nesnese a build na něm padal (build)
 
 ## [0.1.0] – 2026-09-09
 

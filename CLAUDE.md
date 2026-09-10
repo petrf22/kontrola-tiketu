@@ -81,7 +81,7 @@ Ověřené příkazy (npm workspace, Node 24):
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 424 testů (jádro, ocr, fetcher, soukromí aplikace i verze)
+npm test             # vitest, 427 testů (jádro, ocr, fetcher, soukromí aplikace i verze)
 npm run typecheck    # tsc --build, strict
 npm run verze        # přegeneruje verzi ze zdroje; musí projít bez změny souborů
 
@@ -186,3 +186,8 @@ v `docs/vydani.md`. Globální `/release-gitlab` na tenhle projekt nesedí (hled
 Release build se podepisuje vlastním klíčem, když jsou v `~/.gradle/gradle.properties`
 property `KONTROLA_TIKETU_*`; jinak spadne na ladicí klíč, aby šel R8 ověřit i bez klíče.
 Artefakt pro Play dělá `./gradlew :app:publishableBundle`, který bez klíče **selže**.
+
+**AAB a rozdělená APK se musí stavět dvěma spuštěními Gradlu**, ne jedním. Rozdělení podle ABI
+se se `shrinkResources` a `bundleRelease` nesnese (AGP 8.13), takže se pro bundle vypíná —
+`splits.abi.enable` se odvozuje z názvů požadovaných tasků. Při souběhu se build zastaví
+už v konfiguraci. Viz `docs/vydani.md`, „Past: AAB a rozdělená APK se nesnesou“.

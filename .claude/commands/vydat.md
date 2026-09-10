@@ -87,8 +87,14 @@ cp app/android/local.properties "$WORKDIR/app/android/"
 cd "$WORKDIR" && npm ci
 export ANDROID_HOME=$HOME/Android/Sdk JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 cd app && npx ng build && npx cap sync android
-cd android && ./gradlew :app:publishableBundle
+cd android
+./gradlew :app:publishableBundle    # AAB pro Play
+./gradlew :app:publishableApk       # APK na vyzkoušení na telefonu
 ```
+
+**Zvlášť, ne najednou** — rozdělení APK podle architektur se se sestavením bundlu nesnese
+a build se v takovém případě zastaví už v konfiguraci. Viz `docs/vydani.md`, „Past: AAB
+a rozdělená APK se nesnesou“.
 
 `local.properties` se negituje — bez zkopírování build spadne na chybějící `sdk.dir`.
 `publishableBundle` bez podpisového klíče selže; to je záměr, viz `docs/vydani.md`.
@@ -98,6 +104,7 @@ Artefakt ulož mimo worktree a worktree ukliď:
 ```bash
 mkdir -p ~/releases/kontrola-tiketu/vX.Y.Z
 cp "$WORKDIR/app/android/app/build/outputs/bundle/release/app-release.aab" ~/releases/kontrola-tiketu/vX.Y.Z/
+cp "$WORKDIR/app/android/app/build/outputs/apk/release/app-arm64-v8a-release.apk" ~/releases/kontrola-tiketu/vX.Y.Z/
 git worktree remove "$WORKDIR"
 ```
 

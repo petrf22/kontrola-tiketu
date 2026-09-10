@@ -12,6 +12,15 @@ def releaseKeyAlias = findProperty('KONTROLA_TIKETU_KEY_ALIAS')
 def releaseKeyPassword = findProperty('KONTROLA_TIKETU_KEY_PASSWORD')
 def hasReleaseSigning = releaseStoreFile && releaseStorePassword && releaseKeyAlias && releaseKeyPassword
 
+// Staví se AAB? Rozhoduje se z názvů požadovaných tasků, protože rozdělení APK podle ABI
+// se s bundlem nesnese (viz komentář u splits níž). Nedá se to poznat jinak než takhle —
+// v době konfigurace ještě žádný task neběží.
+def staviSeBundle = gradle.startParameter.taskNames.any { it.toLowerCase().contains('bundle') }
+def staviSeApk = gradle.startParameter.taskNames.any {
+    def t = it.toLowerCase()
+    t.contains('assemble') || t.contains('publishableapk')
+}
+
 android {
     namespace = "cz.petrf22.kontrolatiketu"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -20,8 +29,8 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // Generováno tools/verze/sync.mjs z kořenového VERSION — needituj ručně.
-        versionCode 100
-        versionName "0.1.0"
+        versionCode 101
+        versionName "0.1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -43,11 +52,15 @@ android {
     // Nativní knihovny (SQLCipher, ML Kit) tvoří většinu velikosti a každá architektura
     // je v balíku zvlášť. Rozdělením vznikne APK pro každou zvlášť, takže se do telefonu
     // dostane jen ta jeho. Play Bundle dělá totéž; tohle je jeho obdoba pro sideload.
-    // Na bundleRelease se rozdělení nevztahuje — AAB si splity řeší sám a tohle nastavení
-    // ignoruje. Play tedy dostane AAB, telefon mimo Play arm64 APK.
+    //
+    // Rozdělení se ale NESMÍ potkat s bundleRelease: se zapnutým shrinkResources vyrobí R8
+    // zkrácené zdroje zvlášť pro každou architekturu a sestavení AAB pak spadne na
+    // "Multiple shrunk-resources files found" (AGP 8.13, issuetracker 402800800). AAB si
+    // splity dělá sám, takže se pro něj rozdělení vypne. Důsledek: APK a AAB se musí stavět
+    // dvěma oddělenými spuštěními Gradlu — viz kontrola pod blokem android.
     splits {
         abi {
-            enable true
+            enable !staviSeBundle
             reset()
             include 'arm64-v8a', 'armeabi-v7a', 'x86_64'
             universalApk true   // ať zůstane i verze pro všechny, kdyby byla potřeba
@@ -100,6 +113,17 @@ try {
     }
 } catch(Exception e) {
     logger.info("google-services.json not found, google-services plugin not applied. Push Notifications won't work")
+}
+
+// Obojí najednou nejde: rozdělení podle ABI je buď zapnuté (APK), nebo vypnuté (AAB), a mění
+// se v době konfigurace. Bez téhle kontroly by APK tiše vyšlo jen univerzální — 75 MB místo 26.
+if (staviSeBundle && staviSeApk) {
+    throw new GradleException(
+        'AAB a rozdělená APK nejdou sestavit jedním spuštěním Gradlu — rozdělení podle ABI se ' +
+        'musí pro bundle vypnout. Spusť je zvlášť:\n' +
+        '  ./gradlew :app:publishableBundle\n' +
+        '  ./gradlew :app:publishableApk\n' +
+        'Viz docs/vydani.md, "Past: AAB a rozdělená APK se nesnesou".')
 }
 
 // --- Publikace: podepsaný a OVĚŘENÝ artefakt (docs/vydani.md, "Podpisový klíč") -------------

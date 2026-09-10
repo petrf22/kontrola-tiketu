@@ -15,8 +15,12 @@ export const KOREN = path.resolve(fileURLToPath(new URL('.', import.meta.url)), 
 
 const HLASKA = '// Generováno tools/verze/sync.mjs z kořenového VERSION — needituj ručně.';
 
-/** Části projektu, které smí stát v závorce na konci položky changelogu. */
-export const CASTI = ['aplikace', 'jádro', 'fetcher'];
+/**
+ * Části projektu, které smí stát v závorce na konci položky changelogu.
+ * `build` je pro změny sestavování a vydávání — do repa patří, ale uživatel aplikace je
+ * nemá jak poznat, tak se do historie v aplikaci nedostanou.
+ */
+export const CASTI = ['aplikace', 'jádro', 'fetcher', 'build'];
 
 /** package.json soubory, ve kterých se drží jedno společné číslo verze. */
 const BALICKY = [
@@ -199,14 +203,21 @@ function historieProAplikaci(verze, vydani) {
   const l = (s) => `'${s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 
   const telo = vydani
-    .map((v) => {
-      const sekce = v.sekce
+    .map((v) => ({
+      ...v,
+      sekce: v.sekce
         .map((s) => ({
           nazev: s.nazev,
-          // Uživatele mobilu nezajímá, co se změnilo v CLI na desktopu.
+          // Uživatele mobilu nezajímá, co se změnilo v CLI na desktopu ani v buildu.
           polozky: s.polozky.filter((p) => p.casti.length === 0 || p.casti.includes('aplikace')),
         }))
-        .filter((s) => s.polozky.length > 0)
+        .filter((s) => s.polozky.length > 0),
+    }))
+    // Vydání, ve kterém se pro uživatele nezměnilo nic, se v aplikaci vůbec neukazuje —
+    // prázdný nadpis pod "Co je nového" vypadá jako chyba.
+    .filter((v) => v.sekce.length > 0)
+    .map((v) => {
+      const sekce = v.sekce
         .map(
           (s) =>
             `      {\n        nazev: ${l(s.nazev)},\n        polozky: [\n` +

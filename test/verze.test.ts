@@ -122,6 +122,13 @@ describe('parser CHANGELOG.md', () => {
     expect(() => parsujChangelog(text)).toThrow(/víceřádková/);
   });
 
+  it('nechá závorku být, když je v ní jen část neznámá', () => {
+    const [vydani] = parsujChangelog(
+      '## [0.1.0] – 2026-09-09\n\n### Přidáno\n- Něco (aplikace, marketing)\n',
+    );
+    expect(vydani.sekce[0].polozky[0].casti).toEqual([]);
+  });
+
   it('padne, když v souboru není žádné vydání', () => {
     expect(() => parsujChangelog('# Změny\n\nZatím nic.\n')).toThrow(/žádné vydání/);
   });
@@ -193,6 +200,34 @@ describe('generátor proti podvrženému kořeni', () => {
     const gradle = podruhe.get('app/android/app/build.gradle')!;
     expect(gradle.match(/Generováno tools\/verze\/sync\.mjs/g)).toHaveLength(1);
     expect(gradle).toBe(jednou.get('app/android/app/build.gradle'));
+  });
+
+  it('vydání beze změn pro uživatele se do aplikace vůbec nedostane', () => {
+    // Oprava sestavování je pro uživatele neviditelná; prázdný nadpis pod „Co je nového“
+    // by vypadal jako chyba.
+    const changelog =
+      '# Změny\n\n' +
+      '## [0.2.0] – 2026-10-01\n\n### Opraveno\n- Něco v buildu (build)\n\n' +
+      '## [0.1.0] – 2026-09-09\n\n### Přidáno\n- Něco viditelného (aplikace)\n';
+    const koren = docasnyKoren('0.2.0', changelog);
+    const ts: string = generuj(koren).get('app/src/app/data/verze.generated.ts')!;
+
+    expect(ts).toContain("VERZE = '0.2.0'");
+    expect(ts).not.toContain("verze: '0.2.0'");
+    expect(ts).toContain("verze: '0.1.0'");
+    expect(ts).not.toContain('Něco v buildu');
+  });
+
+  it('do aplikace nepustí změny fetcheru ani jádra', () => {
+    const changelog =
+      '# Změny\n\n## [0.3.0] – 2026-11-01\n\n### Přidáno\n' +
+      '- Viditelná věc (aplikace)\n- Věc v CLI (fetcher)\n- Věc ve výpočtu (jádro)\n';
+    const koren = docasnyKoren('0.3.0', changelog);
+    const ts: string = generuj(koren).get('app/src/app/data/verze.generated.ts')!;
+
+    expect(ts).toContain('Viditelná věc');
+    expect(ts).not.toContain('Věc v CLI');
+    expect(ts).not.toContain('Věc ve výpočtu');
   });
 
   it('padne, když CHANGELOG.md nemá sekci pro verzi z VERSION', () => {

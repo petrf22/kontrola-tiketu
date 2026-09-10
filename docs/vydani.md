@@ -103,6 +103,8 @@ cd app/android
 ./gradlew :app:publishableApk       # APK pro sideload, ověřené apksignerem
 ```
 
+Zvlášť, ne najednou — viz „Past: AAB a rozdělená APK se nesnesou“.
+
 `jarsigner` se pouští bez `-strict` — klíč je self-signed a přísný režim by hlásil
 `chainNotValidated`, i když je podpis v pořádku.
 
@@ -120,9 +122,28 @@ a v cestě `android/app/src/main/java/cz/petrf22/kontrolatiketu/`.
 ### Nahrávaný formát
 
 Do Play jde **AAB** (`app/android/app/build/outputs/bundle/release/app-release.aab`).
-Rozdělení podle ABI (`splits.abi` v `build.gradle`) se na AAB nevztahuje — bundle si splity
-řeší sám. Rozdělená APK zůstávají pro sideload mimo Play, kde na velkých APK vypršel
-Play Protect (viz `CLAUDE.md`).
+Rozdělená APK zůstávají pro sideload mimo Play, kde na velkých APK vypršel Play Protect
+(viz `CLAUDE.md`).
+
+### Past: AAB a rozdělená APK se nesnesou
+
+Se zapnutým `shrinkResources` vyrobí R8 zkrácené zdroje **zvlášť pro každou architekturu**
+a sestavení bundlu pak spadne na:
+
+```
+Multiple shrunk-resources files found in directory '…/shrunk_resources_proto_format/release/minifyReleaseWithR8'
+Please disable building multiple APKs when building an Android app bundle.
+```
+
+(AGP 8.13, [issuetracker 402800800](https://issuetracker.google.com/402800800).) Narazilo se
+na to při prvním ostrém sestavení AAB 10. 9. 2026.
+
+Řešení v `app/android/app/build.gradle`: `splits.abi.enable` se odvozuje od názvů požadovaných
+tasků a pro bundle se rozdělení vypne. AAB si splity dělá sám, takže se tím nic neztrácí.
+
+**Důsledek: AAB a APK se musí stavět dvěma oddělenými spuštěními Gradlu.** Když se zadají
+najednou, build se zastaví hned v konfiguraci se srozumitelnou hláškou — bez té kontroly by
+z toho tiše vyšlo jen univerzální APK (75 MB místo 26).
 
 ### Play App Signing
 
@@ -280,10 +301,13 @@ cd "$WORKDIR"
 npm ci
 export ANDROID_HOME=$HOME/Android/Sdk JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
 cd app && npx ng build && npx cap sync android
-cd android && ./gradlew :app:publishableBundle
+cd android
+./gradlew :app:publishableBundle    # AAB pro Play
+./gradlew :app:publishableApk       # APK na vyzkoušení na telefonu; zvlášť, ne najednou
 
 mkdir -p ~/releases/kontrola-tiketu/vX.Y.Z
 cp app/build/outputs/bundle/release/app-release.aab ~/releases/kontrola-tiketu/vX.Y.Z/
+cp app/build/outputs/apk/release/app-arm64-v8a-release.apk ~/releases/kontrola-tiketu/vX.Y.Z/
 ```
 
 Uklidit: `git worktree remove "$WORKDIR"`.

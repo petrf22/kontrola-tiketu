@@ -79,8 +79,10 @@ Otisk klíče (`keytool -list -v -keystore …`) si zapiš sem, ať jde kdykoli 
 podepisuje tím, čím má:
 
 ```
-SHA-256: (doplnit po vygenerování klíče)
-Vytvořen: (doplnit)
+Alias:    kontrola-tiketu
+Klíč:     4096-bit RSA, SHA384withRSA
+SHA-256:  6B:36:88:46:F9:59:30:29:6D:F9:C0:A5:F3:9F:6B:7C:F4:0D:74:A9:1F:46:1A:B4:66:4E:A2:C7:4C:F3:C0:9D
+Vytvořen: 10. 9. 2026, platí do 19. 7. 2059
 ```
 
 `.gitignore` má `*.jks`, `*.keystore` i `keystore.properties` v kořeni i v `app/android/`.
@@ -156,9 +158,16 @@ Play vyžaduje **veřejnou URL** se zásadami ochrany osobních údajů u každ�
 žádá o citlivé oprávnění — `CAMERA` mezi ně patří. Text je
 v [`docs/zasady-ochrany-osobnich-udaju.md`](zasady-ochrany-osobnich-udaju.md).
 
-> **Otevřená věc:** projekt nemá web a repozitář na GitHubu musí být pro tenhle odkaz
-> **veřejný**, jinak URL nebude fungovat. Rozhodnout: zveřejnit repozitář, nebo text vystavit
-> zvlášť (GitHub Pages, gist).
+Adresa do Play Console:
+
+```
+https://github.com/petrf22/kontrola-tiketu/blob/main/docs/zasady-ochrany-osobnich-udaju.md
+```
+
+Repozitář je veřejný a GitHub markdown vykresluje, takže je to použitelná stránka bez
+zakládání webu. Odkaz míří na `main` schválně — zásady mají popisovat, co aplikace dělá teď,
+ne co dělala v době vydání. **Když se repozitář kdykoli přepne na soukromý, přestane odkaz
+fungovat a Play na to sáhne při první další aktualizaci.**
 
 ### Data safety
 
@@ -303,8 +312,9 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 
 ## Co vydání ještě blokuje
 
-- **Podpisový klíč zatím neexistuje** — vygenerovat podle sekce výše a zálohovat.
-- **Veřejná URL se zásadami ochrany osobních údajů** — viz otevřená věc výše.
+- ~~Podpisový klíč~~ — vytvořen 10. 9. 2026, otisk výše. **Zálohovat mimo tenhle počítač;
+  bez něj se aplikace se stejným `applicationId` už nikdy nevydá.**
+- ~~Veřejná adresa se zásadami~~ — vyřešená, viz výše.
 - **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
   je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
   a míří na uzavřený test, ne rovnou do produkce.

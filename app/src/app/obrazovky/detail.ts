@@ -139,7 +139,7 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
       <p class="overeni">
         Čísla si můžeš ověřit na
         <a [href]="odkazNaVysledky()" target="_blank" rel="noopener noreferrer">stránkách Allwyn</a>.
-        Odkaz otevře prohlížeč — aplikace sama na síť nechodí a nemá k tomu ani oprávnění.
+        Odkaz otevře prohlížeč; aplikace sama na stránky Allwyn nechodí a nic jim neposílá.
       </p>
 
       @if (!mazani()) {

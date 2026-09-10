@@ -2,7 +2,7 @@
  * Stav aplikace nad úložištěm.
  *
  * Drží tikety, tahy a sazby, umí je uložit a vyhodnotit. Obrazovky se tak nemusí starat
- * o pořadí operací ani o slučování importů.
+ * o pořadí operací ani o slučování importů a stažení.
  */
 
 import { Injectable, computed, inject, signal } from '@angular/core';
@@ -14,12 +14,20 @@ import {
   type Tiket,
   type VysledekTiketu,
 } from '@kontrola-tiketu/jadro';
-import { maTrvaleUloziste, ULOZISTE } from './tokeny.js';
+import { maTrvaleUloziste, SIT, ULOZISTE } from './tokeny.js';
 import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js';
+import { stahniVysledky, type KontrolaServeru } from './stahovani.js';
+import { shrnutiStazeni, zpracujStazene } from './vysledkyZeServeru.js';
+
+export interface Zprava {
+  readonly uspech: boolean;
+  readonly zprava: string;
+}
 
 @Injectable({ providedIn: 'root' })
 export class Stav {
   private readonly uloziste = inject(ULOZISTE);
+  private readonly sit = inject(SIT);
 
   readonly tikety = signal<readonly Tiket[]>([]);
   readonly tahy = signal<readonly Tah[]>([]);
@@ -34,6 +42,15 @@ export class Stav {
 
   /** Do kdy má aplikace výsledky. Uživatel tak ví, jestli má smysl něco doimportovat. */
   readonly vysledkyDo = computed(() => this.tahy().at(-1)?.datum ?? null);
+
+  /** Právě se stahují výsledky ze serveru. */
+  readonly stahuje = signal(false);
+
+  /** Co server hlásil o poslední kontrole losování. `null`, dokud se stažení nepovedlo. */
+  readonly kontrolaServeru = signal<KontrolaServeru | null>(null);
+
+  /** Jak dopadl poslední pokus o stažení — pro obrazovku výsledků. */
+  readonly posledniStazeni = signal<Zprava | null>(null);
 
   async nacti(): Promise<void> {
     try {
@@ -76,9 +93,9 @@ export class Stav {
       return { uspech: false, zprava: vysledek.duvod };
     }
 
-    const slouceno = sloucTahy(this.tahy(), vysledek.tahy);
-    await this.uloziste.ulozTahy(slouceno);
-    this.tahy.set(slouceno);
+    // Do úložiště jen nové tahy — úložiště je doplní, nemusí přepisovat celý seznam.
+    await this.uloziste.ulozTahy(vysledek.tahy);
+    this.tahy.set(sloucTahy(this.tahy(), vysledek.tahy));
 
     if (vysledek.sazbyExtra6.length > 0) {
       await this.uloziste.ulozSazby(vysledek.sazbyExtra6);
@@ -86,6 +103,54 @@ export class Stav {
     }
 
     return { uspech: true, zprava: shrnutiImportu(vysledek) };
+  }
+
+  /**
+   * Stáhne ze serveru všechny balíky výsledků, které se od minula změnily.
+   *
+   * Spouští se po otevření aplikace a tlačítkem na obrazovce výsledků. Selhání je běžný
+   * stav — telefon bývá offline — a nesmí rozbít nic, co už aplikace má.
+   */
+  async stahniVysledky(): Promise<Zprava> {
+    if (this.chybaUloziste() !== null) {
+      return this.zapis({ uspech: false, zprava: 'Bez databáze se výsledky nemají kam uložit.' });
+    }
+    if (this.stahuje()) return { uspech: false, zprava: 'Stahování už běží.' };
+
+    this.stahuje.set(true);
+    try {
+      const stazeno = await stahniVysledky(this.sit, await this.uloziste.nactiHashe());
+      if (stazeno.stav === 'chyba') return this.zapis({ uspech: false, zprava: stazeno.duvod });
+
+      const zpracovano = zpracujStazene(this.tahy(), stazeno.nove);
+      if (zpracovano.stav === 'chyba') return this.zapis({ uspech: false, zprava: zpracovano.duvod });
+
+      for (const balik of zpracovano.baliky) {
+        await this.uloziste.ulozTahy(balik.tahy);
+        if (balik.sazbyExtra6.length > 0) {
+          await this.uloziste.ulozSazby(balik.sazbyExtra6);
+          this.sazby.set(balik.sazbyExtra6);
+        }
+        // Hash až po datech: kdyby aplikace mezitím spadla, balík se příště stáhne znovu.
+        await this.uloziste.ulozHash(balik.soubor, balik.hash);
+        this.tahy.set(sloucTahy(this.tahy(), balik.tahy));
+      }
+
+      this.kontrolaServeru.set(stazeno.manifest.kontrola);
+      return this.zapis({ uspech: true, zprava: shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno) });
+    } catch (chyba) {
+      return this.zapis({
+        uspech: false,
+        zprava: `Výsledky se nepodařilo uložit: ${chyba instanceof Error ? chyba.message : String(chyba)}`,
+      });
+    } finally {
+      this.stahuje.set(false);
+    }
+  }
+
+  private zapis(zprava: Zprava): Zprava {
+    this.posledniStazeni.set(zprava);
+    return zprava;
   }
 
   vyhodnot(tiket: Tiket): VysledekTiketu {

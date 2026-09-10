@@ -58,8 +58,9 @@ describe('síť sahá jediný modul', () => {
   it('síťový modul nezná tikety, stav ani úložiště', () => {
     const kod = soubory.find((s) => s.jmeno === SITOVY_MODUL)!.kod;
     const importy = [...kod.matchAll(/^import\s[\s\S]*?from\s+['"]([^'"]+)['"]/gm)].map((m) => m[1]);
-    // Jen Capacitor. Žádné jádro (Tiket), žádný stav, žádné úložiště — nemá jak se k tiketům dostat.
-    expect(importy).toEqual(['@capacitor/core']);
+    // Jen Capacitor a adresa. Žádné jádro (Tiket), žádný stav, žádné úložiště — nemá jak
+    // se k tiketům dostat.
+    expect(importy).toEqual(['@capacitor/core', './adresa-backendu.js']);
     expect(kod).not.toMatch(/\bTiket\b/);
   });
 
@@ -70,8 +71,19 @@ describe('síť sahá jediný modul', () => {
     expect(kod).not.toMatch(/method\s*:\s*['"](POST|PUT|PATCH|DELETE)/i);
   });
 
-  it('adresa backendu je v aplikaci jen jednou', () => {
-    const vyskyty = soubory.filter((s) => s.kod.includes('/v1/'));
-    expect(vyskyty.map((s) => s.jmeno)).toEqual([SITOVY_MODUL]);
+  it('adresa backendu je v aplikaci jen na jednom místě', () => {
+    const vyskyty = soubory.filter((s) => s.kod.includes('/v1/')).map((s) => s.jmeno).sort();
+    expect(vyskyty).toEqual(['app/data/adresa-backendu.ts', 'app/data/adresa-backendu.vyvoj.ts']);
+  });
+
+  it('sestavení pro telefon nenahrazuje adresu lokální vývojovou', () => {
+    const angular = JSON.parse(readFileSync(new URL('../angular.json', import.meta.url), 'utf8'));
+    const projekt = Object.values(angular.projects)[0] as {
+      architect: { build: { defaultConfiguration: string; configurations: Record<string, { fileReplacements?: unknown[] }> } };
+    };
+    const build = projekt.architect.build;
+    expect(build.defaultConfiguration).toBe('production');
+    expect(build.configurations['production']!.fileReplacements).toBeUndefined();
+    expect(readFileSync(join(SRC, 'app/data/adresa-backendu.ts'), 'utf8')).toMatch(/'https:\/\//);
   });
 });

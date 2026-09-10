@@ -6,7 +6,7 @@
  * v Android Keystore) — viz UlozisteVPameti níž, kde je stav popsaný.
  */
 
-import type { SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
+import { sloucTahy, type SazbyExtra6, type Tah, type Tiket } from '@kontrola-tiketu/jadro';
 
 export interface Uloziste {
   /**
@@ -22,10 +22,18 @@ export interface Uloziste {
   smazTiket(id: string): Promise<void>;
 
   nactiTahy(): Promise<Tah[]>;
+  /**
+   * Doplní tahy. Tah se stejnou hrou a datem přepíše, ostatní nechá být — stačí tedy
+   * předat jen to nové, ne celý seznam.
+   */
   ulozTahy(tahy: readonly Tah[]): Promise<void>;
 
   nactiSazby(): Promise<SazbyExtra6[]>;
   ulozSazby(sazby: readonly SazbyExtra6[]): Promise<void>;
+
+  /** Hashe balíků stažených z backendu (`soubor` → `hash`) — co se znovu stahovat nemusí. */
+  nactiHashe(): Promise<Map<string, string>>;
+  ulozHash(soubor: string, hash: string): Promise<void>;
 }
 
 /**
@@ -39,6 +47,7 @@ export class UlozisteVPameti implements Uloziste {
   private tikety = new Map<string, Tiket>();
   private tahy: Tah[] = [];
   private sazby: SazbyExtra6[] = [];
+  private hashe = new Map<string, string>();
 
   async nactiTikety(): Promise<Tiket[]> {
     return [...this.tikety.values()].sort((a, b) => b.vlozeno.localeCompare(a.vlozeno));
@@ -58,7 +67,7 @@ export class UlozisteVPameti implements Uloziste {
   }
 
   async ulozTahy(tahy: readonly Tah[]): Promise<void> {
-    this.tahy = [...tahy];
+    this.tahy = sloucTahy(this.tahy, tahy);
   }
 
   async nactiSazby(): Promise<SazbyExtra6[]> {
@@ -67,5 +76,13 @@ export class UlozisteVPameti implements Uloziste {
 
   async ulozSazby(sazby: readonly SazbyExtra6[]): Promise<void> {
     this.sazby = [...sazby];
+  }
+
+  async nactiHashe(): Promise<Map<string, string>> {
+    return new Map(this.hashe);
+  }
+
+  async ulozHash(soubor: string, hash: string): Promise<void> {
+    this.hashe.set(soubor, hash);
   }
 }

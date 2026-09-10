@@ -1,8 +1,8 @@
 /**
- * Čtení souboru s výsledky, který vyrobil fetcher.
+ * Čtení souboru s výsledky — od fetcheru, nebo balíku staženého z backendu (formát je týž).
  *
- * Aplikace nemá síťové oprávnění, takže tenhle soubor je jediná cesta, jak se do ní dostanou
- * výsledky losování. O to důležitější je poznat, že je něco špatně, a říct to. Tiše přečtený
+ * Každá cesta, kudy se do aplikace dostanou výsledky, jde přes tuhle kontrolu. O to
+ * důležitější je poznat, že je něco špatně, a říct to. Tiše přečtený
  * cizí nebo starý soubor by znamenal špatně vyhodnocený tiket — a uživatel by se to dozvěděl
  * až u přepážky.
  */

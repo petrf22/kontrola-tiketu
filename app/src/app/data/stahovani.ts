@@ -24,12 +24,9 @@
  */
 
 import { CapacitorHttp } from '@capacitor/core';
+import { ZAKLADNI_URL } from './adresa-backendu.js';
 
-/**
- * Adresa backendu. Je zapsaná i v `network_security_config.xml`, kde tvoří jedinou výjimku,
- * kam smí aplikace navázat TLS spojení — obě místa musí sedět (hlídá `soukromi.test.ts`).
- */
-export const ZAKLADNI_URL = 'https://vysledky.kontrola-tiketu.invalid/v1/';
+export { ZAKLADNI_URL };
 
 /**
  * Stejný pro všechny instalace. Výchozí User-Agent Androidu by nesl model telefonu a verzi
@@ -44,7 +41,7 @@ const HASH = /^sha256:[0-9a-f]{64}$/;
 export interface Odpoved {
   readonly stav: number;
   /** Tělo odpovědi přesně tak, jak leželo na serveru. */
-  readonly telo: Uint8Array;
+  readonly telo: Uint8Array<ArrayBuffer>;
 }
 
 /** Vrstva sítě je vyměnitelná, aby testy a vývoj v prohlížeči nemusely nikam chodit. */
@@ -68,7 +65,7 @@ export const sitCapacitor: Sit = async (url) => {
 };
 
 /** Android vkládá do base64 konce řádků; `atob` bílé znaky podle specifikace přeskočí. */
-function zBase64(base64: string): Uint8Array {
+function zBase64(base64: string): Uint8Array<ArrayBuffer> {
   return Uint8Array.from(atob(base64), (znak) => znak.charCodeAt(0));
 }
 
@@ -190,7 +187,7 @@ export function prectiManifest(text: string): Manifest | string {
 }
 
 /** `sha256:` a hex — stejný tvar, jaký píše backend do manifestu. */
-export async function sha256(bajty: Uint8Array): Promise<string> {
+export async function sha256(bajty: Uint8Array<ArrayBuffer>): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', bajty);
   return `sha256:${[...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')}`;
 }
@@ -232,7 +229,7 @@ export async function stahniVysledky(
 }
 
 /** Bajty odpovědi, nebo věta pro uživatele. */
-async function stahni(sit: Sit, url: string): Promise<Uint8Array | string> {
+async function stahni(sit: Sit, url: string): Promise<Uint8Array<ArrayBuffer> | string> {
   let odpoved: Odpoved;
   try {
     odpoved = await sit(url);

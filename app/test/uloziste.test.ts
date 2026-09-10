@@ -84,6 +84,27 @@ function smlouvaUloziste(jmeno: string, vyrob: () => Uloziste): void {
       expect(await u.nactiTahy()).toHaveLength(3);
     });
 
+    it('další uložení tahy doplní, nepřepíše celý seznam', async () => {
+      // Aplikace ukládá jen přírůstek — z importu i ze stažení.
+      const u = vyrob();
+      await u.ulozTahy([EJ_2026_09_01, SP_2026_09_02]);
+      await u.ulozTahy([EJ_2026_09_08, EJ_2026_09_01]);
+      expect((await u.nactiTahy()).map((t) => `${t.hra}|${t.datum}`).sort()).toEqual([
+        'eurojackpot|2026-09-01',
+        'eurojackpot|2026-09-08',
+        'sportka|2026-09-02',
+      ]);
+    });
+
+    it('hashe stažených balíků se uloží a přepíšou', async () => {
+      const u = vyrob();
+      expect(await u.nactiHashe()).toEqual(new Map());
+      await u.ulozHash('2026.json', 'sha256:a');
+      await u.ulozHash('2025.json', 'sha256:b');
+      await u.ulozHash('2026.json', 'sha256:c');
+      expect(await u.nactiHashe()).toEqual(new Map([['2026.json', 'sha256:c'], ['2025.json', 'sha256:b']]));
+    });
+
     it('uložení prázdného seznamu tahů projde', async () => {
       const u = vyrob();
       await expect(u.ulozTahy([])).resolves.toBeUndefined();

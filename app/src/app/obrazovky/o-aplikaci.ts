@@ -5,8 +5,7 @@ import { HISTORIE, VERZE } from '../data/verze.generated.js';
 /**
  * Verze a historie změn. Obojí je zabudované v bundlu (`verze.generated.ts` generuje
  * `npm run verze` z kořenového CHANGELOG.md), takže se kvůli téhle obrazovce nikam nechodí
- * a nic se nečte ze souborů — u aplikace bez síťového oprávnění je to jediná varianta,
- * která nevyžaduje vysvětlování.
+ * a nic se nečte ze souborů. Na síť smí jen stažení výsledků (`data/stahovani.ts`).
  */
 @Component({
   selector: 'app-o-aplikaci',
@@ -14,9 +13,9 @@ import { HISTORIE, VERZE } from '../data/verze.generated.js';
     <p class="verze">Verze {{ verze }}</p>
 
     <p>
-      Kontrola papírových tiketů Eurojackpotu a Sportky na vlastním zařízení. Aplikace nemá
-      oprávnění k síti — nemůže tedy nikam odeslat, které tikety držíš ani jestli jsi vyhrál.
-      Ověřit si to můžeš v nastavení telefonu v seznamu oprávnění.
+      Kontrola papírových tiketů Eurojackpotu a Sportky na vlastním zařízení. Na síť aplikace
+      chodí jen pro veřejné výsledky losování — stáhne je celé, pro každého stejně, a tikety
+      vyhodnotí až v telefonu. Nikam tedy neodesílá, které tikety držíš ani jestli jsi vyhrál.
     </p>
 
     <p class="upozorneni">
@@ -33,7 +32,9 @@ import { HISTORIE, VERZE } from '../data/verze.generated.js';
       <li>obrazovky jsou chráněné proti náhledům v přepínači aplikací</li>
       <li>snímek pořízený kvůli přečtení čísel se hned maže a do galerie se nedostane</li>
       <li>číslo klubové karty z čárového kódu se zahazuje</li>
-      <li>jediné oprávnění, o které aplikace žádá, je fotoaparát</li>
+      <li>žádá jen o fotoaparát a o přístup k internetu kvůli výsledkům</li>
+      <li>spojit se umí jedině se serverem výsledků — k jiným adresám systém spojení nepustí</li>
+      <li>výsledky stahuje celé a pro všechny stejně, bez vsazených čísel i sériových čísel tiketů</li>
     </ul>
 
     <h2>Co je nového</h2>

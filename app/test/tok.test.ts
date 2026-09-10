@@ -1,7 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { sloucTahy, vyhodnotTiket, type Tah, type Tiket } from '@kontrola-tiketu/jadro';
+import { createHash } from 'node:crypto';
 import { nactiVysledky } from '../src/app/data/import.js';
+import { stahniVysledky, ZAKLADNI_URL, type Sit } from '../src/app/data/stahovani.js';
+import { shrnutiStazeni, zpracujStazene } from '../src/app/data/vysledkyZeServeru.js';
 
 /**
  * Celý tok aplikace na jednom místě: soubor od fetcheru → sloučení s tím, co už je uložené
@@ -76,5 +79,59 @@ describe('od souboru k vyhodnocení', () => {
     const jednou = sloucTahy([], tahy);
     const dvakrát = sloucTahy(jednou, tahy);
     expect(dvakrát).toHaveLength(jednou.length);
+  });
+});
+
+/**
+ * Tatáž cesta, jen výsledky nepřijdou souborem, ale ze serveru. Balík na serveru je přesně
+ * tentýž soubor, takže vyhodnocení musí vyjít stejně.
+ */
+describe('od serveru k vyhodnocení', () => {
+  const bajty = new Uint8Array(readFileSync(new URL('fixtures/vysledky-2026-35-az-37.json', import.meta.url)));
+  const hash = `sha256:${createHash('sha256').update(bajty).digest('hex')}`;
+  const manifest = new TextEncoder().encode(
+    JSON.stringify({ verzeManifestu: 1, kontrola: {}, baliky: [{ soubor: '2026.json', hash }] }),
+  );
+  const sit: Sit = async (url) =>
+    url === `${ZAKLADNI_URL}manifest.json`
+      ? { stav: 200, telo: manifest }
+      : url === `${ZAKLADNI_URL}2026.json`
+        ? { stav: 200, telo: bajty }
+        : { stav: 404, telo: new Uint8Array() };
+
+  it('stažený balík vyhodnotí tiket stejně jako soubor', async () => {
+    const stazeno = await stahniVysledky(sit, new Map());
+    if (stazeno.stav !== 'ok') throw new Error(stazeno.duvod);
+    const zpracovano = zpracujStazene([], stazeno.nove);
+    if (zpracovano.stav !== 'ok') throw new Error(zpracovano.duvod);
+
+    const tahy = sloucTahy([], zpracovano.baliky.flatMap((b) => b.tahy));
+    const sazby = zpracovano.baliky[0]!.sazbyExtra6;
+    const vysledek = vyhodnotTiket(tiketEJ([47, 14, 27, 34, 1], [4, 1], null), tahy, sazby);
+    expect(vysledek.celkemKc).toBe(5780);
+    expect(shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno)).toBe('Staženo: 6 nových tahů.');
+  });
+
+  it('podruhé už nic nestahuje a nic nepřibude', async () => {
+    const stazeno = await stahniVysledky(sit, new Map([['2026.json', hash]]));
+    expect(stazeno).toMatchObject({ stav: 'ok', nove: [] });
+    expect(shrnutiStazeni(0, 0)).toBe('Výsledky jsou aktuální, nic nového.');
+  });
+
+  it('doplněná tabulka výher se pozná jako změna, ne jako nový tah', () => {
+    const nactene = nactiVysledky(SOUBOR);
+    if (nactene.stav !== 'ok') throw new Error(nactene.duvod);
+    const bezTabulky = nactene.tahy.map((t) => (t.hra === 'eurojackpot' ? { ...t, poradi: [] } : t));
+    const zpracovano = zpracujStazene(bezTabulky, [{ soubor: '2026.json', hash, text: SOUBOR }]);
+    expect(zpracovano).toMatchObject({ stav: 'ok', pribylo: 0, zmeneno: 3 });
+    expect(shrnutiStazeni(0, 3)).toBe('Staženo: 3 doplněné tahy.');
+  });
+
+  it('balík, který nejde přečíst, se neuloží ani zčásti', () => {
+    const zpracovano = zpracujStazene([], [
+      { soubor: '2025.json', hash, text: SOUBOR },
+      { soubor: '2026.json', hash, text: '{"verzeFormatu": 99}' },
+    ]);
+    expect(zpracovano.stav).toBe('chyba');
   });
 });

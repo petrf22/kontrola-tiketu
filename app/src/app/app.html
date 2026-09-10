@@ -33,6 +33,16 @@
   @if (stav.vysledkyDo(); as datum) {
     <span>Výsledky mám do {{ formatujDatum(datum) }}.</span>
   } @else {
-    <span>Zatím nemáš naimportované žádné výsledky.</span>
+    <span>Zatím nemám žádné výsledky.</span>
+  }
+  @if (stav.stahuje()) {
+    <span>Stahuji výsledky…</span>
+  } @else if (stav.kontrolaServeru(); as kontrola) {
+    @if (kontrola.posledniDotaz) {
+      <span>Server naposledy kontroloval {{ formatujDatumCas(kontrola.posledniDotaz) }}.</span>
+    }
+    @for (ceka of cekaNaTabulku(); track ceka) {
+      <span>{{ ceka }}: čísla jsou známá, tabulka výher zatím ne.</span>
+    }
   }
 </footer>

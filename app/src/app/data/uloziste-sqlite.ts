@@ -42,6 +42,10 @@ CREATE TABLE IF NOT EXISTS sazby (
   platnostOd TEXT PRIMARY KEY NOT NULL,
   data TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS baliky (
+  soubor TEXT PRIMARY KEY NOT NULL,
+  hash TEXT NOT NULL
+);
 `;
 
 function vygenerujPassphrase(): string {
@@ -134,5 +138,23 @@ export class UlozisteSqlite implements Uloziste {
       values: [s.platnostOd, JSON.stringify(s)],
     }));
     if (prikazy.length > 0) await this.spojeniDb.executeSet(prikazy);
+  }
+
+  async nactiHashe(): Promise<Map<string, string>> {
+    const odpoved = await this.spojeniDb.query('SELECT soubor, hash FROM baliky');
+    return new Map(
+      (odpoved.values ?? []).map((radek) => {
+        const { soubor, hash } = radek as { soubor: string; hash: string };
+        return [soubor, hash] as const;
+      }),
+    );
+  }
+
+  async ulozHash(soubor: string, hash: string): Promise<void> {
+    await this.spojeniDb.run(
+      'INSERT INTO baliky (soubor, hash) VALUES (?, ?) ' +
+        'ON CONFLICT(soubor) DO UPDATE SET hash = excluded.hash',
+      [soubor, hash],
+    );
   }
 }

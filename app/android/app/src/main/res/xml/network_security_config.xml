@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Síťový allowlist aplikace — náhrada za záruku, kterou dřív dávala absence oprávnění INTERNET.
+
+    Aplikace smí na síť kvůli stažení výsledků, ale v závislostech je i Googlí přenosová vrstva
+    pro odesílání záznamů (datatransport z ML Kitu, viz docs/vydani.md). Tahle konfigurace
+    zajistí na úrovni systému, že TLS spojení projde jedině na server výsledků:
+
+    - base-config nedůvěřuje žádné certifikační autoritě, takže spojení kamkoli jinam selže
+      už při ověření certifikátu,
+    - jedinou výjimkou je doména backendu, a ta věří jen systémovým autoritám — ne uživatelským,
+      takže ji neodposlechne ani proxy s podvrženým certifikátem,
+    - nešifrovaný provoz je zakázaný všude.
+
+    Doména musí sedět s app/src/app/data/adresa-backendu.ts — hlídá app/test/soukromi.test.ts.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors />
+    </base-config>
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="false">vysledky.kontrola-tiketu.invalid</domain>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+</network-security-config>

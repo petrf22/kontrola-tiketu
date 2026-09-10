@@ -16,34 +16,37 @@ const cti = (cesta: string) => readFileSync(join(KOREN, cesta), 'utf8');
 
 const MANIFEST = 'android/app/src/main/AndroidManifest.xml';
 
+/** Komponenty Googlí přenosové vrstvy, které si vtahuje ML Kit (docs/vydani.md). */
+const DATATRANSPORT = [
+  'com.google.android.datatransport.runtime.backends.TransportBackendDiscovery',
+  'com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService',
+  'com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver',
+];
+
 describe('Android manifest', () => {
   const manifest = cti(MANIFEST);
 
-  it('nemá žádné síťové oprávnění', () => {
-    // Řádky s tools:node="remove" oprávnění naopak odstraňují, ty se nepočítají.
-    const pozadovana = [...manifest.matchAll(/<uses-permission[^>]*>/g)]
-      .map((m) => m[0])
-      .filter((r) => !r.includes('tools:node="remove"'));
-
-    for (const radek of pozadovana) {
-      expect(radek).not.toMatch(/INTERNET|ACCESS_NETWORK_STATE|ACCESS_WIFI_STATE/);
-    }
-  });
-
-  it('INTERNET aktivně odstraňuje, aby ho nepřidala závislost oklikou', () => {
-    expect(manifest).toMatch(
-      /<uses-permission[^>]*android\.permission\.INTERNET[^>]*tools:node="remove"/,
-    );
-  });
-
-  it('žádá jen o kameru', () => {
+  /** Požadovaná oprávnění — řádky s tools:node="remove" je naopak odstraňují. */
+  const pozadovana = () =>
     // Musí se brát celá značka, ne jen kus po android:name — jinak by se do porovnání
     // nedostalo tools:node="remove", které je až za ním.
-    const pozadovana = [...manifest.matchAll(/<uses-permission\b[^>]*>/g)]
+    [...manifest.matchAll(/<uses-permission\b[^>]*>/g)]
       .map((m) => m[0])
       .filter((znacka) => !znacka.includes('tools:node="remove"'))
       .map((znacka) => /android:name="([^"]+)"/.exec(znacka)?.[1]);
-    expect(pozadovana).toEqual(['android.permission.CAMERA']);
+
+  it('žádá právě o kameru a o internet, nic víc', () => {
+    // INTERNET je tu kvůli stažení výsledků (docs/backend.md). Kam smí spojení vést,
+    // hlídá blok „síťový allowlist“ níž.
+    expect(pozadovana()).toEqual(['android.permission.CAMERA', 'android.permission.INTERNET']);
+  });
+
+  it('stav sítě aktivně odstraňuje, aby ho nepřidala závislost oklikou', () => {
+    for (const opravneni of ['ACCESS_NETWORK_STATE', 'ACCESS_WIFI_STATE']) {
+      expect(manifest).toMatch(
+        new RegExp(`<uses-permission[^>]*android\\.permission\\.${opravneni}[^>]*tools:node="remove"`),
+      );
+    }
   });
 
   it('zakazuje zálohování', () => {
@@ -58,6 +61,56 @@ describe('Android manifest', () => {
 
   it('nevystavuje FileProvider ven', () => {
     expect(manifest).toMatch(/FileProvider[\s\S]{0,200}android:exported="false"/);
+  });
+});
+
+/**
+ * Síťový allowlist — náhrada za záruku, kterou dřív dávala absence oprávnění INTERNET.
+ *
+ * V závislostech je Googlí přenosová vrstva pro odesílání záznamů (datatransport z ML Kitu).
+ * Dokud aplikace neměla INTERNET, nemohla nic odeslat. Teď to drží dvě věci: TLS projde
+ * jedině na server výsledků a ta vrstva je z manifestu odstraněná.
+ */
+describe('síťový allowlist', () => {
+  const manifest = cti(MANIFEST);
+  const konfigurace = cti('android/app/src/main/res/xml/network_security_config.xml').replace(
+    /<!--[\s\S]*?-->/g,
+    '',
+  );
+
+  it('manifest se na něj odkazuje', () => {
+    expect(manifest).toMatch(/android:networkSecurityConfig="@xml\/network_security_config"/);
+  });
+
+  it('základ nedůvěřuje žádné certifikační autoritě', () => {
+    const zaklad = /<base-config\b[^>]*>([\s\S]*?)<\/base-config>/.exec(konfigurace);
+    expect(zaklad?.[0]).toMatch(/cleartextTrafficPermitted="false"/);
+    expect(zaklad?.[1]).toMatch(/<trust-anchors\s*\/>/);
+    expect(zaklad?.[1]).not.toMatch(/<certificates/);
+  });
+
+  it('výjimka je právě jedna, bez subdomén, a jen se systémovými autoritami', () => {
+    const domeny = [...konfigurace.matchAll(/<domain\b([^>]*)>([^<]+)<\/domain>/g)];
+    expect(domeny).toHaveLength(1);
+    expect(domeny[0]![1]).toMatch(/includeSubdomains="false"/);
+    expect(konfigurace).not.toMatch(/src="user"/);
+    expect(konfigurace).not.toMatch(/cleartextTrafficPermitted="true"/);
+    expect(konfigurace).not.toMatch(/<debug-overrides/);
+  });
+
+  it('výjimka je přesně ta doména, na kterou aplikace posílá dotazy', () => {
+    const adresa = /ZAKLADNI_URL = '([^']+)'/.exec(cti('src/app/data/adresa-backendu.ts'))?.[1] ?? '';
+    const domena = /<domain\b[^>]*>([^<]+)<\/domain>/.exec(konfigurace)?.[1]?.trim();
+    expect(new URL(adresa).protocol).toBe('https:');
+    expect(domena).toBe(new URL(adresa).hostname);
+  });
+
+  it('Googlí vrstva pro odesílání záznamů je ze sloučeného manifestu odstraněná', () => {
+    for (const komponenta of DATATRANSPORT) {
+      expect(manifest, komponenta).toMatch(
+        new RegExp(`android:name="${komponenta.replace(/\./g, '\\.')}"\\s*tools:node="remove"`),
+      );
+    }
   });
 });
 
@@ -184,13 +237,12 @@ describe('sestavené APK', () => {
   const lzeOverit = apk !== '' && existsSync(apk) && aapt2 !== undefined;
 
   /**
-   * Kontroluje se, že jediné oprávnění je kamera — ne jen že chybí ty síťové.
+   * Kontroluje se přesný seznam oprávnění — ne jen že chybí ty nežádoucí.
    *
    * Původní volnější verze tohohle testu prošla i ve chvíli, kdy si SQLite plugin přitáhl
-   * USE_BIOMETRIC a USE_FINGERPRINT. Zadání připouští jednu jedinou permission, tak ať to
-   * test hlídá doslova.
+   * USE_BIOMETRIC a USE_FINGERPRINT. Ať to test hlídá doslova.
    */
-  it.skipIf(!lzeOverit)('má jediné oprávnění, a tím je kamera', () => {
+  it.skipIf(!lzeOverit)('má právě dvě oprávnění: kameru a internet', () => {
     const vypis = execFileSync(aapt2!, ['dump', 'permissions', apk], { encoding: 'utf8' });
 
     const balik = /package: (\S+)/.exec(vypis)?.[1] ?? '';
@@ -200,6 +252,16 @@ describe('sestavené APK', () => {
       // není systémové a nic nezpřístupňuje ven.
       .filter((p) => !p.startsWith(balik));
 
-    expect(pozadovana).toEqual(['android.permission.CAMERA']);
+    expect(pozadovana).toEqual(['android.permission.CAMERA', 'android.permission.INTERNET']);
+  });
+
+  it.skipIf(!lzeOverit)('nese síťový allowlist a nemá Googlí vrstvu pro odesílání záznamů', () => {
+    const strom = execFileSync(aapt2!, ['dump', 'xmltree', '--file', 'AndroidManifest.xml', apk], {
+      encoding: 'utf8',
+    });
+    expect(strom).toMatch(/networkSecurityConfig/);
+    for (const komponenta of DATATRANSPORT) {
+      expect(strom, komponenta).not.toContain(komponenta);
+    }
   });
 });

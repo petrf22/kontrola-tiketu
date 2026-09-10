@@ -3,32 +3,39 @@
     Tvrdé požadavky na soukromí ze zadání jsou akceptační kritéria, ne doporučení.
     Většina z nich je vidět právě tady a dá se ověřit v sestavené aplikaci bez důvěry v kód.
 
-    Nepřidávej sem INTERNET ani jiné síťové oprávnění. Absence síťové permission je
-    ověřitelná záruka, že aplikace nemůže nic vynést — je to funkce, ne opomenutí.
+    INTERNET tu je kvůli stažení výsledků z backendu (docs/backend.md). Zadání to připouští jen
+    s tvrdým pravidlem: stahují se vždy všechny tahy, nikdy dotaz vázaný na tiket. Záruku, kterou
+    dřív dávala absence oprávnění, teď drží tři věci a všechny hlídá app/test/soukromi.test.ts:
+
+    1. network_security_config pustí TLS jedině na server výsledků,
+    2. Googlí vrstva pro odesílání záznamů z ML Kitu je ze sloučeného manifestu odstraněná,
+    3. na síť sahá jediný modul aplikace a ten o tiketech neví (app/test/sit.test.ts).
+
+    Žádné další síťové oprávnění sem nepatří.
 -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!--
-        Jediné oprávnění aplikace. Snímky se zpracovávají ve streamu a nikam se neukládají,
-        takže nic dalšího potřeba není.
-    -->
+    <!-- Snímky se zpracovávají na zařízení a nikam se neukládají. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
+    <!-- Jen pro stažení výsledků; kam smí spojení vést, určuje network_security_config. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <!--
-        Capacitor i některé knihovny si INTERNET přidávají samy. Tenhle řádek ho ze sloučeného
-        manifestu odstraní, ať se do sestavené aplikace nedostane oklikou přes závislost.
+        Stav sítě aplikace znát nepotřebuje — když je offline, stažení prostě selže. Knihovny
+        si tyhle oprávnění přidávají samy, tak se ze sloučeného manifestu odstraňují.
     -->
-    <uses-permission android:name="android.permission.INTERNET" tools:node="remove" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" tools:node="remove" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" tools:node="remove" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove" />
 
     <!--
         SQLite plugin si přitahuje biometrii kvůli volitelnému odemykání databáze otiskem.
         Tuhle možnost nepoužíváme — klíč drží Android Keystore bez součinnosti uživatele —
-        takže oprávnění ven. Zadání připouští jedinou permission, a tou je kamera.
+        takže oprávnění ven. Aplikace žádá jen o kameru a o internet kvůli výsledkům.
     -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" tools:node="remove" />
     <uses-permission android:name="android.permission.USE_FINGERPRINT" tools:node="remove" />
@@ -43,6 +50,7 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:usesCleartextTraffic="false">
 
         <activity
@@ -59,6 +67,23 @@
             </intent-filter>
 
         </activity>
+
+        <!--
+            Googlí přenosová vrstva pro odesílání záznamů (Firelog), kterou vtahuje ML Kit.
+            Dokud aplikace neměla INTERNET, nemohla nic odeslat; teď by mohla. Proto ven:
+            registrace backendu CCT (tím se posílá do Googlu) i obě plánovací komponenty.
+            Kdyby je něco přesto spustilo, TLS spojení mimo server výsledků nepustí
+            network_security_config. Viz docs/vydani.md, „Past: v manifestu je Googlí datatransport“.
+        -->
+        <service
+            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+            tools:node="remove" />
+        <service
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+            tools:node="remove" />
+        <receiver
+            android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+            tools:node="remove" />
 
         <!--
             FileProvider zůstává kvůli importu JSON s výsledky. Sdílí se jen dovnitř,

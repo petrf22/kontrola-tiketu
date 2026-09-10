@@ -14,7 +14,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --build",
     "verze": "node tools/verze/sync.mjs",
-    "vyherka": "npm run vyherka -w @kontrola-tiketu/fetcher --"
+    "vyherka": "npm run vyherka -w @kontrola-tiketu/fetcher --",
+    "backend:test": "composer --working-dir=backend test",
+    "backend:phpstan": "composer --working-dir=backend phpstan"
   },
   "devDependencies": {
     "@types/node": "^26.5.0",

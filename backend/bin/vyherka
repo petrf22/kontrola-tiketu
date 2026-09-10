@@ -1,0 +1,15 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Vstupní bod pro cron i ruční spuštění. Veškerá logika je v src/Cli/Cli.php, ať jde testovat.
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use KontrolaTiketu\Cli\Cli;
+use KontrolaTiketu\Konfigurace;
+
+date_default_timezone_set('Europe/Prague');
+
+exit((new Cli(Konfigurace::nacti()))->hlavni(array_values(array_slice($argv, 1))));

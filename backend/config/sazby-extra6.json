@@ -1,0 +1,19 @@
+{
+  "poznamka": "Výhry v Extra 6 jsou stanovené násobkem sázky, ne totalizátorem, a výherní listina je nepublikuje. Proto se vedou tady jako data s obdobím platnosti a v kódu nejsou. Zdroj: herní plán loterií Allwyn, oddíl EUROJACKPOT, bod 25.",
+  "sazby": [
+    {
+      "platnostOd": "2025-09-05",
+      "sazkaKc": 40,
+      "nasobky": {
+        "sestecisli": 25000,
+        "peticisli": 2500,
+        "ctyrcisli": 250,
+        "trojcisli": 25,
+        "dvojcisli": 2.5,
+        "koncove-cislo": 1.5,
+        "sousedni-cislo": 1.5
+      },
+      "zdroj": "https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf (bod 25; datum platnosti odvozeno z názvu souboru, v textu plánu uvedeno není)"
+    }
+  ]
+}

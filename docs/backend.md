@@ -116,6 +116,12 @@ Kořen `https://<doména>/v1/`. Jen `GET`, bez parametrů, bez cookies, bez aute
 adresářů a soubory s tečkou na začátku (dočasné soubory publikace), posílá HSTS, `nosniff`,
 `no-referrer`, `Cache-Control: no-cache` a u JSON `Access-Control-Allow-Origin: *`.
 
+**Soubory `.json` jdou ven jako `text/plain; charset=utf-8`, ne `application/json`.** Capacitor
+v aplikaci odpověď s JSON typem sám rozparsuje (na webu i na Androidu, bez ohledu na požadovaný
+typ odpovědi) a Android navíc čte text po řádcích a zahodí koncový nový řádek. Aplikace by pak
+nedostala bajty, ze kterých se ověřuje hash. S `text/plain` si vezme surové bajty. Kdyby hosting
+typ přepisoval, aplikace to ohlásí hláškou o nečekaném typu obsahu.
+
 ---
 
 ## Rozvrh
@@ -169,6 +175,9 @@ Vývoj:
 cd backend && composer install
 npm run backend:test          # PHPUnit
 npm run backend:phpstan       # statická analýza, level max
+
+# lokální server se stejnými hlavičkami jako .htaccess (vestavěný server PHP .htaccess nečte)
+php -S localhost:8080 -t public tools/vyvojovy-server.php
 ```
 
 ---
@@ -204,7 +213,7 @@ cron z příkazové řádky; subdoména s vlastním document rootem a HTTPS.
    Když hosting pouští cron častěji, nevadí to (pojistka 55 minut).
 6. **Kontrola po nasazení:**
    ```bash
-   curl -sI https://vysledky.<doména>/v1/manifest.json   # 200, application/json, no-cache, HSTS, bez Set-Cookie
+   curl -sI https://vysledky.<doména>/v1/manifest.json   # 200, text/plain; charset=utf-8, no-cache, HSTS, bez Set-Cookie
    curl -sI https://vysledky.<doména>/                   # 403
    curl -sI https://vysledky.<doména>/v1/.htaccess       # 403
    ```

@@ -18,12 +18,14 @@ DirectoryIndex disabled
     RewriteRule ^ - [F]
 </IfModule>
 
+# Schválně text/plain, ne application/json: u JSON typu Capacitor v aplikaci odpověď sám
+# rozparsuje a nevydá bajty, ze kterých se ověřuje hash z manifestu. Hlídá HtaccessTest.
 <IfModule mod_mime.c>
-    AddType "application/json; charset=utf-8" .json
+    AddType "text/plain; charset=utf-8" .json
 </IfModule>
 
 <IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE application/json
+    AddOutputFilterByType DEFLATE text/plain
 </IfModule>
 
 <IfModule mod_headers.c>

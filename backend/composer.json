@@ -1,0 +1,37 @@
+{
+    "name": "kontrola-tiketu/backend",
+    "description": "Hlídání nových losování Allwyn a publikace výsledků pro aplikaci Kontrola tiketu",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=8.2",
+        "ext-json": "*",
+        "ext-mbstring": "*",
+        "ext-pdo_sqlite": "*",
+        "ext-zlib": "*"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.1",
+        "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "KontrolaTiketu\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "KontrolaTiketu\\Test\\": "tests/"
+        }
+    },
+    "config": {
+        "platform": {
+            "php": "8.2.0"
+        },
+        "sort-packages": true
+    },
+    "scripts": {
+        "test": "phpunit",
+        "phpstan": "phpstan analyse --memory-limit=512M"
+    }
+}

@@ -1,0 +1,11 @@
+/vendor/
+
+# Generované výstupy — vznikají cronem na serveru, do gitu nepatří.
+/public/v1/
+
+# Archiv listin, SQLite, zámek a log. Archiv je stejný jako fetcher/.cache a stejně jako on
+# není smetí: patří do zálohy, jen se kvůli velikosti neverzuje.
+/var/
+
+# Cesty a nastavení konkrétního hostingu.
+/config/konfigurace.lokalni.php

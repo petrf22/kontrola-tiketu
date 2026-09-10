@@ -9,3 +9,7 @@
 
 # Cesty a nastavení konkrétního hostingu.
 /config/konfigurace.lokalni.php
+
+# Mezipaměť PHPUnit.
+/.phpunit.result.cache
+/.phpunit.cache/

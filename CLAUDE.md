@@ -69,10 +69,13 @@ app/src/app/data/      import.ts, uloziste.ts, stav.ts, tokeny.ts
 app/src/app/obrazovky/ seznam.ts, novy-tiket.ts, sken.ts, sken-cisel.ts, detail.ts,
                        import-vysledku.ts, o-aplikaci.ts
 app/android/           nativní projekt, zatvrzený manifest
+backend/               PHP pro sdílený hosting: rozvrh, stahování, SQLite, publikace do public/v1
+backend/src/Zdroj/     port parseru listiny z fetcheru — musí vyrábět bajtově totéž
 data/sazby-extra6.json pevné částky Extra 6 (listina je nepublikuje)
 data/vysledky.json     výsledky k importu, verzované v gitu (teď 2021–2026, 1190 tahů)
 docs/data-source.md    výstup fáze 0
 docs/vydani.md         podpis, Google Play, postup vydání — runbook i zápis rozhodnutí
+docs/backend.md        backend: rozhodnutí, API, rozvrh, nasazení na hosting
 tools/verze/sync.mjs   generátor verze z VERSION + CHANGELOG.md
 tools/ikony/generuj.py generátor ikony, splashe a grafiky pro Play
 ```
@@ -84,6 +87,8 @@ npm install          # po instalaci je potřeba npm approve-scripts esbuild
 npm test             # vitest, 427 testů (jádro, ocr, fetcher, soukromí aplikace i verze)
 npm run typecheck    # tsc --build, strict
 npm run verze        # přegeneruje verzi ze zdroje; musí projít bez změny souborů
+npm run backend:test     # PHPUnit backendu (po `composer install` v backend/)
+npm run backend:phpstan  # statická analýza backendu, level max
 
 npm run vyherka -- stav
 npm run vyherka -- stahni --od 2026-35 --do 2026-37 [--hra sportka]
@@ -98,9 +103,14 @@ Jádro je čistá knihovna: bez UI, bez I/O, bez sítě, bez běhových závislo
 `packages/jadro/test/bezIO.test.ts` — když do `src/` přidáš import z `node:`, `fetch`,
 `document` nebo `@angular`, test spadne. To je záměr, ne překážka.
 
-Fetcher má dva oddělené režimy: `stahni` je **jediné místo v projektu, které chodí na síť**,
-`preparsuj` nesahá na síť vůbec. Když opravuješ parser, pracuj vždy proti archivu nebo fixturám —
-nikdy nestahuj znovu to, co už je stažené.
+Fetcher má dva oddělené režimy: `stahni` chodí na síť, `preparsuj` nesahá na síť vůbec. Když
+opravuješ parser, pracuj vždy proti archivu nebo fixturám — nikdy nestahuj znovu to, co už je
+stažené.
+
+**Parser listiny existuje dvakrát** — ve fetcheru (TS) a v backendu (PHP, `backend/src/Zdroj/`),
+protože sdílený hosting nemá Node. Kdo opravuje jeden, opravuje oba. Že ze stejného archivu
+vyrábějí bajtově totéž, hlídá `test/backend.test.ts` v `npm test` (bez PHP se přeskočí).
+Podrobnosti, API, rozvrh a nasazení jsou v `docs/backend.md`.
 
 Aplikace (Angular 22 + Capacitor 8, balík `app`):
 

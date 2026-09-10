@@ -208,6 +208,35 @@ cache aplikace a maže se i při chybě (viz [`ocr-a-carovy-kod.md`](ocr-a-carov
 Do galerie se nedostane a nikam se neodesílá. Číslo klubové karty, které je v čárovém kódu
 tiketu čitelné, se zahazuje.
 
+### Past: v manifestu je Googlí datatransport, a je to v pořádku
+
+Kdo se podívá do manifestu sestaveného balíčku, najde tam komponenty, které tam nikdo
+nepsal — zjištěno při vydání 0.1.1:
+
+```
+service  com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService
+receiver androidx.profileinstaller.ProfileInstallReceiver
+```
+
+Vtahuje je **ML Kit** jako tranzitivní závislost; `datatransport` je Googlí přenosová vrstva
+pro odesílání záznamů (Firelog). Zní to jako telemetrie, kterou zadání zakazuje.
+
+**Odeslat ale nemá jak: aplikace nemá `INTERNET`.** Přesně kvůli tomuhle je absence síťového
+oprávnění akceptační kritérium — je to záruka, kterou nejde obejít závislostí, na kterou se
+zapomnělo. `android:permission="android.permission.BIND_JOB_SERVICE"` a `DUMP` u těchhle
+komponent nejsou oprávnění, o která aplikace žádá; omezují, kdo je smí spouštět.
+
+Ověřit je to na sestaveném balíčku takhle — musí vyjít jen `CAMERA` a vlastní
+`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`:
+
+```bash
+aapt2 dump permissions app-arm64-v8a-release.apk
+```
+
+Hlídá to `app/test/soukromi.test.ts`. **Kdyby někdo `INTERNET` kdy přidal, tahle komponenta
+začne fungovat** — to je ten skutečný důvod, proč se oprávnění odstraňuje přes
+`tools:node="remove"` a ne jen „nepřidává“.
+
 ### Texty pro store listing
 
 Verzované tady, ne jen v Play Console.

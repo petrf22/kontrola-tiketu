@@ -259,7 +259,7 @@ Verzované tady, ne jen v Play Console.
 **Krátký popis** (max 80 znaků):
 
 ```
-Zkontroluj tiket Eurojackpotu a Sportky v telefonu. Tikety se nikam neodesílají.
+Zkontrolujte tiket Eurojackpotu a Sportky. Tikety se nikam neodesílají.
 ```
 
 **Dlouhý popis** (max 4000 znaků):
@@ -300,6 +300,9 @@ UPOZORNĚNÍ
 Vyhodnocení je neoficiální a nezávazné. Aplikace nenahrazuje kontrolu tiketu — závazná je
 vždy kontrola na terminálu provozovatele. Výhru lze uplatnit pouze tam, s platným papírovým
 tiketem a ve stanovené lhůtě.
+
+Aplikace není oficiální aplikací provozovatele loterie a není s ním nijak spojená.
+Eurojackpot a Sportka jsou ochranné známky svých vlastníků.
 ```
 
 ### Cesta do produkce

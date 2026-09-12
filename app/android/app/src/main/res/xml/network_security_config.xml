@@ -19,7 +19,7 @@
         <trust-anchors />
     </base-config>
     <domain-config cleartextTrafficPermitted="false">
-        <domain includeSubdomains="false">vysledky.kontrola-tiketu.invalid</domain>
+        <domain includeSubdomains="false">kontrolatiketu.petrf22.cz</domain>
         <trust-anchors>
             <certificates src="system" />
         </trust-anchors>

@@ -412,14 +412,15 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
       stažení výsledků po otevření i tlačítkem, import souboru, vyhodnocení
 - [ ] v režimu letadlo se aplikace otevře bez chyby a stažení ohlásí, že server není dostupný
 - [ ] obrazovka „O aplikaci“ ukazuje správné číslo verze
-- [ ] doména v `app/src/app/data/adresa-backendu.ts` je skutečná (ne `.invalid`), backend na ní
+- [ ] doména v `app/src/app/data/adresa-backendu.ts` (`kontrolatiketu.petrf22.cz`) odpovídá
+      nasazenému backendu, backend na ní
       běží a `curl -sI …/v1/manifest.json` vrací `text/plain` (docs/backend.md)
 
 ## Co vydání ještě blokuje
 
-- **Doména backendu.** V aplikaci i v `network_security_config.xml` je zatím zástupná
-  `vysledky.kontrola-tiketu.invalid`. Bez skutečné domény a nasazeného backendu stažení
-  výsledků nefunguje (import souboru ano).
+- ~~Doména backendu~~ — `kontrolatiketu.petrf22.cz` (12. 9. 2026), v aplikaci
+  i v `network_security_config.xml`. Dokud na ní backend neběží, stažení výsledků nefunguje
+  (import souboru ano).
 - **Síťový allowlist a ML Kit bez `datatransport` na telefonu.** Prázdné `<trust-anchors />`
   v `base-config` je podle schématu platné, ale na zařízení se ještě neověřovalo. Ověřit, že
   stažení z backendu projde, spojení jinam selže a sken i rozpoznání textu fungují.

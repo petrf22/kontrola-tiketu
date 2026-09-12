@@ -1,6 +1,6 @@
 # Backend: hlídání losování a výsledky pro aplikaci
 
-Runbook i zápis rozhodnutí. Stav k **11. 9. 2026**.
+Runbook i zápis rozhodnutí. Stav k **12. 9. 2026**.
 
 ---
 
@@ -79,7 +79,7 @@ dá se zahodit a znovu postavit příkazem `obnov`.
 
 ## API
 
-Kořen `https://<doména>/v1/`. Jen `GET`, bez parametrů, bez cookies, bez autentizace.
+Kořen `https://kontrolatiketu.petrf22.cz/v1/`. Jen `GET`, bez parametrů, bez cookies, bez autentizace.
 
 | Cesta | Obsah |
 |---|---|
@@ -213,12 +213,54 @@ cron z příkazové řádky; subdoména s vlastním document rootem a HTTPS.
    Když hosting pouští cron častěji, nevadí to (pojistka 55 minut).
 6. **Kontrola po nasazení:**
    ```bash
-   curl -sI https://vysledky.<doména>/v1/manifest.json   # 200, text/plain; charset=utf-8, no-cache, HSTS, bez Set-Cookie
-   curl -sI https://vysledky.<doména>/                   # 403
-   curl -sI https://vysledky.<doména>/v1/.htaccess       # 403
+   curl -sI https://kontrolatiketu.petrf22.cz/v1/manifest.json   # 200, text/plain; charset=utf-8, no-cache, HSTS, bez Set-Cookie
+   curl -sI https://kontrolatiketu.petrf22.cz/                   # 403
+   curl -sI https://kontrolatiketu.petrf22.cz/v1/.htaccess       # 403
    ```
 7. **Access log.** Jediné místo, kde vzniká stopa (IP a čas stažení, nic víc). Když to panel
    umožní, vypnout ho nebo zkrátit uchovávání.
+
+### Gigaserver (jen FTP)
+
+Ostrý backend běží na **`kontrolatiketu.petrf22.cz`** u Gigaserveru. Hosting se od obecného
+postupu výše liší ve třech věcech:
+
+- **Subdoména je složka** `kontrolatiketu.petrf22.cz` v kořeni FTP a ta je rovnou document
+  rootem — přesměrovat ho na `backend/public` nejde.
+- **Není SSH.** Neprojde `rsync`, `ssh … obnov` ani cron jako příkazová řádka.
+- **Cron** se zadává v administraci (sekce „Ostatní“) a schvaluje ho technik.
+
+Rozložení na FTP — kód leží vedle docrootu, ne v něm:
+
+```
+/kontrolatiketu.petrf22.cz/      ← obsah backend/public (.htaccess, robots.txt, v1/)
+/kontrolatiketu-backend/         ← bin, src, config, vendor (--no-dev), var
+```
+
+`config/konfigurace.lokalni.php` (mimo git) přesměruje jen veřejný adresář:
+
+```php
+<?php
+return ['verejne' => dirname(__DIR__, 2) . '/kontrolatiketu.petrf22.cz/v1'];
+```
+
+Databáze a publikace se bez SSH na serveru nestaví — vyrobí se lokálně a nahrají hotové:
+
+```bash
+cd backend && composer install --no-dev --optimize-autoloader
+php bin/vyherka obnov                  # var/stav.sqlite a public/v1 z archivu
+# FTPS; -L kvůli symlinku var/archiv → fetcher/.cache
+lftp -u <ucet> <ftp-server> -e '   # údaje z administrace Gigaserveru
+  set ftp:ssl-force true;
+  mirror -R -L --exclude-glob .phpunit* public/ /kontrolatiketu.petrf22.cz/;
+  mirror -R -L --exclude tests/ --exclude-glob tik.lock --exclude-glob "*.log" \
+    --exclude public/ --exclude tools/ ./ /kontrolatiketu-backend/;
+  bye'
+composer install                       # vrátit vývojové závislosti
+```
+
+Heslo k FTP do repozitáře nepatří — `lftp` si ho vyžádá, nebo ho vezme z `~/.netrc`.
+Kontrola po nasazení je stejná jako v bodě 6 výše.
 
 ### Záloha
 
@@ -235,8 +277,8 @@ Na hosting jde jen `backend/`, proto má backend kopii `data/sazby-extra6.json` 
 
 ## Otevřené body
 
-- **Doména backendu** je natvrdo v aplikaci (adresa API i síťový allowlist). Změna domény
-  znamená novou verzi aplikace.
+- **Doména backendu** (`kontrolatiketu.petrf22.cz`) je natvrdo v aplikaci (adresa API i síťový
+  allowlist). Změna domény znamená novou verzi aplikace.
 - **Cron voláním URL.** Některé hostingy neumí cron z příkazové řádky. Pak by byl potřeba
   `public/cron.php` s tajným klíčem — jediný kus PHP za běhu. Řešit, až když to bude nutné.
 - **Časy zveřejnění** — viz Rozvrh, změří se provozem.

@@ -12,10 +12,11 @@ je jen rychlá orientace; při rozporu platí zadání.
 Hotový je **zdroj dat**, **vyhodnocovací jádro**, **fetcher**, **čtení tiketu**, **kostra
 aplikace se šesti obrazovkami** a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
 
-**Stahování výsledků zatím není na telefonu ověřené.** Adresa backendu je zástupná
-(`vysledky.kontrola-tiketu.invalid`), síťový allowlist s prázdnými `<trust-anchors />` a chod
-ML Kitu bez odstraněného `datatransport` se musí vyzkoušet na zařízení — viz `docs/vydani.md`,
-„Co vydání ještě blokuje“.
+**Stahování výsledků zatím není na telefonu ověřené.** Aplikace míří na
+`kontrolatiketu.petrf22.cz` (Gigaserver, jen FTP — viz `docs/backend.md`), backend tam ale
+ještě není nasazený. Síťový allowlist s prázdnými `<trust-anchors />` a chod ML Kitu bez
+odstraněného `datatransport` se musí vyzkoušet na zařízení — viz `docs/vydani.md`, „Co vydání
+ještě blokuje“.
 
 **Ověřené na skutečném telefonu** (Xiaomi 14T Pro, Android 16, 9. 9. 2026):
 

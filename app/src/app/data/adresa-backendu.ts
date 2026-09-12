@@ -7,4 +7,4 @@
  *
  * Při `ng serve` ji nahrazuje `adresa-backendu.vyvoj.ts` (lokální backend, viz docs/backend.md).
  */
-export const ZAKLADNI_URL = 'https://vysledky.kontrola-tiketu.invalid/v1/';
+export const ZAKLADNI_URL = 'https://kontrolatiketu.petrf22.cz/v1/';

@@ -39,3 +39,28 @@ export function formatujDatumCas(iso: string): string {
 export function nazevDne(zkratka: string): string {
   return DNY[zkratka] ?? zkratka;
 }
+
+/**
+ * Názvy pořadí doplňkové hry. Šance je má i v listině (`popis`), Extra 6 ale ne, takže by
+ * se uživateli jinak ukázal holý klíč z modelu — „pořadí trojcisli“.
+ */
+const PORADI_DOPLNKOVE: Readonly<Record<string, string>> = {
+  sestecisli: 'šestičíslí',
+  peticisli: 'pětičíslí',
+  ctyrcisli: 'čtyřčíslí',
+  trojcisli: 'trojčíslí',
+  dvojcisli: 'dvojčíslí',
+  'koncove-cislo': 'koncové číslo',
+  'sousedni-cislo': 'sousední číslo',
+};
+
+export function nazevPoradiDoplnkoveHry(klic: string): string {
+  return PORADI_DOPLNKOVE[klic] ?? klic;
+}
+
+/** `1 sloupec`, `3 sloupce`, `5 sloupců` — čeština má tři tvary, ne dva. */
+export function pocetSloupcu(pocet: number): string {
+  if (pocet === 1) return '1 sloupec';
+  if (pocet >= 2 && pocet <= 4) return `${pocet} sloupce`;
+  return `${pocet} sloupců`;
+}

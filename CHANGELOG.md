@@ -29,6 +29,11 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 - Aplikace žádá o přístup k internetu, ale spojit se umí jedině se serverem výsledků — jinam systém šifrované spojení nepustí; Googlí vrstva pro odesílání záznamů z ML Kitu je z aplikace odstraněná (aplikace)
 - Import výsledků ukládá jen nové tahy místo přepisu celého seznamu (aplikace)
 
+### Opraveno
+- Výhra v Šanci nebo v Extra 6 se popisuje česky („trojčíslí“) místo klíčem z modelu („pořadí trojcisli“) (aplikace)
+- V seznamu tiketů je zase název hry vlevo a částka vpravo; mřížka je stavěla obráceně (aplikace)
+- Počet sloupců se skloňuje — „1 sloupec“, „3 sloupce“, „5 sloupců“ (aplikace)
+
 ## [0.1.1] – 2026-09-10
 
 ### Opraveno

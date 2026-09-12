@@ -1,7 +1,13 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
 import type { Sloupec, VysledekSlosovani, VysledekTiketu, Vyhra } from '@kontrola-tiketu/jadro';
-import { formatujDatum, formatujDatumCas, nazevDne } from '../data/format.js';
+import {
+  formatujDatum,
+  formatujDatumCas,
+  nazevDne,
+  nazevPoradiDoplnkoveHry,
+  pocetSloupcu,
+} from '../data/format.js';
 import { Stav } from '../data/stav.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
@@ -28,7 +34,7 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
     @if (tiket(); as t) {
       <h2>{{ t.hra === 'eurojackpot' ? 'Eurojackpot' : 'Sportka' }}</h2>
       <p class="popis">
-        {{ t.sloupce.length }} sloupců, {{ t.slosovani.pocet }} slosování od
+        {{ pocetSloupcu(t.sloupce.length) }}, {{ t.slosovani.pocet }} slosování od
         {{ formatujDatum(t.slosovani.prvni) }}.
         @if (t.kodDoplnkoveHry) {
           <br />{{ t.hra === 'eurojackpot' ? 'Extra 6' : 'Šance' }}: {{ t.kodDoplnkoveHry }}
@@ -244,6 +250,7 @@ export class Detail {
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujDatumCas = formatujDatumCas;
+  protected readonly pocetSloupcu = pocetSloupcu;
 
   /**
    * Sériové číslo tiketu, pokud pochází z čárového kódu.
@@ -348,7 +355,12 @@ export class Detail {
     else casti.push(`Sloupec ${(vyhra.indexSloupce ?? 0) + 1}`);
 
     if (vyhra.poradiTahu !== null) casti.push(`${vyhra.poradiTahu}. tah`);
-    casti.push(`pořadí ${vyhra.poradi}`);
+
+    // Bonus žádné pořadí nemá — jeho klíč je jen „bonus“, takže by z toho vyšlo
+    // „Bonus · pořadí bonus“. Doplňková hra má místo římské číslice název koncovky.
+    if (vyhra.zdroj === 'doplnkova-hra') casti.push(nazevPoradiDoplnkoveHry(vyhra.poradi));
+    else if (vyhra.zdroj !== 'bonus') casti.push(`pořadí ${vyhra.poradi}`);
+
     return casti.join(' · ');
   }
 

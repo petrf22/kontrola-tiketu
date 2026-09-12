@@ -59,7 +59,14 @@ interface RadekSeznamu {
     }
     .hra { font-weight: 600; }
     .detail { grid-column: 1; font-size: 0.8rem; color: var(--barva-text-tlumeny); }
-    .castka { grid-row: 1 / span 2; align-self: center; font-variant-numeric: tabular-nums; }
+    /*
+      Sloupec se musí určit výslovně. Mřížka umisťuje nejdřív prvky s pevným řádkem, takže
+      by částka sebrala první sloupec a název hry by skončil vpravo — opačně, než se čte.
+    */
+    .castka {
+      grid-column: 2; grid-row: 1 / span 2;
+      align-self: center; font-variant-numeric: tabular-nums;
+    }
     .castka.nejisty { color: var(--barva-text-tlumeny); }
   `,
 })

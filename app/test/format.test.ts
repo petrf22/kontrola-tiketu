@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { formatujDatum, formatujDatumCas, nazevDne } from '../src/app/data/format.js';
+import {
+  formatujDatum,
+  formatujDatumCas,
+  nazevDne,
+  nazevPoradiDoplnkoveHry,
+  pocetSloupcu,
+} from '../src/app/data/format.js';
 
 describe('formatujDatum', () => {
   it('píše datum česky, ne v ISO tvaru', () => {
@@ -35,5 +41,28 @@ describe('nazevDne', () => {
 
   it('neznámou zkratku nechá být', () => {
     expect(nazevDne('xx')).toBe('xx');
+  });
+});
+
+describe('nazevPoradiDoplnkoveHry', () => {
+  it('místo klíče z modelu vypíše, co uživatel trefil', () => {
+    // Bez tohohle stálo v detailu tiketu „pořadí trojcisli“.
+    expect(nazevPoradiDoplnkoveHry('trojcisli')).toBe('trojčíslí');
+    expect(nazevPoradiDoplnkoveHry('koncove-cislo')).toBe('koncové číslo');
+    expect(nazevPoradiDoplnkoveHry('sousedni-cislo')).toBe('sousední číslo');
+  });
+
+  it('neznámý klíč vrátí beze změny, ať se neztratí', () => {
+    expect(nazevPoradiDoplnkoveHry('sedmicisli')).toBe('sedmicisli');
+  });
+});
+
+describe('pocetSloupcu', () => {
+  it('skloňuje podle počtu, jak má čeština', () => {
+    expect(pocetSloupcu(1)).toBe('1 sloupec');
+    expect(pocetSloupcu(2)).toBe('2 sloupce');
+    expect(pocetSloupcu(4)).toBe('4 sloupce');
+    expect(pocetSloupcu(5)).toBe('5 sloupců');
+    expect(pocetSloupcu(10)).toBe('10 sloupců');
   });
 });

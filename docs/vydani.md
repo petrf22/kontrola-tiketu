@@ -305,6 +305,37 @@ Aplikace není oficiální aplikací provozovatele loterie a není s ním nijak 
 Eurojackpot a Sportka jsou ochranné známky svých vlastníků.
 ```
 
+### Screenshoty
+
+Verzované v `tools/screenshoty/`, pět PNG 1080×1920. Generuje je `tools/screenshoty/generuj.mjs`
+proti aplikaci běžící v prohlížeči:
+
+```bash
+cd backend && php -S localhost:8080 -t public tools/vyvojovy-server.php   # výsledky
+cd app && npx ng serve                                                    # aplikace
+node tools/screenshoty/generuj.mjs                                        # snímky
+```
+
+Backend se naplní z archivu fetcheru (`ln -s ../../fetcher/.cache backend/var/archiv`,
+pak `php bin/vyherka obnov` a `publikuj`). Bez něj snímek obrazovky „Výsledky“ ukáže
+nepovedené stažení.
+
+**Proč z prohlížeče, a ne z telefonu:** `MainActivity` nastavuje `FLAG_SECURE`, takže
+systémový snímek je černý. Je to akceptační kritérium soukromí a kvůli obrázkům se
+obcházet nebude. V prohlížeči běží tentýž kód i HTML jako ve webview; liší se jen úložiště
+(paměť místo SQLCipher) a varování „Běžíš v prohlížeči“, které skript skrývá — na telefonu
+se nezobrazuje nikdy.
+
+Obrazovky s kamerou takhle nafotit nejdou, potřebují nativní ML Kit. Play je nevyžaduje.
+
+Čím se řídí rozměr: Play chce delší stranu nejvýš dvojnásobek kratší a pro propagaci aspoň
+1080 px. Proto 432×768 CSS při hustotě 2,5. Průhlednost Play odmítá, takže `bez-alfy.py`
+po každém generování převede snímky na 24bitové PNG a zkontroluje rozměr.
+
+Ukázkové tikety jsou vymyšlené, ale vyhodnocují se proti skutečným tahům z `data/vysledky.json`
+— všechny částky tedy spočítá jádro z reálné tabulky výher a žádná není opsaná natvrdo.
+Skutečné tikety uživatele se k tomu nepoužívají.
+
 ### Cesta do produkce
 
 Nové vývojářské účty musí projít **uzavřeným testem: 12 testerů, kteří jsou přihlášení

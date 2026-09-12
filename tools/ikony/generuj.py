@@ -147,6 +147,11 @@ def splashe() -> None:
 
 FONT = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
 
+# Dřív tu stálo „Offline. Nic se nikam neodesílá.“ Od stahování výsledků aplikace offline
+# není; co platí dál, je že z telefonu neodchází nic o tiketech.
+NADPIS = "Kontrola tiketu"
+PODNADPIS = "Tikety nikam neodesílá."
+
 
 def _font_do_sirky(text: str, max_sirka: int, max_velikost: int):
     """Největší velikost písma, při které se text ještě vejde. None, když font chybí."""
@@ -176,14 +181,13 @@ def play() -> None:
     kresba = ImageDraw.Draw(feature)
 
     text_x, sirka_textu = 430, 1024 - 430 - 70
-    nadpis = _font_do_sirky("Kontrola tiketu", sirka_textu, 80)
-    podnadpis = _font_do_sirky("Offline. Nic se nikam neodesílá.", sirka_textu, 34)
+    nadpis = _font_do_sirky(NADPIS, sirka_textu, 80)
+    podnadpis = _font_do_sirky(PODNADPIS, sirka_textu, 34)
     if nadpis is None or podnadpis is None:
         print(f"  (font {FONT} nenalezen, feature grafika bude bez textu)")
     else:
-        kresba.text((text_x, 210), "Kontrola tiketu", font=nadpis, fill=TIKET, anchor="ls")
-        kresba.text((text_x, 280), "Offline. Nic se nikam neodesílá.", font=podnadpis,
-                    fill=NEVYPLNENE, anchor="ls")
+        kresba.text((text_x, 210), NADPIS, font=nadpis, fill=TIKET, anchor="ls")
+        kresba.text((text_x, 280), PODNADPIS, font=podnadpis, fill=NEVYPLNENE, anchor="ls")
     uloz(feature, zde / "play-feature-1024x500.png")
 
 

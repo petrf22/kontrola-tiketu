@@ -7,6 +7,9 @@
 # není smetí: patří do zálohy, jen se kvůli velikosti neverzuje.
 /var/
 
+# Spouštěč cronu pod tajným jménem — existuje jen na serveru (docs/backend.md).
+/public/cron/
+
 # Cesty a nastavení konkrétního hostingu.
 /config/konfigurace.lokalni.php
 

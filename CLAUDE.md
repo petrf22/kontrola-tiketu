@@ -157,7 +157,8 @@ Keystore, snímky z kamery se neukládají). Kritérium „jediná permission `C
 
 1. **Backend** (`backend/`, PHP na sdíleném hostingu) — cronem hlídá výherní listinu podle
    rozvrhu, publikuje výsledky jako statické soubory (`manifest.json` + roční balíky ve formátu
-   fetcheru). Za běhu žádné PHP. Viz `docs/backend.md`.
+   fetcheru). Za běhu žádné PHP kromě spouštěče cronu pod tajnou adresou (hosting umí cron
+   jen voláním URL; tajné jméno do gitu nepatří). Viz `docs/backend.md`.
 2. **Mobilní aplikace** — Angular + Capacitor. Stahuje od backendu **vždy všechny** balíky,
    pro všechny stejně (GET bez parametrů, bez cookies, pevný User-Agent). OCR běží on-device
    (ML Kit), vyhodnocení je lokální. Import souboru zůstává jako záloha.

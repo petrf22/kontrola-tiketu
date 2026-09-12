@@ -31,6 +31,15 @@ final class HtaccessTest extends TestCase
         self::assertStringContainsString('Options -Indexes', self::htaccess());
     }
 
+    public function testJedinePhpJeSpoustecCronuPodTajnymJmenem(): void
+    {
+        $pravidla = self::htaccess();
+        self::assertStringContainsString("RewriteCond %{REQUEST_FILENAME} -f\n    RewriteRule ^cron/[0-9a-f]{32}\\.php$ - [L]", $pravidla);
+        $bezKomentaru = (string) preg_replace('/^\\s*#.*$/m', '', $pravidla);
+        self::assertSame(1, preg_match_all('/php/i', $bezKomentaru), 'jiné PHP ven nesmí');
+        self::assertSame([], glob(Fixtury::KOREN_REPA . '/backend/public/cron/*') ?: [], 'tajné jméno do gitu nepatří');
+    }
+
     public function testDocasneSouboryPublikaceVenNesmi(): void
     {
         self::assertMatchesRegularExpression('/<FilesMatch "\^\\\\\.">\s*Require all denied/', self::htaccess());

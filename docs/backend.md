@@ -25,7 +25,7 @@ Backend nedostane nic nad rámec toho, co vidí každý webový server (IP adres
 
 ## Rozhodnutí
 
-### Za běhu žádné PHP
+### Za běhu žádné PHP (až na spouštěč cronu)
 
 REST API tvoří **statické soubory** v `public/v1/`, které servíruje přímo Apache hostingu.
 PHP běží jen v cronu. Důvody:
@@ -39,6 +39,17 @@ PHP běží jen v cronu. Důvody:
 Kód v cronu je čisté PHP 8.2+ s Composerem a **bez běhových závislostí** (vývojové: PHPUnit
 a PHPStan na nejvyšší úrovni). Kdyby jednou bylo potřeba API, které za běhu něco počítá,
 nejlepší volba je **Slim 4**. Laravel, Symfony i Nette jsou na dva soubory JSON zbytečně těžké.
+
+**Výjimka: cron voláním URL.** Gigaserver umí cron jen jako zavolání URL, a to bez parametrů
+(12. 9. 2026). Z webu je proto dostupný jediný skript: `cron/<32 hex znaků>.php` v docrootu,
+jednořádkový odkaz do `bin/cron.php` mimo docroot. Pravidla:
+
+- **Jméno souboru je tajný klíč** (128 bitů náhody). Do gitu nepatří — existuje jen na serveru,
+  `.gitignore` ho hlídá a `HtaccessTest` kontroluje, že jiné PHP ven nepustí.
+- Spouštěč nic nepřijímá. Běh je přesně `bin/vyherka tik` včetně zámku, takže ani vyzrazené jméno
+  nevede k více dotazům na Allwyn, než dovolí rozvrh (pojistka 55 minut, `maxDotazuNaBeh`).
+- Odpověď je jen `ok` (200) nebo `chyba` (500), podrobnosti jdou do `var/tik.log`.
+- S aplikací nemá nic společného — aplikace chodí jen na `v1/*.json`.
 
 ### Parser existuje dvakrát — a hlídá se to
 
@@ -112,7 +123,8 @@ Kořen `https://kontrolatiketu.petrf22.cz/v1/`. Jen `GET`, bez parametrů, bez c
   který ještě neleží na disku.
 - Jména balíků odpovídají `^[a-z0-9-]+\.json$`; klient jiná odmítne.
 
-`public/.htaccess` pouští ven jen `v1/*.json` a `robots.txt` (`Disallow: /`), zakazuje výpis
+`public/.htaccess` pouští ven jen `v1/*.json`, `robots.txt` (`Disallow: /`) a existující
+`cron/<32 hex>.php` (viz Výjimka výše), zakazuje výpis
 adresářů a soubory s tečkou na začátku (dočasné soubory publikace), posílá HSTS, `nosniff`,
 `no-referrer`, `Cache-Control: no-cache` a u JSON `Access-Control-Allow-Origin: *`.
 
@@ -228,12 +240,13 @@ postupu výše liší ve třech věcech:
 - **Subdoména je složka** `kontrolatiketu.petrf22.cz` v kořeni FTP a ta je rovnou document
   rootem — přesměrovat ho na `backend/public` nejde.
 - **Není SSH.** Neprojde `rsync`, `ssh … obnov` ani cron jako příkazová řádka.
-- **Cron** se zadává v administraci (sekce „Ostatní“) a schvaluje ho technik.
+- **Cron** se zadává v administraci (sekce „Ostatní“) jako URL bez parametrů a schvaluje ho
+  technik.
 
 Rozložení na FTP — kód leží vedle docrootu, ne v něm:
 
 ```
-/kontrolatiketu.petrf22.cz/      ← obsah backend/public (.htaccess, robots.txt, v1/)
+/kontrolatiketu.petrf22.cz/      ← obsah backend/public (.htaccess, robots.txt, v1/) + cron/<tajné>.php
 /kontrolatiketu-backend/         ← bin, src, config, vendor (--no-dev), var
 ```
 
@@ -260,7 +273,23 @@ composer install                       # vrátit vývojové závislosti
 ```
 
 Heslo k FTP do repozitáře nepatří — `lftp` si ho vyžádá, nebo ho vezme z `~/.netrc`.
-Kontrola po nasazení je stejná jako v bodě 6 výše.
+Kontrola po nasazení je stejná jako v bodě 6 výše. **`mirror` do docrootu nikdy s `--delete`** —
+smazal by spouštěč cronu, který v `backend/public` není.
+
+**Cron.** Spouštěč s tajným jménem se vyrobí jednou a nahraje jen na server:
+
+```bash
+jmeno=$(openssl rand -hex 16)
+mkdir -p ~/kontrolatiketu-cron/cron
+printf '<?php require __DIR__ . %s;\n' "'/../../kontrolatiketu-backend/bin/cron.php'" \
+  > ~/kontrolatiketu-cron/cron/$jmeno.php
+echo "https://kontrolatiketu.petrf22.cz/cron/$jmeno.php"   # tuhle URL zadat do cronu, každou hodinu
+lftp -u <ucet> <ftp-server> -e 'set ftp:ssl-force true; mirror -R ~/kontrolatiketu-cron/ /kontrolatiketu.petrf22.cz/; bye'
+```
+
+Adresu si uschovat mimo repozitář (správce hesel). Když unikne, vyrobit nové jméno, starý soubor
+smazat a cron přenastavit. Po prvních bězích stáhnout `var/tik.log` a v manifestu zkontrolovat
+`kontrola.posledniDotaz`.
 
 ### Záloha
 
@@ -279,6 +308,4 @@ Na hosting jde jen `backend/`, proto má backend kopii `data/sazby-extra6.json` 
 
 - **Doména backendu** (`kontrolatiketu.petrf22.cz`) je natvrdo v aplikaci (adresa API i síťový
   allowlist). Změna domény znamená novou verzi aplikace.
-- **Cron voláním URL.** Některé hostingy neumí cron z příkazové řádky. Pak by byl potřeba
-  `public/cron.php` s tajným klíčem — jediný kus PHP za běhu. Řešit, až když to bude nutné.
 - **Časy zveřejnění** — viz Rozvrh, změří se provozem.

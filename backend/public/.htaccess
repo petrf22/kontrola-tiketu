@@ -1,5 +1,5 @@
-# Document root backendu. Servíruje se odsud jen /v1/*.json a robots.txt — nic jiného,
-# žádné PHP. Soubory v v1/ vyrábí `bin/vyherka tik` z cronu.
+# Document root backendu. Servíruje se odsud jen /v1/*.json a robots.txt a jediné PHP — spouštěč
+# cronu pod tajným jménem. Soubory v v1/ vyrábí `tik` z cronu.
 #
 # Každý blok je v <IfModule>, aby chybějící modul na sdíleném hostingu neshodil celý web
 # chybou 500. Že hlavičky opravdu chodí, se ověří po nasazení (docs/backend.md).
@@ -15,6 +15,11 @@ DirectoryIndex disabled
 <IfModule mod_rewrite.c>
     RewriteEngine On
     RewriteRule ^(robots\.txt|v1/[a-z0-9-]+\.json)$ - [L]
+    # Cron hostingu umí jen zavolat URL (docs/backend.md, „Gigaserver“). Soubor s tajným jménem
+    # leží jen na serveru a odkazuje do bin/cron.php mimo docroot. Jméno, které neexistuje,
+    # dostane 403 stejně jako všechno ostatní.
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^cron/[0-9a-f]{32}\.php$ - [L]
     RewriteRule ^ - [F]
 </IfModule>
 

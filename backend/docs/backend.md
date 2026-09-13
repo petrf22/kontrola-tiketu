@@ -349,6 +349,11 @@ dostává. Po změně sazeb: upravit, nasadit, `php bin/vyherka publikuj`.
 
 ## Otevřené body
 
+- **Nasazeno 13. 9. 2026** na `kontrolatiketu.petrf22.cz`: archiv 2317 listin (Sportka 1994–2026,
+  Eurojackpot 2015–2026), databáze a publikace postavené lokálně příkazem `obnov`. Ruční zavolání
+  spouštěče cronu vrátilo `ok` a zapsalo `var/tik.log`. Cron v administraci zadává uživatel —
+  po prvním losování ověřit v logu a v `kontrola.posledniDotaz`, že opravdu běží každou hodinu.
+
 - **Doména backendu** (`kontrolatiketu.petrf22.cz`) je natvrdo v aplikaci (adresa API i síťový
   allowlist). Změna domény znamená novou verzi aplikace.
 - **Časy zveřejnění** — viz Rozvrh, změří se provozem.

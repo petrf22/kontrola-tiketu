@@ -47,9 +47,8 @@ node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí
 Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace se šesti obrazovkami**
 a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
 
-**Stahování výsledků zatím není na telefonu ověřené.** Aplikace míří na
-`kontrolatiketu.petrf22.cz` (Gigaserver, jen FTP — viz `backend/docs/backend.md`), backend tam ale
-ještě není nasazený. Síťový allowlist s prázdnými `<trust-anchors />` a chod ML Kitu bez
+**Stahování výsledků zatím není na telefonu ověřené.** Backend je nasazený na
+`kontrolatiketu.petrf22.cz` (13. 9. 2026; Gigaserver, jen FTP — viz `backend/docs/backend.md`). Síťový allowlist s prázdnými `<trust-anchors />` a chod ML Kitu bez
 odstraněného `datatransport` se musí vyzkoušet na zařízení — viz `mobil/docs/vydani.md`, „Co
 vydání ještě blokuje“.
 

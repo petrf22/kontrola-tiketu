@@ -420,8 +420,7 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 ## Co vydání ještě blokuje
 
 - ~~Doména backendu~~ — `kontrolatiketu.petrf22.cz` (12. 9. 2026), v aplikaci
-  i v `network_security_config.xml`. Dokud na ní backend neběží, stažení výsledků nefunguje
-  (import souboru ano).
+  i v `network_security_config.xml`. Backend na ní běží od 13. 9. 2026.
 - **Síťový allowlist a ML Kit bez `datatransport` na telefonu.** Prázdné `<trust-anchors />`
   v `base-config` je podle schématu platné, ale na zařízení se ještě neověřovalo. Ověřit, že
   stažení z backendu projde, spojení jinam selže a sken i rozpoznání textu fungují.

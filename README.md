@@ -105,8 +105,9 @@ Aby nevznikl mylný dojem, že je všechno vyzkoušené:
   je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
   a míří na uzavřený test, ne rovnou do produkce.
 - **Aplikace zatím není v Google Play** — viz [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
-- **Backend zatím není nasazený.** Aplikace míří na `kontrolatiketu.petrf22.cz`, ale síťový
-  allowlist se ještě neověřoval na telefonu. Do té doby funguje import souboru.
+- **Stahování výsledků se ještě neověřovalo na telefonu.** Backend běží na
+  `kontrolatiketu.petrf22.cz` (od 13. 9. 2026), ale síťový allowlist se na zařízení nezkoušel.
+  Do té doby je jistý import souboru.
 
 Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 

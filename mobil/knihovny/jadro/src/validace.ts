@@ -17,7 +17,7 @@ export type ProblemKod =
   | 'spatny-pocet-cisel'
   | 'cislo-mimo-rozsah'
   | 'duplicitni-cislo'
-  | 'spatny-format-sesticisli'
+  | 'spatny-format-kodu'
   | 'zadny-sloupec'
   | 'nesouhlasi-hra'
   | 'spatny-pocet-slosovani'
@@ -27,7 +27,18 @@ export type ProblemKod =
 export const ROZSAHY = {
   eurojackpot: { cisla: { pocet: 5, min: 1, max: 50 }, eurocisla: { pocet: 2, min: 1, max: 12 } },
   sportka: { cisla: { pocet: 6, min: 1, max: 49 } },
+  euromiliony: { cisla: { pocet: 7, min: 1, max: 35 }, druheOsudi: { pocet: 1, min: 1, max: 5 } },
 } as const;
+
+/**
+ * Kolik číslic má kód doplňkové hry: Extra 6 a Šance šest, Eurošance pět. Vedoucí nuly
+ * jsou významné, proto je kód vždy řetězec.
+ */
+export const DELKA_KODU_DOPLNKOVE_HRY: Readonly<Record<Hra, number>> = {
+  eurojackpot: 6,
+  sportka: 6,
+  euromiliony: 5,
+};
 
 /**
  * Dny, na které jde hru vsadit. Slouží jen jako nabídka ve formuláři tiketu — vyhodnocení
@@ -36,6 +47,7 @@ export const ROZSAHY = {
 export const DNY_LOSOVANI: Readonly<Record<Hra, readonly Den[]>> = {
   eurojackpot: ['ut', 'pa'],
   sportka: ['st', 'pa', 'ne'],
+  euromiliony: ['ut', 'so'],
 };
 
 /**
@@ -51,8 +63,6 @@ export function dnyZVyberu(hra: Hra, zaskrtnute: readonly Den[]): Den[] | null {
   return vybrane.length === nabidka.length ? null : vybrane;
 }
 
-const SESTICISLI = /^[0-9]{6}$/;
-
 interface Ocekavani {
   readonly pocet: number;
   readonly min: number;
@@ -61,7 +71,7 @@ interface Ocekavani {
 
 /**
  * Zkontroluje jednu skupinu tipovaných čísel: počet, rozsah a duplicity.
- * Sdílí ji Eurojackpot i Sportka, protože pravidla se liší jen čísly v `ocekavani`.
+ * Sdílí ji všechny hry, protože pravidla se liší jen čísly v `ocekavani`.
  */
 export function zkontrolujCisla(
   cisla: readonly number[],
@@ -110,16 +120,27 @@ export function zkontrolujSloupec(sloupec: Sloupec, cesta = 'sloupec'): Problem[
       ...zkontrolujCisla(sloupec.eurocisla, ROZSAHY.eurojackpot.eurocisla, `${cesta}.eurocisla`),
     ];
   }
+  if (sloupec.hra === 'euromiliony') {
+    return [
+      ...zkontrolujCisla(sloupec.cisla, ROZSAHY.euromiliony.cisla, `${cesta}.cisla`),
+      ...zkontrolujCisla(sloupec.druheOsudi, ROZSAHY.euromiliony.druheOsudi, `${cesta}.druheOsudi`),
+    ];
+  }
   return zkontrolujCisla(sloupec.cisla, ROZSAHY.sportka.cisla, `${cesta}.cisla`);
 }
 
-/** Šestičíslí Šance i Extra 6 je řetězec právě šesti číslic — vedoucí nuly jsou významné. */
-export function zkontrolujSesticisli(hodnota: string, cesta: string): Problem[] {
-  if (SESTICISLI.test(hodnota)) return [];
+const SLOVY: Readonly<Record<number, string>> = { 5: 'pět', 6: 'šest' };
+
+/**
+ * Kód doplňkové hry je řetězec právě `delka` číslic — vedoucí nuly jsou významné.
+ * Délku podle hry dává {@link DELKA_KODU_DOPLNKOVE_HRY}.
+ */
+export function zkontrolujKodDoplnkoveHry(hodnota: string, delka: number, cesta: string): Problem[] {
+  if (new RegExp(`^[0-9]{${delka}}$`).test(hodnota)) return [];
   return [
     {
-      kod: 'spatny-format-sesticisli',
-      zprava: `Očekává se šest číslic, zadáno „${hodnota}“.`,
+      kod: 'spatny-format-kodu',
+      zprava: `Očekává se ${SLOVY[delka] ?? delka} číslic, zadáno „${hodnota}“.`,
       cesta,
     },
   ];
@@ -165,7 +186,13 @@ export function zkontrolujTiket(tiket: Tiket): Problem[] {
   }
 
   if (tiket.kodDoplnkoveHry !== null) {
-    problemy.push(...zkontrolujSesticisli(tiket.kodDoplnkoveHry, 'kodDoplnkoveHry'));
+    problemy.push(
+      ...zkontrolujKodDoplnkoveHry(
+        tiket.kodDoplnkoveHry,
+        DELKA_KODU_DOPLNKOVE_HRY[tiket.hra],
+        'kodDoplnkoveHry',
+      ),
+    );
   }
 
   return problemy;

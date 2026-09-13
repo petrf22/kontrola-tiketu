@@ -3,14 +3,18 @@
  *
  * Zdrojem struktury je výherní listina Allwyn (viz backend/docs/data-source.md), zdrojem pravidel
  * herní plán. Model záměrně neobsahuje žádné výherní částky — ty vždy pocházejí z konkrétního
- * tahu. Jedinou výjimkou je Extra 6, jejíž sazby listina nepublikuje; ty se načítají zvlášť
- * jako data, ne jako konstanty v kódu.
+ * tahu. Výjimkou jsou Extra 6 a Eurošance, jejichž sazby listina nepublikuje; ty se načítají
+ * zvlášť jako data, ne jako konstanty v kódu.
  */
 
-/** Verze formátu JSON, který publikuje backend a konzumuje aplikace. */
-export const VERZE_FORMATU = 1;
+/**
+ * Verze formátu JSON, který publikuje backend a konzumuje aplikace.
+ *
+ * 2 (13. 9. 2026): Euromiliony a `sazbyEurosance`.
+ */
+export const VERZE_FORMATU = 2;
 
-export type Hra = 'eurojackpot' | 'sportka';
+export type Hra = 'eurojackpot' | 'sportka' | 'euromiliony';
 
 export type Den = 'po' | 'ut' | 'st' | 'ct' | 'pa' | 'so' | 'ne';
 
@@ -26,12 +30,17 @@ export type PoradiEurojackpot =
   | 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI'
   | 'VII' | 'VIII' | 'IX' | 'X' | 'XI' | 'XII';
 
+/** Euromiliony mají deset pořadí, I (7+1) až X (2+1). */
+export type PoradiEuromiliony =
+  | 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI' | 'VII' | 'VIII' | 'IX' | 'X';
+
 /** Sportka má pět pořadí na tah a společný Bonus. */
 export type PoradiSportka = 'bonus' | 'I' | 'II' | 'III' | 'IV' | 'V';
 
 /**
- * Šance i Extra 6 se vyhodnocují shodou koncových číslic sázenky a mají shodnou strukturu
- * pořadí. `sousedni-cislo` je 7. pořadí — sázka na čísla o jednu vyšší a nižší než koncové.
+ * Šance, Extra 6 i Eurošance se vyhodnocují shodou koncových číslic sázenky. `sousedni-cislo`
+ * je 7. pořadí Šance a Extra 6 — sázka na čísla o jednu vyšší a nižší než koncové. Eurošance
+ * má jen pět číslic a sousední číslo nezná, takže `sestecisli` ani `sousedni-cislo` nedosáhne.
  */
 export type PoradiKoncoveCislice =
   | 'sestecisli' | 'peticisli' | 'ctyrcisli' | 'trojcisli'
@@ -83,6 +92,19 @@ export interface TahEurojackpot extends TahZaklad {
   readonly jackpotKc: number | null;
 }
 
+export interface TahEuromiliony extends TahZaklad {
+  readonly hra: 'euromiliony';
+  /** Sedm čísel z 1–35, v pořadí vylosování. */
+  readonly cisla: readonly number[];
+  /** Jedno číslo z 1–5 z druhého osudí. */
+  readonly druheOsudi: number;
+  /** Pět číslic Eurošance jako řetězec — vedoucí nuly jsou významné. */
+  readonly eurosance: string;
+  readonly poradi: readonly Poradi<PoradiEuromiliony>[];
+  readonly prevodHlavniCastKc: number | null;
+  readonly jackpotKc: number | null;
+}
+
 /** Jeden z dvojice tahů Sportky. Čísla sloupce hrají v obou tazích, viz herní plán, bod 1. */
 export interface SportkaTah {
   readonly poradiTahu: 1 | 2;
@@ -112,7 +134,7 @@ export interface TahSportka extends TahZaklad {
   readonly superJackpotKc: number | null;
 }
 
-export type Tah = TahEurojackpot | TahSportka;
+export type Tah = TahEurojackpot | TahSportka | TahEuromiliony;
 
 // ---------------------------------------------------------------------------
 // Tikety
@@ -129,7 +151,17 @@ export interface SloupecSportka {
   readonly cisla: readonly number[];
 }
 
-export type Sloupec = SloupecEurojackpot | SloupecSportka;
+/**
+ * Druhé osudí je seznam, i když se tipuje jediné číslo — validace i formulář s ním pak
+ * zacházejí stejně jako s euročísly. Systémové sázky (víc čísel z druhého osudí) model nezná.
+ */
+export interface SloupecEuromiliony {
+  readonly hra: 'euromiliony';
+  readonly cisla: readonly number[];
+  readonly druheOsudi: readonly number[];
+}
+
+export type Sloupec = SloupecEurojackpot | SloupecSportka | SloupecEuromiliony;
 
 /**
  * Na která slosování tiket platí.
@@ -155,7 +187,10 @@ export interface Tiket {
   readonly hra: Hra;
   readonly sloupce: readonly Sloupec[];
   readonly slosovani: RozsahSlosovani;
-  /** Šest číslic Extra 6 (Eurojackpot) nebo Šance (Sportka); `null`, pokud nebyla vsazena. */
+  /**
+   * Šest číslic Extra 6 (Eurojackpot) nebo Šance (Sportka), pět číslic Eurošance (Euromiliony);
+   * `null`, pokud nebyla vsazena.
+   */
   readonly kodDoplnkoveHry: string | null;
   /**
    * Kolik tiket stál. `null`, když se nepodařilo přečíst a uživatel ho nedoplnil.
@@ -180,6 +215,26 @@ export interface SazbyExtra6 {
   readonly platnostOd: Datum;
   readonly sazkaKc: number;
   readonly nasobky: Readonly<Record<PoradiKoncoveCislice, number>>;
+  /** Zdroj, ze kterého byly sazby opsány — kvůli dohledatelnosti. */
+  readonly zdroj: string;
+}
+
+// ---------------------------------------------------------------------------
+// Sazby Eurošance
+// ---------------------------------------------------------------------------
+
+/** Pořadí, která Eurošance zná (herní plán, Euromiliony bod 10). */
+export type PoradiEurosance = Exclude<PoradiKoncoveCislice, 'sestecisli' | 'sousedni-cislo'>;
+
+/**
+ * Výhry v Eurošanci jsou pevné (herní plán, Euromiliony bod 16) a listina je nepublikuje.
+ * Na rozdíl od Extra 6 se vedou přímo v korunách: násobky v plánu jsou zaokrouhlené
+ * (1,66667násobek) a vedly by na necelé koruny, kdežto částky v závorkách jsou přesné.
+ */
+export interface SazbyEurosance {
+  readonly platnostOd: Datum;
+  readonly sazkaKc: number;
+  readonly vyhryKc: Readonly<Record<PoradiEurosance, number>>;
   /** Zdroj, ze kterého byly sazby opsány — kvůli dohledatelnosti. */
   readonly zdroj: string;
 }

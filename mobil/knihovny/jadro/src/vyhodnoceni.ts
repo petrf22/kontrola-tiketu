@@ -8,18 +8,23 @@
 
 import type {
   Datum,
+  SloupecEuromiliony,
   SloupecEurojackpot,
   SloupecSportka,
   Tah,
+  TahEuromiliony,
   TahEurojackpot,
   TahSportka,
   Tiket,
+  SazbyEurosance,
   SazbyExtra6,
 } from './model.js';
 import { vyhodnotSloupecEurojackpot, type VysledekSloupceEurojackpot } from './eurojackpot.js';
 import { vyhodnotSloupecVObouTazich, type VysledekSloupceSportka } from './sportka.js';
 import { vyhodnotSance } from './sance.js';
 import { vyhodnotExtra6, type VyhradaExtra6 } from './extra6.js';
+import { vyhodnotSloupecEuromiliony, type VysledekSloupceEuromiliony } from './euromiliony.js';
+import { vyhodnotEurosance, type VyhradaEurosance } from './eurosance.js';
 
 /** Počet sloupců, který herní plán považuje za plnou sázenku Sportky (bod 11). */
 export const PLNA_SAZENKA_SPORTKA = 8;
@@ -31,16 +36,17 @@ export interface Vyhra {
   readonly zdroj: ZdrojVyhry;
   /** Pořadí sloupce na tiketu, počítáno od nuly. `null` u doplňkové hry. */
   readonly indexSloupce: number | null;
-  /** Sportka: ve kterém z dvojice tahů. `null` u Eurojackpotu a doplňkové hry. */
+  /** Sportka: ve kterém z dvojice tahů. `null` u ostatních her a doplňkové hry. */
   readonly poradiTahu: 1 | 2 | null;
   readonly poradi: string;
   /** `null`, pokud částku nešlo určit — viz `vyhrada`. */
   readonly castkaKc: number | null;
-  readonly vyhrada: VyhradaExtra6 | 'chybi-v-tabulce' | null;
+  readonly vyhrada: VyhradaExtra6 | VyhradaEurosance | 'chybi-v-tabulce' | null;
 }
 
 export type VysledekSloupceTiketu =
   | { readonly hra: 'eurojackpot'; readonly index: number; readonly vysledek: VysledekSloupceEurojackpot }
+  | { readonly hra: 'euromiliony'; readonly index: number; readonly vysledek: VysledekSloupceEuromiliony }
   | {
       readonly hra: 'sportka';
       readonly index: number;
@@ -159,6 +165,40 @@ function vyhodnotEurojackpot(
   return sestav(tah.datum, sloupce, vyhry);
 }
 
+function vyhodnotEuromiliony(
+  tiket: Tiket,
+  tah: TahEuromiliony,
+  sazby: readonly SazbyEurosance[],
+): VysledekSlosovani {
+  const sloupce: VysledekSloupceTiketu[] = [];
+  const vyhry: Vyhra[] = [];
+
+  for (const [index, sloupec] of tiket.sloupce.entries()) {
+    if (sloupec.hra !== 'euromiliony') continue;
+    const vysledek = vyhodnotSloupecEuromiliony(sloupec as SloupecEuromiliony, tah);
+    sloupce.push({ hra: 'euromiliony', index, vysledek });
+    if (vysledek.poradi !== null) {
+      vyhry.push(vyhraZeSloupce(index, null, vysledek.poradi, vysledek.vyseVyhryKc));
+    }
+  }
+
+  if (tiket.kodDoplnkoveHry !== null) {
+    const eurosance = vyhodnotEurosance(tiket.kodDoplnkoveHry, tah, sazby);
+    if (eurosance.poradi !== null) {
+      vyhry.push({
+        zdroj: 'doplnkova-hra',
+        indexSloupce: null,
+        poradiTahu: null,
+        poradi: eurosance.poradi,
+        castkaKc: eurosance.vyseVyhryKc,
+        vyhrada: eurosance.vyhrada,
+      });
+    }
+  }
+
+  return sestav(tah.datum, sloupce, vyhry);
+}
+
 function vyhodnotSportka(tiket: Tiket, tah: TahSportka): VysledekSlosovani {
   const sloupce: VysledekSloupceTiketu[] = [];
   const vyhry: Vyhra[] = [];
@@ -230,18 +270,28 @@ function sestav(
   };
 }
 
+/**
+ * @param sazby Sazby Extra 6 (Eurojackpot).
+ * @param sazbyEurosance Sazby Eurošance (Euromiliony).
+ */
 export function vyhodnotTiket(
   tiket: Tiket,
   tahy: readonly Tah[],
   sazby: readonly SazbyExtra6[] = [],
+  sazbyEurosance: readonly SazbyEurosance[] = [],
 ): VysledekTiketu {
   const { pouzite, chybi } = vyberSlosovani(tiket, tahy);
 
-  const slosovani = pouzite.map((tah) =>
-    tah.hra === 'eurojackpot'
-      ? vyhodnotEurojackpot(tiket, tah, sazby)
-      : vyhodnotSportka(tiket, tah),
-  );
+  const slosovani = pouzite.map((tah) => {
+    switch (tah.hra) {
+      case 'eurojackpot':
+        return vyhodnotEurojackpot(tiket, tah, sazby);
+      case 'euromiliony':
+        return vyhodnotEuromiliony(tiket, tah, sazbyEurosance);
+      case 'sportka':
+        return vyhodnotSportka(tiket, tah);
+    }
+  });
 
   const nejistych = slosovani.reduce((s, v) => s + v.nejistychVyher, 0);
 

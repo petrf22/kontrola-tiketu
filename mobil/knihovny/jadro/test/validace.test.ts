@@ -4,7 +4,7 @@ import {
   jePlatny,
   ROZSAHY,
   zkontrolujCisla,
-  zkontrolujSesticisli,
+  zkontrolujKodDoplnkoveHry,
   zkontrolujSloupec,
   zkontrolujTiket,
   type Sloupec,
@@ -105,17 +105,62 @@ describe('zkontrolujSloupec', () => {
   });
 });
 
-describe('zkontrolujSesticisli', () => {
+describe('zkontrolujKodDoplnkoveHry', () => {
   it('přijme vedoucí nuly', () => {
-    expect(zkontrolujSesticisli('000000', 'k')).toEqual([]);
-    expect(zkontrolujSesticisli('057739', 'k')).toEqual([]);
+    expect(zkontrolujKodDoplnkoveHry('000000', 6, 'k')).toEqual([]);
+    expect(zkontrolujKodDoplnkoveHry('057739', 6, 'k')).toEqual([]);
+    expect(zkontrolujKodDoplnkoveHry('07781', 5, 'k')).toEqual([]);
   });
 
   it('odmítne jinou délku a nečíslice', () => {
-    expect(kody(zkontrolujSesticisli('12345', 'k'))).toEqual(['spatny-format-sesticisli']);
-    expect(kody(zkontrolujSesticisli('1234567', 'k'))).toEqual(['spatny-format-sesticisli']);
-    expect(kody(zkontrolujSesticisli('12 456', 'k'))).toEqual(['spatny-format-sesticisli']);
-    expect(kody(zkontrolujSesticisli('', 'k'))).toEqual(['spatny-format-sesticisli']);
+    expect(kody(zkontrolujKodDoplnkoveHry('12345', 6, 'k'))).toEqual(['spatny-format-kodu']);
+    expect(kody(zkontrolujKodDoplnkoveHry('1234567', 6, 'k'))).toEqual(['spatny-format-kodu']);
+    expect(kody(zkontrolujKodDoplnkoveHry('12 456', 6, 'k'))).toEqual(['spatny-format-kodu']);
+    expect(kody(zkontrolujKodDoplnkoveHry('', 6, 'k'))).toEqual(['spatny-format-kodu']);
+    expect(kody(zkontrolujKodDoplnkoveHry('123456', 5, 'k'))).toEqual(['spatny-format-kodu']);
+  });
+
+  it('řekne v hlášce, kolik číslic čeká', () => {
+    expect(zkontrolujKodDoplnkoveHry('1234', 5, 'k')[0]?.zprava).toContain('pět číslic');
+    expect(zkontrolujKodDoplnkoveHry('1234', 6, 'k')[0]?.zprava).toContain('šest číslic');
+  });
+});
+
+describe('Euromiliony', () => {
+  const sloupec = (cisla: number[], druheOsudi: number[]): Sloupec => ({
+    hra: 'euromiliony',
+    cisla,
+    druheOsudi,
+  });
+
+  it('přijme sedm čísel z 1–35 a jedno z 1–5', () => {
+    expect(zkontrolujSloupec(sloupec([1, 2, 3, 4, 5, 6, 35], [5]))).toEqual([]);
+  });
+
+  it('hlásí rozsah i počet v obou osudích', () => {
+    expect(kody(zkontrolujSloupec(sloupec([1, 2, 3, 4, 5, 6, 36], [1])))).toEqual(['cislo-mimo-rozsah']);
+    expect(kody(zkontrolujSloupec(sloupec([1, 2, 3, 4, 5, 6], [1])))).toEqual(['spatny-pocet-cisel']);
+    expect(kody(zkontrolujSloupec(sloupec([1, 2, 3, 4, 5, 6, 7], [6])))).toEqual(['cislo-mimo-rozsah']);
+    expect(zkontrolujSloupec(sloupec([1, 2, 3, 4, 5, 6, 7], []))[0]?.cesta).toBe('sloupec.druheOsudi');
+  });
+
+  it('kód Eurošance má pět číslic, ne šest', () => {
+    const tiket: Tiket = {
+      id: 'em',
+      hra: 'euromiliony',
+      sloupce: [sloupec([1, 2, 3, 4, 5, 6, 7], [1])],
+      slosovani: { prvni: '2026-09-08', pocet: 1, dny: null },
+      kodDoplnkoveHry: '07781',
+      cenaKc: null,
+      vlozeno: '2026-09-07T10:00:00Z',
+    };
+    expect(zkontrolujTiket(tiket)).toEqual([]);
+    expect(kody(zkontrolujTiket({ ...tiket, kodDoplnkoveHry: '077810' }))).toEqual(['spatny-format-kodu']);
+  });
+
+  it('úterý a sobota znamenají všechna slosování', () => {
+    expect(dnyZVyberu('euromiliony', ['so', 'ut'])).toBeNull();
+    expect(dnyZVyberu('euromiliony', ['so'])).toEqual(['so']);
   });
 });
 
@@ -172,7 +217,7 @@ describe('zkontrolujTiket', () => {
     expect(zkontrolujTiket({ ...zaklad, kodDoplnkoveHry: null })).toEqual([]);
     expect(zkontrolujTiket({ ...zaklad, kodDoplnkoveHry: '236412' })).toEqual([]);
     expect(kody(zkontrolujTiket({ ...zaklad, kodDoplnkoveHry: '23641' }))).toEqual([
-      'spatny-format-sesticisli',
+      'spatny-format-kodu',
     ]);
   });
 

@@ -31,12 +31,15 @@ export interface VysledekExtra6 {
   readonly vyhrada: VyhradaExtra6 | null;
 }
 
-/** Vybere sazby platné k danému datu — tedy poslední, které začaly platit nejpozději tehdy. */
-export function vyberSazby(
-  sazby: readonly SazbyExtra6[],
+/**
+ * Vybere sazby platné k danému datu — tedy poslední, které začaly platit nejpozději tehdy.
+ * Slouží Extra 6 i Eurošanci.
+ */
+export function vyberSazby<S extends { readonly platnostOd: Datum }>(
+  sazby: readonly S[],
   datum: Datum,
-): SazbyExtra6 | null {
-  let nejlepsi: SazbyExtra6 | null = null;
+): S | null {
+  let nejlepsi: S | null = null;
   for (const s of sazby) {
     if (s.platnostOd <= datum && (nejlepsi === null || s.platnostOd > nejlepsi.platnostOd)) {
       nejlepsi = s;

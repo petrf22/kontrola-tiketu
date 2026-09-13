@@ -5,6 +5,7 @@ import {
   splnujePodminkyBonusu,
   vyberSlosovani,
   vyhodnotTiket,
+  type SazbyEurosance,
   type SazbyExtra6,
   type Sloupec,
   type Tah,
@@ -12,13 +13,17 @@ import {
 } from '../src/index.js';
 import { EJ_2026_09_01, EJ_2026_09_04, EJ_2026_09_08 } from './fixtures/eurojackpot.js';
 import { SP_2026_09_02, SP_2026_09_04, SP_2026_09_06 } from './fixtures/sportka.js';
+import { EM_2026_09_08, EM_2026_09_12 } from './fixtures/euromiliony.js';
 
-const SAZBY: readonly SazbyExtra6[] = JSON.parse(
+const BALIK = JSON.parse(
   readFileSync(new URL('../../../test/fixtures/vysledky-2026-35-az-37.json', import.meta.url), 'utf8'),
-).sazbyExtra6;
+);
+const SAZBY: readonly SazbyExtra6[] = BALIK.sazbyExtra6;
+const SAZBY_EUROSANCE: readonly SazbyEurosance[] = BALIK.sazbyEurosance;
 
 const TAHY_EJ: readonly Tah[] = [EJ_2026_09_01, EJ_2026_09_04, EJ_2026_09_08];
 const TAHY_SP: readonly Tah[] = [SP_2026_09_02, SP_2026_09_04, SP_2026_09_06];
+const TAHY_EM: readonly Tah[] = [EM_2026_09_08, EM_2026_09_12];
 
 function tiketEJ(over: Partial<Tiket> = {}): Tiket {
   return {
@@ -208,6 +213,56 @@ describe('Bonus Sportky', () => {
     const t = tiketSP({ sloupce: [vyherniSloupec], kodDoplnkoveHry: '996412' });
     const vyhry = vyhodnotTiket(t, TAHY_SP, SAZBY).slosovani[0]!.vyhry;
     expect(vyhry.some((x) => x.zdroj === 'bonus')).toBe(false);
+  });
+});
+
+describe('vyhodnotTiket — Euromiliony', () => {
+  function tiketEM(over: Partial<Tiket> = {}): Tiket {
+    return {
+      id: 'em-test',
+      hra: 'euromiliony',
+      // 8. 9. 2026: 18 17 28 3 2 12 22 | 5 → 6+1, III. pořadí 22 047 Kč.
+      sloupce: [{ hra: 'euromiliony', cisla: [18, 17, 28, 3, 2, 12, 1], druheOsudi: [5] }],
+      slosovani: { prvni: '2026-09-08', pocet: 1, dny: null },
+      kodDoplnkoveHry: null,
+      cenaKc: null,
+      vlozeno: '2026-09-07T10:00:00Z',
+      ...over,
+    };
+  }
+
+  it('sloupec vyhraje částku z tabulky tahu', () => {
+    const v = vyhodnotTiket(tiketEM(), TAHY_EM, SAZBY, SAZBY_EUROSANCE);
+    expect(v.slosovani[0]!.vyhry).toEqual([
+      { zdroj: 'sloupec', indexSloupce: 0, poradiTahu: null, poradi: 'III', castkaKc: 22047, vyhrada: null },
+    ]);
+    expect(v.soucetJisty).toBe(true);
+  });
+
+  it('Eurošance přidá pevnou výhru jako doplňkovou hru', () => {
+    // 8. 9. 2026 vylosováno 37960; kód 11160 trefí dvojčíslí za 200 Kč.
+    const v = vyhodnotTiket(tiketEM({ kodDoplnkoveHry: '11160' }), TAHY_EM, SAZBY, SAZBY_EUROSANCE);
+    const doplnkova = v.slosovani[0]!.vyhry.find((x) => x.zdroj === 'doplnkova-hra');
+    expect(doplnkova).toEqual({
+      zdroj: 'doplnkova-hra', indexSloupce: null, poradiTahu: null,
+      poradi: 'dvojcisli', castkaKc: 200, vyhrada: null,
+    });
+    expect(v.celkemKc).toBe(22047 + 200);
+  });
+
+  it('bez sazeb Eurošance je součet neúplný', () => {
+    const v = vyhodnotTiket(tiketEM({ kodDoplnkoveHry: '11160' }), TAHY_EM, SAZBY);
+    expect(v.slosovani[0]!.nejistychVyher).toBe(1);
+    expect(v.soucetJisty).toBe(false);
+  });
+
+  it('tiket na víc slosování vyhodnotí úterý i sobotu', () => {
+    const t = tiketEM({ slosovani: { prvni: '2026-09-08', pocet: 2, dny: null } });
+    const v = vyhodnotTiket(t, [...TAHY_EM, ...TAHY_EJ], SAZBY, SAZBY_EUROSANCE);
+    expect(v.slosovani.map((s) => s.datum)).toEqual(['2026-09-08', '2026-09-12']);
+    // 12. 9. 2026: 6 17 9 34 3 12 29 | 2 — sloupec trefí 17, 3, 12 bez druhého osudí, nic.
+    expect(v.slosovani[1]!.vyhry).toEqual([]);
+    expect(v.celkemKc).toBe(22047);
   });
 });
 

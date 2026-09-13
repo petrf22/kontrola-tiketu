@@ -47,9 +47,9 @@ node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí
 Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace se šesti obrazovkami**
 a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
 
-**Euromiliony** (13. 9. 2026) jsou hotové v backendu i aplikaci, ale **nejsou nasazené** a tiket
+**Euromiliony** (13. 9. 2026) jsou vydané ve verzi 0.2.0 a backend s nimi je nasazený, ale tiket
 Euromilionů nikdo neviděl na papíře. Přinesly `verzeFormatu` 2 — aplikace do 0.1.1 ho odmítne,
-takže backend a aplikace jdou ven společně (`backend/docs/backend.md`, Otevřené body).
+takže ze serveru stahuje jen 0.2.0 a novější (`backend/docs/backend.md`, API).
 
 **Stahování výsledků zatím není na telefonu ověřené.** Backend je nasazený na
 `kontrolatiketu.petrf22.cz` (13. 9. 2026; Gigaserver, jen FTP — viz `backend/docs/backend.md`). Síťový allowlist s prázdnými `<trust-anchors />` a chod ML Kitu bez

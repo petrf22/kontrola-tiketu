@@ -324,6 +324,23 @@ Heslo k FTP do repozitáře nepatří — `lftp` si ho vyžádá, nebo ho vezme 
 Kontrola po nasazení je stejná jako v bodě 6 výše. **`mirror` do docrootu nikdy s `--delete`** —
 smazal by spouštěč cronu, který v `backend/public` není.
 
+**Aktualizace běžícího nasazení.** Server od nasazení žije vlastním životem: cron stahuje nové
+listiny do archivu a zapisuje do databáze běhy a časy, kdy byl který tah poprvé úplný. Lokální
+databázi proto **nikdy nenahrávat přes serverovou** — přišlo by se o to, co server mezitím
+stáhl a naměřil. Postup z 13. 9. 2026:
+
+1. Nahrávat hned po celé hodině, ať do dalšího běhu cronu zbývá dost času (běh trvá do minuty).
+2. Stáhnout ze serveru `var/stav.sqlite` a listiny novější než minulé nasazení
+   (`mirror --newer-than="…"`). HTML se mezi staženími liší v nonce Akamai, takže listiny
+   porovnávat podle vyparsovaných tahů; ty, ve kterých má server víc, zkopírovat do lokálního
+   archivu i s časem (`cp -p`).
+3. Serverovou databázi dát do `var/`, `php bin/vyherka obnov` do ní doplní nové tahy a zachová
+   ostatní záznamy; zároveň vyrobí `public/v1`.
+4. `composer install --no-dev --optimize-autoloader` a nahrát v tomhle pořadí: kód (bez `var/`),
+   `mirror -R --only-missing` archivu, databázi pod dočasným jménem a přejmenovat, nakonec
+   `public/`. Nový kód musí být nahoře dřív než data, která starý kód nezná.
+5. Ověřit hashe balíků proti manifestu a po dalším celé hodině stáhnout `var/tik.log`.
+
 **Cron.** Spouštěč s tajným jménem se vyrobí jednou a nahraje jen na server:
 
 ```bash
@@ -361,11 +378,11 @@ upravit, nasadit, `php bin/vyherka publikuj`.
   spouštěče cronu vrátilo `ok` a zapsalo `var/tik.log`. Cron v administraci zadává uživatel —
   po prvním losování ověřit v logu a v `kontrola.posledniDotaz`, že opravdu běží každou hodinu.
 
-- **Euromiliony zatím nejsou nasazené** (13. 9. 2026). Na hosting patří nový kód, soubor
-  `config/sazby-eurosance.json`, listiny `euromiliony-*` do archivu a nová databáze s publikací
-  (`obnov` lokálně). Pozor na `config/konfigurace.lokalni.php`: přepisuje klíče celé, takže
-  kdyby na serveru definoval `rozvrh`, Euromiliony v něm chybět nesmí. Nasadit až spolu
-  s aplikací, která umí formát 2 — viz API.
+- **Euromiliony nasazeny 13. 9. 2026 ve 23:15** (spolu s vydáním aplikace 0.2.0): kód, sazby
+  Eurošance, 819 listin `euromiliony-*` a databáze sloučená se serverovou podle postupu
+  „Aktualizace běžícího nasazení“. Server od té doby publikuje `verzeFormatu` 2 — aplikace
+  do 0.1.1 ze serveru nestáhne nic. Serverová `konfigurace.lokalni.php` přepisuje jen `verejne`,
+  rozvrh Euromilionů se tedy bere z výchozí konfigurace.
 
 - **Doména backendu** (`kontrolatiketu.petrf22.cz`) je natvrdo v aplikaci (adresa API i síťový
   allowlist). Změna domény znamená novou verzi aplikace.

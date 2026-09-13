@@ -104,7 +104,7 @@ Aby nevznikl mylný dojem, že je všechno vyzkoušené:
 - **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
   je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
   a míří na uzavřený test, ne rovnou do produkce.
-- **Tiket Euromilionů není ověřený na papíře** a Euromiliony zatím nejsou na serveru výsledků.
+- **Tiket Euromilionů není ověřený na papíře.** Server výsledků je publikuje od 13. 9. 2026.
 - **Aplikace zatím není v Google Play** — viz [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
 - **Stahování výsledků se ještě neověřovalo na telefonu.** Backend běží na
   `kontrolatiketu.petrf22.cz` (od 13. 9. 2026), ale síťový allowlist se na zařízení nezkoušel.

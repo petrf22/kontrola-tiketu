@@ -435,6 +435,5 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
   a míří na uzavřený test, ne rovnou do produkce.
 - **Tiket Euromilionů není ověřený na papíře** — rozvržení sloupců, popisek Eurošance ani
   čárový kód. Viz `docs/ocr-a-carovy-kod.md`, „Euromiliony: neověřeno na papíře“.
-- **Backend s formátem 2 a aplikace se nasazují společně.** Aplikace do 0.1.1 balík ve formátu 2
-  (Euromiliony) odmítne s výzvou k aktualizaci. Backend s Euromiliony proto na hosting až ve
-  chvíli, kdy je nová verze aplikace na telefonu. Viz `backend/docs/backend.md`, API.
+- ~~Backend s formátem 2~~ — nasazený 13. 9. 2026 spolu s vydáním 0.2.0. Aplikace do 0.1.1
+  ze serveru už nestáhne nic (balík ve formátu 2 odmítne s výzvou k aktualizaci).

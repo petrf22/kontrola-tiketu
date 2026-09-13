@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.knihovny.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@kontrola-tiketu/jadro": ["../jadro/src/index.ts"]
+    }
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"]
+}

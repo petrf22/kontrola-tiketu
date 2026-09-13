@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Sjednocené verzování celého repozitáře (docs/vydani.md, sekce "Postup vydání").
 // Kořenové VERSION + CHANGELOG.md jsou jediný zdroj pravdy — tenhle skript z nich přepisuje
-// osm commitovaných výstupů (pět package.json, versionCode/versionName v Android buildu,
+// čtyři commitované výstupy (package.json aplikace, versionCode/versionName v Android buildu,
 // historii změn pro obrazovku "O aplikaci" a verzi PHP backendu). Spouští se `npm run verze`.
 //
 // Že generované soubory skutečně sedí se zdrojem, hlídá test/verze.test.ts. V předloze
@@ -23,15 +23,10 @@ const HLASKA = '// Generováno tools/verze/sync.mjs z kořenového VERSION — n
 export const CASTI = ['aplikace', 'jádro', 'fetcher', 'backend', 'build'];
 
 /** package.json soubory, ve kterých se drží jedno společné číslo verze. */
-const BALICKY = [
-  'package.json',
-  'app/package.json',
-  'packages/jadro/package.json',
-  'packages/ocr/package.json',
-];
+const BALICKY = ['mobil/package.json'];
 
-const GRADLE = 'app/android/app/build.gradle';
-const HISTORIE_TS = 'app/src/app/data/verze.generated.ts';
+const GRADLE = 'mobil/android/app/build.gradle';
+const HISTORIE_TS = 'mobil/src/app/data/verze.generated.ts';
 const VERZE_PHP = 'backend/src/Verze.php';
 
 const cti = (koren, relativni) => readFileSync(path.join(koren, relativni), 'utf8');
@@ -199,7 +194,7 @@ export function generuj(koren = KOREN) {
  * což u appky bez síťového oprávnění dává větší smysl.
  */
 function historieProAplikaci(verze, vydani) {
-  // Prettier v app/ je nastavený na jednoduché uvozovky (app/.prettierrc), ať generovaný
+  // Prettier v mobil/ je nastavený na jednoduché uvozovky (mobil/.prettierrc), ať generovaný
   // soubor nevyčnívá a nesvádí někoho ho "opravit" ručně.
   const l = (s) => `'${s.replace(/\\/g, '\\\\').replace(/'/g, "\\'")}'`;
 
@@ -236,8 +231,8 @@ function historieProAplikaci(verze, vydani) {
 
   return (
     '// Generováno tools/verze/sync.mjs z kořenového VERSION a CHANGELOG.md — needituj ručně.\n' +
-    '// Zobrazuje obrazovka "O aplikaci" (app/src/app/obrazovky/o-aplikaci.ts). Jsou tu jen\n' +
-    '// položky týkající se aplikace; změny fetcheru a jádra zůstávají v CHANGELOG.md.\n' +
+    '// Zobrazuje obrazovka "O aplikaci" (mobil/src/app/obrazovky/o-aplikaci.ts). Jsou tu jen\n' +
+    '// položky týkající se aplikace; ostatní změny zůstávají v CHANGELOG.md.\n' +
     '\n' +
     'export interface SekceZmen {\n' +
     '  readonly nazev: string;\n' +

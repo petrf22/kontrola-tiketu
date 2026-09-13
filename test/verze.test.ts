@@ -18,15 +18,12 @@ const cti = (relativni: string) => readFileSync(join(KOREN, relativni), 'utf8');
 const GENEROVANE: Map<string, string> = generuj();
 
 describe('generované soubory sedí se zdrojem', () => {
-  it('generuje se právě sedm souborů', () => {
+  it('generuje se právě čtyři soubory', () => {
     expect([...GENEROVANE.keys()].sort()).toEqual([
-      'app/android/app/build.gradle',
-      'app/package.json',
-      'app/src/app/data/verze.generated.ts',
       'backend/src/Verze.php',
-      'package.json',
-      'packages/jadro/package.json',
-      'packages/ocr/package.json',
+      'mobil/android/app/build.gradle',
+      'mobil/package.json',
+      'mobil/src/app/data/verze.generated.ts',
     ]);
   });
 
@@ -40,7 +37,7 @@ describe('generované soubory sedí se zdrojem', () => {
   it('versionName i versionCode v Android buildu odpovídají VERSION', () => {
     const verze = cti('VERSION').trim();
     const { versionCode } = rozborVerze(verze);
-    const gradle = cti('app/android/app/build.gradle');
+    const gradle = cti('mobil/android/app/build.gradle');
     expect(gradle).toContain(`versionCode ${versionCode}`);
     expect(gradle).toContain(`versionName "${verze}"`);
   });
@@ -176,7 +173,7 @@ describe('generátor proti podvrženému kořeni', () => {
   const changelog = (verze: string) =>
     `# Změny\n\n## [${verze}] – 2026-09-09\n\n### Přidáno\n- Něco (aplikace)\n`;
 
-  it('zapíše novou verzi do všech osmi souborů', () => {
+  it('zapíše novou verzi do všech čtyř souborů', () => {
     const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
     const soubory: Map<string, string> = generuj(koren);
     for (const [relativni, obsah] of soubory) {
@@ -184,9 +181,9 @@ describe('generátor proti podvrženému kořeni', () => {
         expect(JSON.parse(obsah).version, relativni).toBe('1.2.3');
       }
     }
-    expect(soubory.get('app/android/app/build.gradle')).toContain('versionCode 10203');
-    expect(soubory.get('app/android/app/build.gradle')).toContain('versionName "1.2.3"');
-    expect(soubory.get('app/src/app/data/verze.generated.ts')).toContain("VERZE = '1.2.3'");
+    expect(soubory.get('mobil/android/app/build.gradle')).toContain('versionCode 10203');
+    expect(soubory.get('mobil/android/app/build.gradle')).toContain('versionName "1.2.3"');
+    expect(soubory.get('mobil/src/app/data/verze.generated.ts')).toContain("VERZE = '1.2.3'");
     expect(soubory.get('backend/src/Verze.php')).toContain("VERZE = '1.2.3'");
   });
 
@@ -194,13 +191,13 @@ describe('generátor proti podvrženému kořeni', () => {
     const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
     const jednou: Map<string, string> = generuj(koren);
     writeFileSync(
-      join(koren, 'app/android/app/build.gradle'),
-      jednou.get('app/android/app/build.gradle')!,
+      join(koren, 'mobil/android/app/build.gradle'),
+      jednou.get('mobil/android/app/build.gradle')!,
     );
     const podruhe: Map<string, string> = generuj(koren);
-    const gradle = podruhe.get('app/android/app/build.gradle')!;
+    const gradle = podruhe.get('mobil/android/app/build.gradle')!;
     expect(gradle.match(/Generováno tools\/verze\/sync\.mjs/g)).toHaveLength(1);
-    expect(gradle).toBe(jednou.get('app/android/app/build.gradle'));
+    expect(gradle).toBe(jednou.get('mobil/android/app/build.gradle'));
   });
 
   it('vydání beze změn pro uživatele se do aplikace vůbec nedostane', () => {
@@ -211,7 +208,7 @@ describe('generátor proti podvrženému kořeni', () => {
       '## [0.2.0] – 2026-10-01\n\n### Opraveno\n- Něco v buildu (build)\n\n' +
       '## [0.1.0] – 2026-09-09\n\n### Přidáno\n- Něco viditelného (aplikace)\n';
     const koren = docasnyKoren('0.2.0', changelog);
-    const ts: string = generuj(koren).get('app/src/app/data/verze.generated.ts')!;
+    const ts: string = generuj(koren).get('mobil/src/app/data/verze.generated.ts')!;
 
     expect(ts).toContain("VERZE = '0.2.0'");
     expect(ts).not.toContain("verze: '0.2.0'");
@@ -224,7 +221,7 @@ describe('generátor proti podvrženému kořeni', () => {
       '# Změny\n\n## [0.3.0] – 2026-11-01\n\n### Přidáno\n' +
       '- Viditelná věc (aplikace)\n- Věc v CLI (fetcher)\n- Věc ve výpočtu (jádro)\n';
     const koren = docasnyKoren('0.3.0', changelog);
-    const ts: string = generuj(koren).get('app/src/app/data/verze.generated.ts')!;
+    const ts: string = generuj(koren).get('mobil/src/app/data/verze.generated.ts')!;
 
     expect(ts).toContain('Viditelná věc');
     expect(ts).not.toContain('Věc v CLI');

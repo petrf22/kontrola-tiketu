@@ -246,6 +246,18 @@ postupu výše liší ve třech věcech:
 - **Cron** se zadává v administraci (sekce „Ostatní“) jako URL bez parametrů a schvaluje ho
   technik.
 
+Zjištěno diagnostikou (13. 9. 2026):
+
+- PHP 8.5.10 (FPM) s `pdo_sqlite`, `zlib`, `mbstring` a `curl`. `allow_url_fopen` je vypnutý —
+  nevadí, `SitHttp` používá cURL. Testy backendu procházejí i na 8.5
+  (`docker run --rm -v "$PWD":/app -w /app php:8.5-cli vendor/bin/phpunit`).
+- `max_execution_time` 120 s, `set_time_limit` funguje (spouštěč cronu si bere 300 s).
+- `open_basedir` pouští celé `/www/petrf22.cz`. Docroot je `/www/petrf22.cz/kontrolatiketu.petrf22.cz`,
+  takže sourozenecká složka s kódem je pro PHP dosažitelná.
+- Zakázané jsou mimo jiné `exec`, `proc_open`, `symlink` a `readlink` — backend nic z toho nevolá.
+- Hosting sám přidává `Cache-Control: max-age=2592000` a `Expires` o 30 dní. Po nasazení ověřit,
+  co chodí u `manifest.json`; kdyby to přebilo `no-cache`, přidat do `.htaccess` `ExpiresActive Off`.
+
 Rozložení na FTP — kód leží vedle docrootu, ne v něm:
 
 ```

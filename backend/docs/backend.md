@@ -255,8 +255,13 @@ Zjištěno diagnostikou (13. 9. 2026):
 - `open_basedir` pouští celé `/www/petrf22.cz`. Docroot je `/www/petrf22.cz/kontrolatiketu.petrf22.cz`,
   takže sourozenecká složka s kódem je pro PHP dosažitelná.
 - Zakázané jsou mimo jiné `exec`, `proc_open`, `symlink` a `readlink` — backend nic z toho nevolá.
-- Hosting sám přidává `Cache-Control: max-age=2592000` a `Expires` o 30 dní. Po nasazení ověřit,
-  co chodí u `manifest.json`; kdyby to přebilo `no-cache`, přidat do `.htaccess` `ExpiresActive Off`.
+- Hosting sám přidává `Cache-Control: max-age=2592000` a `Expires` o 30 dní. U JSON to
+  `.htaccess` přebije (`no-cache`, `Header unset Expires`); ověřeno na hostingu.
+- Kořen FTP je `/www/petrf22.cz`, hlavní web leží v `/petrf22.cz/`. Složka
+  `kontrolatiketu-backend` tedy neodpovídá žádné doméně a web ji neservíruje (ověřeno: 404).
+- **FTP server posílá vadný řetěz certifikátů** — certifikát je na `vmm152.farma.gigaserver.cz`
+  (ne na `ftp.petrf22.cz`) a chybí mezilehlý Let's Encrypt YR2, jehož kořen ISRG Root YR systém
+  zatím nezná. Ověření se kvůli tomu **nevypíná**: řetěz se doplní a jméno ověří zvlášť.
 
 Rozložení na FTP — kód leží vedle docrootu, ne v něm:
 
@@ -271,6 +276,29 @@ Rozložení na FTP — kód leží vedle docrootu, ne v něm:
 <?php
 return ['verejne' => dirname(__DIR__, 2) . '/kontrolatiketu.petrf22.cz/v1'];
 ```
+
+**FTPS s doplněným řetězem.** Jednou vyrobit balík autorit (mimo repozitář) a před každým
+připojením ověřit certifikát i jméno, `lftp` pak smí vynechat jen kontrolu jména:
+
+```bash
+curl -sS https://letsencrypt.org/certs/gen-y/root-yr-by-x1.pem https://letsencrypt.org/certs/gen-y/int-yr2.pem \
+  | cat /etc/ssl/certs/ca-certificates.crt - > ~/.local/share/kontrola-tiketu-ftp-ca.pem
+
+echo QUIT | openssl s_client -connect ftp.petrf22.cz:21 -starttls ftp -brief -verify_return_error \
+  -CAfile ~/.local/share/kontrola-tiketu-ftp-ca.pem -verify_hostname vmm152.farma.gigaserver.cz \
+  2>&1 | grep -q 'Verification: OK' && echo certifikát v pořádku
+```
+
+Do skriptu pro `lftp -f` pak patří na začátek (přihlášení bere `lftp` z `~/.netrc`):
+
+```
+set ftp:ssl-force true
+set ssl:ca-file ~/.local/share/kontrola-tiketu-ftp-ca.pem
+set ssl:check-hostname/ftp.petrf22.cz no
+open ftp.petrf22.cz
+```
+
+Když Gigaserver certifikát opraví, `check-hostname` vrátit a ověření přes `openssl` zahodit.
 
 Databáze a publikace se bez SSH na serveru nestaví — vyrobí se lokálně a nahrají hotové:
 

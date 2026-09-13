@@ -45,6 +45,12 @@ final class HtaccessTest extends TestCase
         self::assertMatchesRegularExpression('/<FilesMatch "\^\\\\\.">\s*Require all denied/', self::htaccess());
     }
 
+    public function testJsonSeNeukladaDoMezipameti(): void
+    {
+        // Nový balík aplikace pozná podle hashe v manifestu; starý manifest z mezipaměti by ho skryl.
+        self::assertMatchesRegularExpression('/<FilesMatch "\\\\.json\$">.*Header set Cache-Control "no-cache".*Header unset Expires.*<\/FilesMatch>/s', self::htaccess());
+    }
+
     public function testNeposilaCookies(): void
     {
         self::assertStringContainsString('Header always unset Set-Cookie', self::htaccess());

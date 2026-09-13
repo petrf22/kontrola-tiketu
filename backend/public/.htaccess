@@ -44,6 +44,9 @@ DirectoryIndex disabled
         # Klient se ptá vždy celým dotazem bez podmíněných hlaviček a nové pozná podle hashe
         # v manifestu. Mezipaměť po cestě by mu jen podstrkovala staré soubory.
         Header set Cache-Control "no-cache"
+        # Gigaserver přes mod_expires přidává Expires o 30 dní dopředu. Cache-Control má sice
+        # přednost, ale ať po cestě nic nesvádí k podržení starého manifestu.
+        Header unset Expires
         # Veřejná data; potřeba pro vývoj aplikace v prohlížeči.
         Header set Access-Control-Allow-Origin "*"
     </FilesMatch>

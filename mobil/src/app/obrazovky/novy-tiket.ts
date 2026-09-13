@@ -73,7 +73,7 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       <fieldset>
         <legend>Hra</legend>
         @for (h of hry; track h) {
-          <label><input type="radio" name="hra" [value]="h"
+          <label><input type="radio" name="hra" [attr.value]="h"
             [checked]="hra() === h" (change)="zmenHru(h)" /> {{ nazevHry(h) }}</label>
         }
       </fieldset>

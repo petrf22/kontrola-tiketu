@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DNY_LOSOVANI,
   porovnejSportka,
   urciPoradiSportka,
   vyhodnotSloupecSportka,
@@ -177,7 +178,7 @@ describe('fixtury odpovídají výherní listině', () => {
 
   it('pokrývá obě éry hry — 2015 dvakrát týdně, 2026 třikrát', () => {
     const dny = new Set(VSECHNY_TAHY_SPORTKA.map((t) => t.den));
-    expect(dny).toEqual(new Set(['st', 'pa', 'ne']));
+    expect(dny).toEqual(new Set(DNY_LOSOVANI.sportka));
     expect(VSECHNY_TAHY_SPORTKA.some((t) => t.sazkovyTyden.rok === 2015)).toBe(true);
   });
 });

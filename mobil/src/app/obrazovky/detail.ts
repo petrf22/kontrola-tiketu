@@ -7,6 +7,7 @@ import {
   nazevDne,
   nazevPoradiDoplnkoveHry,
   pocetSloupcu,
+  popisDnuSlosovani,
 } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 
@@ -35,7 +36,7 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
       <h2>{{ t.hra === 'eurojackpot' ? 'Eurojackpot' : 'Sportka' }}</h2>
       <p class="popis">
         {{ pocetSloupcu(t.sloupce.length) }}, {{ t.slosovani.pocet }} slosování od
-        {{ formatujDatum(t.slosovani.prvni) }}.
+        {{ formatujDatum(t.slosovani.prvni) }}{{ t.slosovani.dny ? ', ' + popisDnuSlosovani(t.slosovani.dny) : '' }}.
         @if (t.kodDoplnkoveHry) {
           <br />{{ t.hra === 'eurojackpot' ? 'Extra 6' : 'Šance' }}: {{ t.kodDoplnkoveHry }}
         }
@@ -250,6 +251,7 @@ export class Detail {
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujDatumCas = formatujDatumCas;
+  protected readonly popisDnuSlosovani = popisDnuSlosovani;
   protected readonly pocetSloupcu = pocetSloupcu;
 
   /**

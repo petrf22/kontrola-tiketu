@@ -5,6 +5,7 @@ import {
   nazevDne,
   nazevPoradiDoplnkoveHry,
   pocetSloupcu,
+  popisDnuSlosovani,
 } from '../src/app/data/format.js';
 
 describe('formatujDatum', () => {
@@ -64,5 +65,21 @@ describe('pocetSloupcu', () => {
     expect(pocetSloupcu(4)).toBe('4 sloupce');
     expect(pocetSloupcu(5)).toBe('5 sloupců');
     expect(pocetSloupcu(10)).toBe('10 sloupců');
+  });
+});
+
+describe('popisDnuSlosovani', () => {
+  it('tiket na všechna slosování nemá co upřesňovat', () => {
+    expect(popisDnuSlosovani(null)).toBe('');
+  });
+
+  it('skloňuje dny, jak se říkají v odpovědi na otázku kdy', () => {
+    expect(popisDnuSlosovani(['ne'])).toBe('jen v neděli');
+    expect(popisDnuSlosovani(['st', 'ne'])).toBe('jen ve středu a v neděli');
+    expect(popisDnuSlosovani(['ut'])).toBe('jen v úterý');
+  });
+
+  it('víc dnů spojí čárkou a poslední spojkou', () => {
+    expect(popisDnuSlosovani(['st', 'pa', 'ne'])).toBe('jen ve středu, v pátek a v neděli');
   });
 });

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  dnyZVyberu,
   jePlatny,
   ROZSAHY,
   zkontrolujCisla,
@@ -11,6 +12,31 @@ import {
 } from '../src/index.js';
 
 const kody = (p: readonly { kod: string }[]) => p.map((x) => x.kod);
+
+describe('dnyZVyberu', () => {
+  it('všechny dny hry znamenají všechna slosování', () => {
+    expect(dnyZVyberu('sportka', ['st', 'pa', 'ne'])).toBeNull();
+    expect(dnyZVyberu('eurojackpot', ['ut', 'pa'])).toBeNull();
+  });
+
+  it('podmnožinu vrátí jako seznam dnů', () => {
+    expect(dnyZVyberu('sportka', ['ne'])).toEqual(['ne']);
+    expect(dnyZVyberu('eurojackpot', ['pa'])).toEqual(['pa']);
+  });
+
+  it('řadí podle týdne, ne podle pořadí zaškrtnutí', () => {
+    expect(dnyZVyberu('sportka', ['ne', 'st'])).toEqual(['st', 'ne']);
+    expect(dnyZVyberu('sportka', ['ne', 'pa', 'st'])).toBeNull();
+  });
+
+  it('dny, které hra nemá, zahodí — třeba zbytek po přepnutí hry', () => {
+    expect(dnyZVyberu('eurojackpot', ['st', 'pa', 'ne'])).toEqual(['pa']);
+  });
+
+  it('prázdný výběr nechá na validaci', () => {
+    expect(dnyZVyberu('sportka', [])).toEqual([]);
+  });
+});
 
 describe('zkontrolujCisla', () => {
   const ocekavani = ROZSAHY.sportka.cisla;

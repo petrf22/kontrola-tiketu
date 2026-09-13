@@ -4,7 +4,7 @@
  * potřeba ukázat všechny chyby najednou, ne jen tu první.
  */
 
-import type { Sloupec, Tiket } from './model.js';
+import type { Den, Hra, Sloupec, Tiket } from './model.js';
 
 export interface Problem {
   readonly kod: ProblemKod;
@@ -28,6 +28,28 @@ export const ROZSAHY = {
   eurojackpot: { cisla: { pocet: 5, min: 1, max: 50 }, eurocisla: { pocet: 2, min: 1, max: 12 } },
   sportka: { cisla: { pocet: 6, min: 1, max: 49 } },
 } as const;
+
+/**
+ * Dny, na které jde hru vsadit. Slouží jen jako nabídka ve formuláři tiketu — vyhodnocení
+ * se řídí dny skutečných tahů z dat, takže změna rozvrhu ho nerozbije. Pořadí je pořadí týdne.
+ */
+export const DNY_LOSOVANI: Readonly<Record<Hra, readonly Den[]>> = {
+  eurojackpot: ['ut', 'pa'],
+  sportka: ['st', 'pa', 'ne'],
+};
+
+/**
+ * Zaškrtnuté dny z formuláře → `RozsahSlosovani.dny`.
+ *
+ * Všechny dny hry znamenají všechna slosování, tedy `null` — běžný tiket tak zůstane
+ * nezávislý na rozvrhu a započítá i losování mimo něj. Jinak vrací vybrané dny v pořadí
+ * týdne. Prázdný výběr vrátí prázdný seznam, ať ho zachytí {@link zkontrolujTiket}.
+ */
+export function dnyZVyberu(hra: Hra, zaskrtnute: readonly Den[]): Den[] | null {
+  const nabidka = DNY_LOSOVANI[hra];
+  const vybrane = nabidka.filter((den) => zaskrtnute.includes(den));
+  return vybrane.length === nabidka.length ? null : vybrane;
+}
 
 const SESTICISLI = /^[0-9]{6}$/;
 
@@ -137,7 +159,7 @@ export function zkontrolujTiket(tiket: Tiket): Problem[] {
   if (tiket.slosovani.dny !== null && tiket.slosovani.dny.length === 0) {
     problemy.push({
       kod: 'prazdny-seznam-dnu',
-      zprava: 'Seznam dnů je prázdný. Pro všechna slosování použij null, ne prázdný seznam.',
+      zprava: 'Vyber alespoň jeden den slosování.',
       cesta: 'slosovani.dny',
     });
   }

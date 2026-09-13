@@ -75,6 +75,24 @@ describe('od souboru k vyhodnocení', () => {
     expect(vysledek.soucetJisty).toBe(false);
   });
 
+  it('tiket na vybrané dny se vyhodnotí jen proti nim', () => {
+    // Sportka v balíku: 2. 9. (st), 4. 9. (pá), 6. 9. (ne). Tiket od středy na dvě
+    // nedělní slosování má dostat 6. 9. a na druhou neděli teprve čekat.
+    const tiket: Tiket = {
+      id: 'test-nedele',
+      hra: 'sportka',
+      sloupce: [{ hra: 'sportka', cisla: [1, 2, 3, 4, 5, 6] }],
+      slosovani: { prvni: '2026-09-02', pocet: 2, dny: ['ne'] },
+      kodDoplnkoveHry: null,
+      cenaKc: null,
+      vlozeno: '2026-09-01T10:00:00Z',
+    };
+    const vysledek = vyhodnotTiket(tiket, tahy, sazby);
+    expect(vysledek.slosovani.map((s) => s.datum)).toEqual(['2026-09-06']);
+    expect(vysledek.chybejicichSlosovani).toBe(1);
+    expect(vysledek.soucetJisty).toBe(false);
+  });
+
   it('opakovaný import téhož souboru nic nezdvojí', () => {
     const jednou = sloucTahy([], tahy);
     const dvakrát = sloucTahy(jednou, tahy);

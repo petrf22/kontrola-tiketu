@@ -1,13 +1,17 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
+  DNY_LOSOVANI,
+  dnyZVyberu,
   ROZSAHY,
   zkontrolujTiket,
+  type Den,
   type Hra,
   type Sloupec,
   type Tiket,
 } from '@kontrola-tiketu/jadro';
 import { prectiCisla } from '@kontrola-tiketu/ocr';
+import { nazevDne } from '../data/format.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { Stav } from '../data/stav.js';
 
@@ -45,6 +49,19 @@ interface Radek {
             (input)="pocet.set(+$any($event.target).value)" required />
         </label>
       </div>
+
+      <!--
+        Tiket může platit jen na některé dny losování. Výchozí jsou všechny — tak se sází
+        nejčastěji a tak se tiket choval, než výběr přibyl.
+      -->
+      <fieldset>
+        <legend>Dny slosování</legend>
+        @for (den of nabidkaDnu(); track den) {
+          <label><input type="checkbox" name="dny" [value]="den"
+            [checked]="zaskrtnuteDny().includes(den)"
+            (change)="prepniDen(den, $any($event.target).checked)" /> {{ nazevDne(den) }}</label>
+        }
+      </fieldset>
 
       <label>Cena tiketu v Kč (nepovinné)
         <input type="number" min="0" step="1" inputmode="numeric" placeholder="např. 400"
@@ -183,6 +200,11 @@ export class NovyTiket {
     this.rozpoznane?.hlavicka.datum ?? new Date().toISOString().slice(0, 10),
   );
   protected readonly pocet = signal(this.rozpoznane?.hlavicka.pocetSlosovani ?? 1);
+  // Den v závorce hlavičky se sem zatím nepropisuje: bez tiketu vsazeného na vybrané dny
+  // nevíme, jestli znamená den prvního slosování, nebo výběr dnů.
+  protected readonly zaskrtnuteDny = signal<readonly Den[]>(DNY_LOSOVANI[this.hra()]);
+  protected readonly nabidkaDnu = computed(() => DNY_LOSOVANI[this.hra()]);
+  protected readonly nazevDne = nazevDne;
   protected readonly doplnkova = signal(this.rozpoznane?.kodDoplnkoveHry ?? '');
   protected readonly cena = signal(
     this.rozpoznane?.cenaKc === null || this.rozpoznane?.cenaKc === undefined
@@ -221,7 +243,11 @@ export class NovyTiket {
         `rucni-${this.prvni()}-${sloupce.map((s) => s.cisla.join('.')).join('_')}`,
       hra,
       sloupce,
-      slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: null },
+      slosovani: {
+        prvni: this.prvni(),
+        pocet: this.pocet(),
+        dny: dnyZVyberu(hra, this.zaskrtnuteDny()),
+      },
       kodDoplnkoveHry: this.doplnkova().trim() === '' ? null : this.doplnkova().trim(),
       cenaKc: this.cena().trim() === '' ? null : Number(this.cena()),
       vlozeno: new Date().toISOString(),
@@ -234,6 +260,13 @@ export class NovyTiket {
 
   protected zmenHru(hra: Hra): void {
     this.hra.set(hra);
+    this.zaskrtnuteDny.set(DNY_LOSOVANI[hra]);
+  }
+
+  protected prepniDen(den: Den, zaskrtnuto: boolean): void {
+    this.zaskrtnuteDny.update((dny) =>
+      zaskrtnuto ? [...dny.filter((d) => d !== den), den] : dny.filter((d) => d !== den),
+    );
   }
 
   protected zmenCisla(index: number, hodnota: string): void {

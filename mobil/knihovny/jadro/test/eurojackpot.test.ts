@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  DNY_LOSOVANI,
   porovnejEurojackpot,
   urciPoradiEurojackpot,
   vyhodnotSloupecEurojackpot,
@@ -181,5 +182,10 @@ describe('fixtury odpovídají výherní listině', () => {
   it('Extra 6 si drží vedoucí nulu', () => {
     // 2026-09-04 mělo vylosováno 0 5 7 7 3 9; jako číslo by se nula ztratila.
     expect(EJ_2026_09_04.extra6).toBe('057739');
+  });
+
+  it('losuje se v úterý a v pátek, jak nabízí formulář tiketu', () => {
+    const dny = new Set(VSECHNY_TAHY_EJ.map((t) => t.den));
+    expect(dny).toEqual(new Set(DNY_LOSOVANI.eurojackpot));
   });
 });

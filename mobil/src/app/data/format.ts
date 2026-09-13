@@ -40,6 +40,22 @@ export function nazevDne(zkratka: string): string {
   return DNY[zkratka] ?? zkratka;
 }
 
+const VE_DNECH: Readonly<Record<string, string>> = {
+  po: 'v pondělí', ut: 'v úterý', st: 've středu', ct: 've čtvrtek',
+  pa: 'v pátek', so: 'v sobotu', ne: 'v neděli',
+};
+
+/**
+ * `['st', 'ne']` → `jen ve středu a v neděli`. Tiket na všechna slosování (`null`) nemá
+ * co upřesňovat, vrací prázdný řetězec.
+ */
+export function popisDnuSlosovani(dny: readonly string[] | null): string {
+  if (dny === null || dny.length === 0) return '';
+  const nazvy = dny.map((den) => VE_DNECH[den] ?? den);
+  const posledni = nazvy.pop()!;
+  return `jen ${nazvy.length > 0 ? `${nazvy.join(', ')} a ${posledni}` : posledni}`;
+}
+
 /**
  * Názvy pořadí doplňkové hry. Šance je má i v listině (`popis`), Extra 6 ale ne, takže by
  * se uživateli jinak ukázal holý klíč z modelu — „pořadí trojcisli“.

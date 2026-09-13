@@ -2,7 +2,7 @@
 /*
  * Generátor screenshotů pro Google Play.
  *
- * Fotí se aplikace běžící v prohlížeči (`cd app && npx ng serve`), ne na telefonu: tam je
+ * Fotí se aplikace běžící v prohlížeči (`cd mobil && npx ng serve`), ne na telefonu: tam je
  * systémový snímek černý kvůli FLAG_SECURE, což je akceptační kritérium soukromí a kvůli
  * obrázkům se obcházet nebude. V prohlížeči běží tentýž kód i HTML jako ve webview.
  *
@@ -10,10 +10,10 @@
  * schválně bez Playwrightu a jiných závislostí.
  *
  * Předpoklady:
- *   cd app && npx ng serve                                    (aplikace na :4200)
+ *   cd mobil && npx ng serve                                  (aplikace na :4200)
  *   cd backend && php -S localhost:8080 -t public tools/vyvojovy-server.php
  *
- * Postup je v docs/vydani.md, sekce „Screenshoty“.
+ * Postup je v mobil/docs/vydani.md, sekce „Screenshoty“.
  */
 
 import { spawn, execFileSync } from 'node:child_process';
@@ -39,14 +39,14 @@ const HUSTOTA = 2.5;
 
 /*
  * Ukázkové tikety. Čísla jsou vymyšlená — žádný skutečný tiket uživatele — ale vyhodnocují
- * se proti reálným tahům z data/vysledky.json, takže všechny částky spočítá jádro z tabulky
+ * se proti reálným tahům z balíku, který servíruje lokální backend, takže všechny částky spočítá jádro z tabulky
  * výher konkrétního tahu. Nic se nevypisuje natvrdo.
  *
  * Eurojackpot 4. 9. 2026 (14 43 33 5 31 + 4 3, Extra 6 057739)
  *             8. 9. 2026 (47 14 27 34 36 + 4 3, Extra 6 912799)
  * Sportka     6. 9. 2026 (I. 35 28 15 13 37 11, II. 3 43 4 19 21 44, Šance 229511)
  *
- * Cena 400 Kč je částka ověřená na reálném tiketu (packages/ocr/test/cena.test.ts).
+ * Cena 400 Kč je částka ověřená na reálném tiketu (mobil/knihovny/ocr/test/cena.test.ts).
  */
 const TIKETY = [
   {

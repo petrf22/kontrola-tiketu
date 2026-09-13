@@ -1,6 +1,6 @@
 <?php
 
-// Generováno tools/verze/sync.mjs z kořenového VERSION — needituj ručně.
+// Generováno nastroje/verze/sync.mjs z kořenového VERSION — needituj ručně.
 
 declare(strict_types=1);
 

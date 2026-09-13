@@ -1,4 +1,6 @@
-# Node / npm
+# Společná pravidla. Každá část má vlastní .gitignore (mobil/, mobil/android/, backend/).
+
+# Node
 node_modules/
 npm-debug.log*
 *.log
@@ -10,25 +12,12 @@ www/
 coverage/
 *.tsbuildinfo
 
-# Archiv stažených výherních listin.
-# POZOR: není to smetí. Je to trvalý archiv surového HTML, ze kterého se dá kdykoliv
-# přeparsovat bez dotazu na síť — pojistka pro případ, že Allwyn adresu změní nebo
-# stránky zavře. Do gitu se nedává jen kvůli velikosti (~114 MB), ale patří do domácí
-# zálohy. Verzovaný v gitu je až vyparsovaný data/vysledky.json.
-# Podrobnosti: docs/data-source.md, sekce „Odolnost zdroje".
-fetcher/.cache/
-
 # Lokální konfigurace
 .env
 .env.*
 *.local
 
-# Android / Capacitor
-android/app/build/
-android/build/
-android/.gradle/
-android/local.properties
-android/app/src/main/assets/public/
+# Android artefakty, ať skončí kdekoliv
 *.apk
 *.aab
 *.hprof
@@ -36,6 +25,7 @@ android/app/src/main/assets/public/
 # Podpisové klíče — nikdy do repozitáře
 *.jks
 *.keystore
+keystore.properties
 
 # Editory a OS
 .idea/

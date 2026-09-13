@@ -16,7 +16,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 KOREN = Path(__file__).resolve().parents[2]
-RES = KOREN / "app/android/app/src/main/res"
+RES = KOREN / "mobil/android/app/src/main/res"
 
 # Tmavě zelená: „zkontrolováno“. Musí být dost tmavá, aby na ní bílý tiket držel kontrast
 # i na světlém pozadí seznamu aplikací.

@@ -28,7 +28,7 @@ android {
         applicationId "cz.petrf22.kontrolatiketu"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // Generováno tools/verze/sync.mjs z kořenového VERSION — needituj ručně.
+        // Generováno nastroje/verze/sync.mjs z kořenového VERSION — needituj ručně.
         versionCode 101
         versionName "0.1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

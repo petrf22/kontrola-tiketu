@@ -1,19 +1,20 @@
 #!/usr/bin/env node
-// Sjednocené verzování celého repozitáře (docs/vydani.md, sekce "Postup vydání").
+// Sjednocené verzování celého repozitáře (mobil/docs/vydani.md, sekce "Postup vydání").
 // Kořenové VERSION + CHANGELOG.md jsou jediný zdroj pravdy — tenhle skript z nich přepisuje
 // čtyři commitované výstupy (package.json aplikace, versionCode/versionName v Android buildu,
-// historii změn pro obrazovku "O aplikaci" a verzi PHP backendu). Spouští se `npm run verze`.
+// historii změn pro obrazovku "O aplikaci" a verzi PHP backendu).
+// Spouští se `node nastroje/verze/sync.mjs` z kořene repozitáře.
 //
-// Že generované soubory skutečně sedí se zdrojem, hlídá test/verze.test.ts. V předloze
-// (~/pracovni/kvalita-cena) to dělá CI přes `git diff --exit-code`; tenhle projekt CI nemá,
-// tak je pojistka v testech — stejně jako bezIO.test.ts a soukromi.test.ts.
+// Že generované soubory skutečně sedí se zdrojem, hlídá test/verze.test.mjs vedle skriptu
+// (`node --test 'nastroje/**/*.test.mjs'`). V předloze (~/pracovni/kvalita-cena) to dělá CI
+// přes `git diff --exit-code`; tenhle projekt CI nemá, tak je pojistka v testech.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 export const KOREN = path.resolve(fileURLToPath(new URL('.', import.meta.url)), '..', '..');
 
-const HLASKA = '// Generováno tools/verze/sync.mjs z kořenového VERSION — needituj ručně.';
+const HLASKA = '// Generováno nastroje/verze/sync.mjs z kořenového VERSION — needituj ručně.';
 
 /**
  * Části projektu, které smí stát v závorce na konci položky changelogu.
@@ -230,7 +231,7 @@ function historieProAplikaci(verze, vydani) {
     .join('\n');
 
   return (
-    '// Generováno tools/verze/sync.mjs z kořenového VERSION a CHANGELOG.md — needituj ručně.\n' +
+    '// Generováno nastroje/verze/sync.mjs z kořenového VERSION a CHANGELOG.md — needituj ručně.\n' +
     '// Zobrazuje obrazovka "O aplikaci" (mobil/src/app/obrazovky/o-aplikaci.ts). Jsou tu jen\n' +
     '// položky týkající se aplikace; ostatní změny zůstávají v CHANGELOG.md.\n' +
     '\n' +
@@ -262,7 +263,7 @@ function verzeBackendu(verze) {
   return (
     '<?php\n' +
     '\n' +
-    '// Generováno tools/verze/sync.mjs z kořenového VERSION — needituj ručně.\n' +
+    '// Generováno nastroje/verze/sync.mjs z kořenového VERSION — needituj ručně.\n' +
     '\n' +
     'declare(strict_types=1);\n' +
     '\n' +

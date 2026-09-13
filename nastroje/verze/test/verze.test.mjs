@@ -1,25 +1,28 @@
+import assert from 'node:assert/strict';
 import { cpSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { describe, expect, it } from 'vitest';
-// @ts-expect-error — generátor je záměrně prostý .mjs bez typů, aby šel spustit holým node.
-import { CASTI, generuj, parsujChangelog, rozborVerze } from '../tools/verze/sync.mjs';
+import { describe, it } from 'node:test';
+import { CASTI, generuj, parsujChangelog, rozborVerze } from '../sync.mjs';
 
 /**
  * Kořenový VERSION a CHANGELOG.md jsou zdroj pravdy o verzi; ostatní soubory z nich generuje
- * `npm run verze`. V předloze (~/pracovni/kvalita-cena) hlídá jejich soulad CI přes
- * `git diff --exit-code`. Tenhle projekt CI nemá, tak je pojistka tady — jinak by stačilo
+ * `node nastroje/verze/sync.mjs`. V předloze (~/pracovni/kvalita-cena) hlídá jejich soulad CI
+ * přes `git diff --exit-code`. Tenhle projekt CI nemá, tak je pojistka tady — jinak by stačilo
  * zapomenout skript spustit a do Play by šel bundle s verzí, kterou nikdo nečekal.
+ *
+ * Schválně `node:test` bez závislostí: nástroje nemají vlastní node_modules. Spouští se
+ * `node --test 'nastroje/**/*.test.mjs'` z kořene repozitáře.
  */
 
-const KOREN = new URL('../', import.meta.url).pathname;
-const cti = (relativni: string) => readFileSync(join(KOREN, relativni), 'utf8');
+const KOREN = new URL('../../../', import.meta.url).pathname;
+const cti = (relativni) => readFileSync(join(KOREN, relativni), 'utf8');
 
-const GENEROVANE: Map<string, string> = generuj();
+const GENEROVANE = generuj();
 
 describe('generované soubory sedí se zdrojem', () => {
-  it('generuje se právě čtyři soubory', () => {
-    expect([...GENEROVANE.keys()].sort()).toEqual([
+  it('generují se právě čtyři soubory', () => {
+    assert.deepEqual([...GENEROVANE.keys()].sort(), [
       'backend/src/Verze.php',
       'mobil/android/app/build.gradle',
       'mobil/package.json',
@@ -29,8 +32,8 @@ describe('generované soubory sedí se zdrojem', () => {
 
   for (const [relativni, ocekavany] of GENEROVANE) {
     it(`${relativni} odpovídá VERSION a CHANGELOG.md`, () => {
-      // Když tenhle test spadne, spusť `npm run verze` a výsledek commitni.
-      expect(cti(relativni), `${relativni} — spusť \`npm run verze\``).toBe(ocekavany);
+      // Když tenhle test spadne, spusť `node nastroje/verze/sync.mjs` a výsledek commitni.
+      assert.equal(cti(relativni), ocekavany, `${relativni} — spusť \`node nastroje/verze/sync.mjs\``);
     });
   }
 
@@ -38,34 +41,34 @@ describe('generované soubory sedí se zdrojem', () => {
     const verze = cti('VERSION').trim();
     const { versionCode } = rozborVerze(verze);
     const gradle = cti('mobil/android/app/build.gradle');
-    expect(gradle).toContain(`versionCode ${versionCode}`);
-    expect(gradle).toContain(`versionName "${verze}"`);
+    assert.ok(gradle.includes(`versionCode ${versionCode}`));
+    assert.ok(gradle.includes(`versionName "${verze}"`));
   });
 });
 
 describe('versionCode', () => {
   it('je major*10000 + minor*100 + patch', () => {
-    expect(rozborVerze('0.1.0').versionCode).toBe(100);
-    expect(rozborVerze('1.0.0').versionCode).toBe(10000);
-    expect(rozborVerze('1.2.3').versionCode).toBe(10203);
+    assert.equal(rozborVerze('0.1.0').versionCode, 100);
+    assert.equal(rozborVerze('1.0.0').versionCode, 10000);
+    assert.equal(rozborVerze('1.2.3').versionCode, 10203);
   });
 
   it('roste monotónně s verzí — Play nikdy nepřijme nižší než naposledy nahraný', () => {
     const rada = ['0.1.0', '0.1.1', '0.2.0', '0.99.99', '1.0.0', '1.0.1', '2.0.0'];
     const kody = rada.map((v) => rozborVerze(v).versionCode);
-    expect(kody).toEqual([...kody].sort((a, b) => a - b));
-    expect(new Set(kody).size).toBe(kody.length);
+    assert.deepEqual(kody, [...kody].sort((a, b) => a - b));
+    assert.equal(new Set(kody).size, kody.length);
   });
 
   it('padne na přetečení místo aby tiše vyrobil kolizi', () => {
     // 0.100.0 i 0.1.100 by daly 10000, tedy totéž co 1.0.0 — a Play by aktualizaci odmítl.
-    expect(() => rozborVerze('0.100.0')).toThrow(/přetéká/);
-    expect(() => rozborVerze('0.1.100')).toThrow(/přetéká/);
+    assert.throws(() => rozborVerze('0.100.0'), /přetéká/);
+    assert.throws(() => rozborVerze('0.1.100'), /přetéká/);
   });
 
   it('nepřijme něco, co není SemVer', () => {
     for (const spatne of ['1.0', 'v1.0.0', '1.0.0-beta', '']) {
-      expect(() => rozborVerze(spatne), spatne).toThrow(/SemVer/);
+      assert.throws(() => rozborVerze(spatne), /SemVer/, spatne);
     }
   });
 });
@@ -86,14 +89,14 @@ describe('parser CHANGELOG.md', () => {
 
   it('vrací vydání od nejnovějšího', () => {
     const vydani = parsujChangelog(zaklad);
-    expect(vydani.map((v: { verze: string }) => v.verze)).toEqual(['0.2.0', '0.1.0']);
-    expect(vydani[0].datum).toBe('2026-10-01');
-    expect(vydani[0].sekce[0].nazev).toBe('Přidáno');
+    assert.deepEqual(vydani.map((v) => v.verze), ['0.2.0', '0.1.0']);
+    assert.equal(vydani[0].datum, '2026-10-01');
+    assert.equal(vydani[0].sekce[0].nazev, 'Přidáno');
   });
 
   it('odděluje dotčené části od textu položky', () => {
     const [vydani] = parsujChangelog('## [0.1.0] – 2026-09-09\n\n### Přidáno\n- Bilance (aplikace, jádro)\n');
-    expect(vydani.sekce[0].polozky[0]).toEqual({ text: 'Bilance', casti: ['aplikace', 'jádro'] });
+    assert.deepEqual(vydani.sekce[0].polozky[0], { text: 'Bilance', casti: ['aplikace', 'jádro'] });
   });
 
   it('závorku s něčím jiným než názvy částí nechá být textem věty', () => {
@@ -101,7 +104,7 @@ describe('parser CHANGELOG.md', () => {
     const [vydani] = parsujChangelog(
       '## [0.1.0] – 2026-09-09\n\n### Přidáno\n- Vyhodnocení obou her (Eurojackpot, Sportka)\n',
     );
-    expect(vydani.sekce[0].polozky[0]).toEqual({
+    assert.deepEqual(vydani.sekce[0].polozky[0], {
       text: 'Vyhodnocení obou her (Eurojackpot, Sportka)',
       casti: [],
     });
@@ -111,23 +114,23 @@ describe('parser CHANGELOG.md', () => {
     const vydani = parsujChangelog(
       '## [Nezveřejněno]\n\n### Přidáno\n- Rozdělaná věc (aplikace)\n\n' + zaklad,
     );
-    expect(vydani.map((v: { verze: string }) => v.verze)).toEqual(['0.2.0', '0.1.0']);
+    assert.deepEqual(vydani.map((v) => v.verze), ['0.2.0', '0.1.0']);
   });
 
   it('padne na víceřádkové položce místo aby ji uřízl', () => {
     const text = '## [0.1.0] – 2026-09-09\n\n### Přidáno\n- První řádek\n  pokračování (aplikace)\n';
-    expect(() => parsujChangelog(text)).toThrow(/víceřádková/);
+    assert.throws(() => parsujChangelog(text), /víceřádková/);
   });
 
   it('nechá závorku být, když je v ní jen část neznámá', () => {
     const [vydani] = parsujChangelog(
       '## [0.1.0] – 2026-09-09\n\n### Přidáno\n- Něco (aplikace, marketing)\n',
     );
-    expect(vydani.sekce[0].polozky[0].casti).toEqual([]);
+    assert.deepEqual(vydani.sekce[0].polozky[0].casti, []);
   });
 
   it('padne, když v souboru není žádné vydání', () => {
-    expect(() => parsujChangelog('# Změny\n\nZatím nic.\n')).toThrow(/žádné vydání/);
+    assert.throws(() => parsujChangelog('# Změny\n\nZatím nic.\n'), /žádné vydání/);
   });
 });
 
@@ -135,7 +138,7 @@ describe('CHANGELOG.md tohoto repozitáře', () => {
   const vydani = parsujChangelog(cti('CHANGELOG.md'));
 
   it('má nejnovější vydání shodné s VERSION', () => {
-    expect(vydani[0].verze).toBe(cti('VERSION').trim());
+    assert.equal(vydani[0].verze, cti('VERSION').trim());
   });
 
   it('používá jen známé názvy částí', () => {
@@ -143,7 +146,7 @@ describe('CHANGELOG.md tohoto repozitáře', () => {
       for (const sekce of v.sekce) {
         for (const polozka of sekce.polozky) {
           for (const cast of polozka.casti) {
-            expect(CASTI, `${v.verze}: "${polozka.text}"`).toContain(cast);
+            assert.ok(CASTI.includes(cast), `${v.verze}: "${polozka.text}" — neznámá část ${cast}`);
           }
         }
       }
@@ -151,14 +154,14 @@ describe('CHANGELOG.md tohoto repozitáře', () => {
   });
 
   it('nemá dvě vydání se stejným číslem', () => {
-    const verze = vydani.map((v: { verze: string }) => v.verze);
-    expect(new Set(verze).size).toBe(verze.length);
+    const verze = vydani.map((v) => v.verze);
+    assert.equal(new Set(verze).size, verze.length);
   });
 });
 
 describe('generátor proti podvrženému kořeni', () => {
-  /** Zkopíruje osm generovaných souborů do dočasného adresáře a podstrčí vlastní zdroj. */
-  function docasnyKoren(verze: string, changelog: string): string {
+  /** Zkopíruje generované soubory do dočasného adresáře a podstrčí vlastní zdroj. */
+  function docasnyKoren(verze, changelog) {
     const koren = mkdtempSync(join(tmpdir(), 'verze-test-'));
     for (const relativni of GENEROVANE.keys()) {
       const cil = join(koren, relativni);
@@ -170,34 +173,31 @@ describe('generátor proti podvrženému kořeni', () => {
     return koren;
   }
 
-  const changelog = (verze: string) =>
+  const changelog = (verze) =>
     `# Změny\n\n## [${verze}] – 2026-09-09\n\n### Přidáno\n- Něco (aplikace)\n`;
 
   it('zapíše novou verzi do všech čtyř souborů', () => {
     const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
-    const soubory: Map<string, string> = generuj(koren);
+    const soubory = generuj(koren);
     for (const [relativni, obsah] of soubory) {
       if (relativni.endsWith('.json')) {
-        expect(JSON.parse(obsah).version, relativni).toBe('1.2.3');
+        assert.equal(JSON.parse(obsah).version, '1.2.3', relativni);
       }
     }
-    expect(soubory.get('mobil/android/app/build.gradle')).toContain('versionCode 10203');
-    expect(soubory.get('mobil/android/app/build.gradle')).toContain('versionName "1.2.3"');
-    expect(soubory.get('mobil/src/app/data/verze.generated.ts')).toContain("VERZE = '1.2.3'");
-    expect(soubory.get('backend/src/Verze.php')).toContain("VERZE = '1.2.3'");
+    assert.ok(soubory.get('mobil/android/app/build.gradle').includes('versionCode 10203'));
+    assert.ok(soubory.get('mobil/android/app/build.gradle').includes('versionName "1.2.3"'));
+    assert.ok(soubory.get('mobil/src/app/data/verze.generated.ts').includes("VERZE = '1.2.3'"));
+    assert.ok(soubory.get('backend/src/Verze.php').includes("VERZE = '1.2.3'"));
   });
 
   it('přepíše hlášku o generování, nezdvojí ji', () => {
     const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
-    const jednou: Map<string, string> = generuj(koren);
-    writeFileSync(
-      join(koren, 'mobil/android/app/build.gradle'),
-      jednou.get('mobil/android/app/build.gradle')!,
-    );
-    const podruhe: Map<string, string> = generuj(koren);
-    const gradle = podruhe.get('mobil/android/app/build.gradle')!;
-    expect(gradle.match(/Generováno tools\/verze\/sync\.mjs/g)).toHaveLength(1);
-    expect(gradle).toBe(jednou.get('mobil/android/app/build.gradle'));
+    const jednou = generuj(koren);
+    writeFileSync(join(koren, 'mobil/android/app/build.gradle'), jednou.get('mobil/android/app/build.gradle'));
+    const podruhe = generuj(koren);
+    const gradle = podruhe.get('mobil/android/app/build.gradle');
+    assert.equal(gradle.match(/Generováno nastroje\/verze\/sync\.mjs/g)?.length, 1);
+    assert.equal(gradle, jednou.get('mobil/android/app/build.gradle'));
   });
 
   it('vydání beze změn pro uživatele se do aplikace vůbec nedostane', () => {
@@ -208,28 +208,28 @@ describe('generátor proti podvrženému kořeni', () => {
       '## [0.2.0] – 2026-10-01\n\n### Opraveno\n- Něco v buildu (build)\n\n' +
       '## [0.1.0] – 2026-09-09\n\n### Přidáno\n- Něco viditelného (aplikace)\n';
     const koren = docasnyKoren('0.2.0', changelog);
-    const ts: string = generuj(koren).get('mobil/src/app/data/verze.generated.ts')!;
+    const ts = generuj(koren).get('mobil/src/app/data/verze.generated.ts');
 
-    expect(ts).toContain("VERZE = '0.2.0'");
-    expect(ts).not.toContain("verze: '0.2.0'");
-    expect(ts).toContain("verze: '0.1.0'");
-    expect(ts).not.toContain('Něco v buildu');
+    assert.ok(ts.includes("VERZE = '0.2.0'"));
+    assert.ok(!ts.includes("verze: '0.2.0'"));
+    assert.ok(ts.includes("verze: '0.1.0'"));
+    assert.ok(!ts.includes('Něco v buildu'));
   });
 
-  it('do aplikace nepustí změny fetcheru ani jádra', () => {
+  it('do aplikace nepustí změny backendu ani jádra', () => {
     const changelog =
       '# Změny\n\n## [0.3.0] – 2026-11-01\n\n### Přidáno\n' +
-      '- Viditelná věc (aplikace)\n- Věc v CLI (fetcher)\n- Věc ve výpočtu (jádro)\n';
+      '- Viditelná věc (aplikace)\n- Věc na serveru (backend)\n- Věc ve výpočtu (jádro)\n';
     const koren = docasnyKoren('0.3.0', changelog);
-    const ts: string = generuj(koren).get('mobil/src/app/data/verze.generated.ts')!;
+    const ts = generuj(koren).get('mobil/src/app/data/verze.generated.ts');
 
-    expect(ts).toContain('Viditelná věc');
-    expect(ts).not.toContain('Věc v CLI');
-    expect(ts).not.toContain('Věc ve výpočtu');
+    assert.ok(ts.includes('Viditelná věc'));
+    assert.ok(!ts.includes('Věc na serveru'));
+    assert.ok(!ts.includes('Věc ve výpočtu'));
   });
 
   it('padne, když CHANGELOG.md nemá sekci pro verzi z VERSION', () => {
     const koren = docasnyKoren('1.2.3', changelog('1.0.0'));
-    expect(() => generuj(koren)).toThrow(/nemá sekci pro 1\.2\.3/);
+    assert.throws(() => generuj(koren), /nemá sekci pro 1\.2\.3/);
   });
 });

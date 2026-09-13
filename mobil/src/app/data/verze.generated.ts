@@ -1,4 +1,4 @@
-// Generováno tools/verze/sync.mjs z kořenového VERSION a CHANGELOG.md — needituj ručně.
+// Generováno nastroje/verze/sync.mjs z kořenového VERSION a CHANGELOG.md — needituj ručně.
 // Zobrazuje obrazovka "O aplikaci" (mobil/src/app/obrazovky/o-aplikaci.ts). Jsou tu jen
 // položky týkající se aplikace; ostatní změny zůstávají v CHANGELOG.md.
 

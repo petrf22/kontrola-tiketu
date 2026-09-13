@@ -3,8 +3,8 @@
 # Generované výstupy — vznikají cronem na serveru, do gitu nepatří.
 /public/v1/
 
-# Archiv listin, SQLite, zámek a log. Archiv je stejný jako fetcher/.cache a stejně jako on
-# není smetí: patří do zálohy, jen se kvůli velikosti neverzuje.
+# Archiv listin, SQLite, zámek a log. Archiv není smetí: patří do zálohy, jen se kvůli
+# velikosti neverzuje. Bez něj by se muselo ~2300krát znovu stahovat z Allwynu.
 /var/
 
 # Spouštěč cronu pod tajným jménem — existuje jen na serveru (docs/backend.md).

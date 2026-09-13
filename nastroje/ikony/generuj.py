@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Generátor ikony, splash screenu a grafiky pro Google Play.
 
-Spouští se ručně: `python3 tools/ikony/generuj.py` (potřebuje Pillow).
+Spouští se ručně: `python3 nastroje/ikony/generuj.py` (potřebuje Pillow).
 
 Motiv je vykreslený kódem, ne exportovaný z editoru — díky tomu jde kdykoli změnit barva
 nebo proporce a znovu rozgenerovat všechny velikosti, aniž by se hledal zdrojový soubor.

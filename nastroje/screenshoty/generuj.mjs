@@ -281,6 +281,6 @@ await main();
 
 /*
  * Play odmítá průhlednost, takže se snímky převedou na 24bitové PNG — stejně jako ikona
- * listingu v tools/ikony/generuj.py.
+ * listingu v nastroje/ikony/generuj.py.
  */
 execFileSync('python3', [join(ZDE, 'bez-alfy.py')], { stdio: 'inherit' });

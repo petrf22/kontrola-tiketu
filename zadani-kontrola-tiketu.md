@@ -37,12 +37,14 @@ Dvě oddělené komponenty, které spolu nekomunikují po síti:
 **1. Fetcher výsledků** (CLI, běží na desktopu)
 Stáhne výsledky losování a tabulky výher hromadně za zadané období, bez ohledu na to, jaké tikety uživatel drží. Výstup je JSON soubor. Server se tak dozví jen to, že si někdo zobrazil veřejné výsledky.
 
+> **Změna 13. 9. 2026.** Fetcher nahradil backend v PHP (`backend/`), který listiny stahuje, archivuje a převádí na JSON sám — `bin/vyherka stahni` a `preparsuj` se stejnými pravidly (User-Agent, robots.txt, minimum dotazů). Desktopový fetcher v TypeScriptu byl smazán.
+
 **2. Android aplikace** (bez `INTERNET` permission)
 Načte JSON s výsledky přes import souboru, čísla z tiketu získá OCR na zařízení, vyhodnocení proběhne lokálně. Absence síťové permission v manifestu je ověřitelná záruka, že aplikace nemůže nic vynést.
 
 Pokud se ukáže, že import souboru je v praxi neúnosně nepohodlný, navrhni variantu se síťovou permission, ale s tvrdým pravidlem: stahují se **vždy všechny tahy za období**, nikdy dotaz vázaný na konkrétní tiket.
 
-> **Uplatněno 10. 9. 2026.** Import souboru se pro kontrolu dvakrát týdně ukázal jako nepoužitelný. Výsledky teď hlídá a publikuje backend v PHP a aplikace si je stahuje celé, pro všechny stejně (`docs/backend.md`). Kritérium „jediná permission je `CAMERA`“ tím padá. Je to slabší záruka než žádná síť vůbec, a proto ji nahrazují vymahatelné pojistky: oprávnění jsou právě `CAMERA` a `INTERNET`, TLS projde jedině na server výsledků, Googlí `datatransport` z ML Kitu je z manifestu odstraněný a na síť sahá jediný modul, který o tiketech neví. Hlídají to `app/test/soukromi.test.ts` a `app/test/sit.test.ts`.
+> **Uplatněno 10. 9. 2026.** Import souboru se pro kontrolu dvakrát týdně ukázal jako nepoužitelný. Výsledky teď hlídá a publikuje backend v PHP a aplikace si je stahuje celé, pro všechny stejně (`backend/docs/backend.md`). Kritérium „jediná permission je `CAMERA`“ tím padá. Je to slabší záruka než žádná síť vůbec, a proto ji nahrazují vymahatelné pojistky: oprávnění jsou právě `CAMERA` a `INTERNET`, TLS projde jedině na server výsledků, Googlí `datatransport` z ML Kitu je z manifestu odstraněný a na síť sahá jediný modul, který o tiketech neví. Hlídají to `mobil/test/soukromi.test.ts` a `mobil/test/sit.test.ts`.
 
 ## Fáze
 

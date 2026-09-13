@@ -12,7 +12,7 @@
       takže ji neodposlechne ani proxy s podvrženým certifikátem,
     - nešifrovaný provoz je zakázaný všude.
 
-    Doména musí sedět s app/src/app/data/adresa-backendu.ts — hlídá app/test/soukromi.test.ts.
+    Doména musí sedět s mobil/src/app/data/adresa-backendu.ts — hlídá mobil/test/soukromi.test.ts.
 -->
 <network-security-config>
     <base-config cleartextTrafficPermitted="false">

@@ -5,15 +5,13 @@ import { dirname, join } from 'node:path';
 import { describe, it } from 'node:test';
 import { CASTI, generuj, parsujChangelog, rozborVerze } from '../sync.mjs';
 
-/**
- * Kořenový VERSION a CHANGELOG.md jsou zdroj pravdy o verzi; ostatní soubory z nich generuje
- * `node nastroje/verze/sync.mjs`. V předloze (~/pracovni/kvalita-cena) hlídá jejich soulad CI
- * přes `git diff --exit-code`. Tenhle projekt CI nemá, tak je pojistka tady — jinak by stačilo
- * zapomenout skript spustit a do Play by šel bundle s verzí, kterou nikdo nečekal.
- *
- * Schválně `node:test` bez závislostí: nástroje nemají vlastní node_modules. Spouští se
- * `node --test 'nastroje/**/*.test.mjs'` z kořene repozitáře.
- */
+// Kořenový VERSION a CHANGELOG.md jsou zdroj pravdy o verzi; ostatní soubory z nich generuje
+// `node nastroje/verze/sync.mjs`. V předloze (~/pracovni/kvalita-cena) hlídá jejich soulad CI
+// přes `git diff --exit-code`. Tenhle projekt CI nemá, tak je pojistka tady — jinak by stačilo
+// zapomenout skript spustit a do Play by šel bundle s verzí, kterou nikdo nečekal.
+//
+// Schválně `node:test` bez závislostí: nástroje nemají vlastní node_modules. Spouští se
+// `node --test 'nastroje/**/*.test.mjs'` z kořene repozitáře.
 
 const KOREN = new URL('../../../', import.meta.url).pathname;
 const cti = (relativni) => readFileSync(join(KOREN, relativni), 'utf8');

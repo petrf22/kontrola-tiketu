@@ -53,9 +53,8 @@ captures/
 .idea/navEditor.xml
 
 # Keystore files
-# Podpisové klíče nikdy do repozitáře (docs/vydani.md). Kořenový .gitignore je má taky, ale
-# pravidla v něm jsou kvůli lomítku ukotvená na kořen a na app/android/ nesedí — spoléhat se
-# na ně by bylo křehké.
+# Podpisové klíče nikdy do repozitáře (mobil/docs/vydani.md). Kořenový .gitignore je má taky,
+# ale mobil má být soběstačný — spoléhat se na pravidla o dvě úrovně výš by bylo křehké.
 *.jks
 *.keystore
 keystore.properties

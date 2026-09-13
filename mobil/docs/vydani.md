@@ -10,28 +10,25 @@ vyznačené.
 
 ## Verzování
 
-**Zdroj pravdy je kořenový [`VERSION`](../VERSION) a [`CHANGELOG.md`](../CHANGELOG.md).**
-Všechno ostatní se z nich generuje příkazem:
+**Zdroj pravdy je kořenový [`VERSION`](../../VERSION) a [`CHANGELOG.md`](../../CHANGELOG.md).**
+Všechno ostatní se z nich generuje příkazem (z kořene repozitáře):
 
 ```bash
-npm run verze
+node nastroje/verze/sync.mjs
 ```
 
-Skript `tools/verze/sync.mjs` přepíše osm commitovaných souborů:
+Skript přepíše čtyři commitované soubory:
 
 | Soubor | Co |
 |---|---|
-| `package.json` | `"version"` |
-| `app/package.json` | `"version"` |
-| `fetcher/package.json` | `"version"` |
-| `packages/jadro/package.json` | `"version"` |
-| `packages/ocr/package.json` | `"version"` |
-| `app/android/app/build.gradle` | `versionCode` + `versionName` |
-| `app/src/app/data/verze.generated.ts` | verze a historie pro obrazovku „O aplikaci“ |
+| `mobil/package.json` | `"version"` |
+| `mobil/android/app/build.gradle` | `versionCode` + `versionName` |
+| `mobil/src/app/data/verze.generated.ts` | verze a historie pro obrazovku „O aplikaci“ |
 | `backend/src/Verze.php` | verze PHP backendu, kterou nese jeho User-Agent |
 
-Ručně se needitují. Že sedí se zdrojem, hlídá `test/verze.test.ts` — předloha na to má CI
-(`sync.mjs` + `git diff --exit-code`), tenhle projekt CI nemá, tak je pojistka v testech.
+Ručně se needitují. Že sedí se zdrojem, hlídá `nastroje/verze/test/verze.test.mjs`
+(`node --test 'nastroje/**/*.test.mjs'`) — předloha na to má CI (`sync.mjs` +
+`git diff --exit-code`), tenhle projekt CI nemá, tak je pojistka v testech.
 
 ### versionCode
 
@@ -47,8 +44,8 @@ a Play by aktualizaci odmítl.
 ### Historie v aplikaci
 
 Do `verze.generated.ts` jdou jen položky changelogu označené `(aplikace)` (a položky bez
-suffixu). Změny fetcheru a jádra zůstávají v `CHANGELOG.md` — uživatele mobilu nezajímá, co
-se změnilo v CLI na desktopu. *(Odchylka od předlohy, která posílá do appky všechno.)*
+suffixu). Změny backendu, jádra a sestavování zůstávají v `CHANGELOG.md` — uživatele mobilu
+nezajímá, co se změnilo na serveru nebo ve výpočtu pod kapotou. *(Odchylka od předlohy, která posílá do appky všechno.)*
 
 Generuje se **TypeScript modul**, ne JSON v assetech jako v předloze. Aplikace pak za běhu
 nemusí nic číst ani stahovat, což u appky bez síťového oprávnění dává větší smysl.
@@ -86,20 +83,19 @@ SHA-256:  6B:36:88:46:F9:59:30:29:6D:F9:C0:A5:F3:9F:6B:7C:F4:0D:74:A9:1F:46:1A:B
 Vytvořen: 10. 9. 2026, platí do 19. 7. 2059
 ```
 
-`.gitignore` má `*.jks`, `*.keystore` i `keystore.properties` v kořeni i v `app/android/`.
-Pravidla v kořenovém `.gitignore` jsou kvůli lomítku ukotvená na kořen a na `app/android/…`
-nesedí — proto jsou i tam.
+`.gitignore` má `*.jks`, `*.keystore` i `keystore.properties` v kořeni repozitáře
+i v `mobil/android/` — dvojí pojistka, kdyby se jeden z nich někdy upravoval.
 
 ### Měkký podpis, tvrdá publikace
 
-`app/android/app/build.gradle` založí `signingConfigs.release` **jen když jsou všechny čtyři
+`android/app/build.gradle` založí `signingConfigs.release` **jen když jsou všechny čtyři
 property k dispozici**; jinak release build spadne zpátky na ladicí klíč. Ověřit, že R8 nic
 nerozbil, musí jít i na stroji, kde klíč není.
 
 Tvrdé jsou až tyhle tasky — bez klíče selžou, a to **před** zdlouhavým R8 buildem:
 
 ```bash
-cd app/android
+cd mobil/android
 ./gradlew :app:publishableBundle    # AAB pro Play, ověřený jarsignerem
 ./gradlew :app:publishableApk       # APK pro sideload, ověřené apksignerem
 ```
@@ -122,9 +118,9 @@ a v cestě `android/app/src/main/java/cz/petrf22/kontrolatiketu/`.
 
 ### Nahrávaný formát
 
-Do Play jde **AAB** (`app/android/app/build/outputs/bundle/release/app-release.aab`).
+Do Play jde **AAB** (`mobil/android/app/build/outputs/bundle/release/app-release.aab`).
 Rozdělená APK zůstávají pro sideload mimo Play, kde na velkých APK vypršel Play Protect
-(viz `CLAUDE.md`).
+(viz `mobil/CLAUDE.md`).
 
 ### Past: AAB a rozdělená APK se nesnesou
 
@@ -139,7 +135,7 @@ Please disable building multiple APKs when building an Android app bundle.
 (AGP 8.13, [issuetracker 402800800](https://issuetracker.google.com/402800800).) Narazilo se
 na to při prvním ostrém sestavení AAB 10. 9. 2026.
 
-Řešení v `app/android/app/build.gradle`: `splits.abi.enable` se odvozuje od názvů požadovaných
+Řešení v `android/app/build.gradle`: `splits.abi.enable` se odvozuje od názvů požadovaných
 tasků a pro bundle se rozdělení vypne. AAB si splity dělá sám, takže se tím nic neztrácí.
 
 **Důsledek: AAB a APK se musí stavět dvěma oddělenými spuštěními Gradlu.** Když se zadají
@@ -184,17 +180,18 @@ v [`docs/zasady-ochrany-osobnich-udaju.md`](zasady-ochrany-osobnich-udaju.md).
 Adresa do Play Console:
 
 ```
-https://github.com/petrf22/kontrola-tiketu/blob/main/docs/zasady-ochrany-osobnich-udaju.md
+https://github.com/petrf22/kontrola-tiketu/blob/main/mobil/docs/zasady-ochrany-osobnich-udaju.md
 ```
 
 Repozitář je veřejný a GitHub markdown vykresluje, takže je to použitelná stránka bez
 zakládání webu. Odkaz míří na `main` schválně — zásady mají popisovat, co aplikace dělá teď,
 ne co dělala v době vydání. **Když se repozitář kdykoli přepne na soukromý, přestane odkaz
-fungovat a Play na to sáhne při první další aktualizaci.**
+fungovat a Play na to sáhne při první další aktualizaci.** Stejně tak přesun souboru —
+13. 9. 2026 se přestěhoval z `docs/` do `mobil/docs/` (aplikace tehdy v Play ještě nebyla).
 
 ### Data safety
 
-Aplikace od stahování výsledků z backendu (docs/backend.md) na síť chodí, ale **žádná data
+Aplikace od stahování výsledků z backendu (`backend/docs/backend.md`) na síť chodí, ale **žádná data
 uživatele neodesílá**: jen `GET` na veřejné soubory, pro všechny stejný, bez parametrů,
 identifikátorů a cookies. Vsazená čísla, sériová čísla ani výsledky vyhodnocení telefon
 neopouštějí.
@@ -209,7 +206,7 @@ neopouštějí.
 **Před prvním nahráním s internetem ověřit v Play Console** aktuální výklad: server hostingu
 může do access logu zapsat IP adresu a čas stažení. Aplikace ji nijak nevyužívá a s tiketem
 se spojit nedá; kdyby ji Play přesto počítal jako shromažďovaný údaj, jednodušší než ji
-deklarovat je access log na hostingu vypnout (docs/backend.md, Nasazení, krok 7).
+deklarovat je access log na hostingu vypnout (`backend/docs/backend.md`, Nasazení, krok 7).
 
 Fotoaparát se používá **výhradně na zařízení**: snímek pro rozpoznání textu žije v privátní
 cache aplikace a maže se i při chybě (viz [`ocr-a-carovy-kod.md`](ocr-a-carovy-kod.md)).
@@ -246,7 +243,7 @@ aapt2 dump permissions app-arm64-v8a-release.apk
 aapt2 dump xmltree --file AndroidManifest.xml app-arm64-v8a-release.apk | grep -c datatransport   # 0
 ```
 
-Obojí hlídá `app/test/soukromi.test.ts`, včetně toho, že doména v allowlistu je přesně ta,
+Obojí hlídá `test/soukromi.test.ts`, včetně toho, že doména v allowlistu je přesně ta,
 na kterou aplikace posílá dotazy.
 
 **Na telefonu je potřeba ověřit**, že sken kódu i rozpoznání textu fungují i bez těchhle
@@ -307,18 +304,17 @@ Eurojackpot a Sportka jsou ochranné známky svých vlastníků.
 
 ### Screenshoty
 
-Verzované v `tools/screenshoty/`, pět PNG 1080×1920. Generuje je `tools/screenshoty/generuj.mjs`
-proti aplikaci běžící v prohlížeči:
+Verzované v `nastroje/screenshoty/`, pět PNG 1080×1920. Generuje je
+`nastroje/screenshoty/generuj.mjs` proti aplikaci běžící v prohlížeči:
 
 ```bash
 cd backend && php -S localhost:8080 -t public tools/vyvojovy-server.php   # výsledky
-cd app && npx ng serve                                                    # aplikace
-node tools/screenshoty/generuj.mjs                                        # snímky
+cd mobil && npx ng serve                                                  # aplikace
+node nastroje/screenshoty/generuj.mjs                                     # snímky
 ```
 
-Backend se naplní z archivu fetcheru (`ln -s ../../fetcher/.cache backend/var/archiv`,
-pak `php bin/vyherka obnov` a `publikuj`). Bez něj snímek obrazovky „Výsledky“ ukáže
-nepovedené stažení.
+Backend potřebuje naplněný archiv a publikaci (`php bin/vyherka obnov`, viz
+`backend/docs/backend.md`). Bez něj snímek obrazovky „Výsledky“ ukáže nepovedené stažení.
 
 **Proč z prohlížeče, a ne z telefonu:** `MainActivity` nastavuje `FLAG_SECURE`, takže
 systémový snímek je černý. Je to akceptační kritérium soukromí a kvůli obrázkům se
@@ -332,7 +328,7 @@ Obrazovky s kamerou takhle nafotit nejdou, potřebují nativní ML Kit. Play je 
 1080 px. Proto 432×768 CSS při hustotě 2,5. Průhlednost Play odmítá, takže `bez-alfy.py`
 po každém generování převede snímky na 24bitové PNG a zkontroluje rozměr.
 
-Ukázkové tikety jsou vymyšlené, ale vyhodnocují se proti skutečným tahům z `data/vysledky.json`
+Ukázkové tikety jsou vymyšlené, ale vyhodnocují se proti skutečným tahům z lokálního backendu
 — všechny částky tedy spočítá jádro z reálné tabulky výher a žádná není opsaná natvrdo.
 Skutečné tikety uživatele se k tomu nepoužívají.
 
@@ -351,10 +347,15 @@ Tenhle projekt je sólo a commituje se **přímo do `main`**, bez feature větv�
 1. Doplnit položky do `## [Nezveřejněno]` v `CHANGELOG.md` a přejmenovat sekci
    na `## [X.Y.Z] – RRRR-MM-DD`.
 2. Zapsat `X.Y.Z` do `VERSION`.
-3. `npm run verze` — přepíše osm generovaných souborů.
-4. `git diff --stat` — musí ukázat právě těch osm plus `VERSION` a `CHANGELOG.md`.
+3. `node nastroje/verze/sync.mjs` — přepíše čtyři generované soubory.
+4. `git diff --stat` — musí ukázat právě ty čtyři plus `VERSION` a `CHANGELOG.md`.
    Cokoli navíc znamená, že skript sáhl, kam neměl; zastavit se.
-5. `npm test` a `npm run typecheck`.
+5. Testy všech částí:
+   ```bash
+   (cd mobil && npm test && npm run typecheck)
+   (cd backend && composer test && composer phpstan)
+   node --test 'nastroje/**/*.test.mjs'
+   ```
 6. Commit a tag:
    ```bash
    git commit -am 'Vydat X.Y.Z'
@@ -374,12 +375,12 @@ WORKDIR=$(mktemp -d -t kontrola-tiketu-vX.Y.Z-XXXX)
 git worktree add "$WORKDIR" vX.Y.Z
 
 # local.properties se negituje; bez něj build spadne na chybějící sdk.dir
-cp app/android/local.properties "$WORKDIR/app/android/"
+cp mobil/android/local.properties "$WORKDIR/mobil/android/"
 
-cd "$WORKDIR"
+cd "$WORKDIR/mobil"
 npm ci
 export ANDROID_HOME=$HOME/Android/Sdk JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-cd app && npx ng build && npx cap sync android
+npx ng build && npx cap sync android
 cd android
 ./gradlew :app:publishableBundle    # AAB pro Play
 ./gradlew :app:publishableApk       # APK na vyzkoušení na telefonu; zvlášť, ne najednou
@@ -395,7 +396,7 @@ Uklidit: `git worktree remove "$WORKDIR"`.
 
 ```bash
 git checkout -b oprava-X.Y.x vX.Y.Z
-# oprava, VERSION → X.Y.(Z+1), npm run verze, commit
+# oprava, VERSION → X.Y.(Z+1), node nastroje/verze/sync.mjs, commit
 git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 ```
 
@@ -403,18 +404,18 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 
 ## Kontrolní seznam před nahráním
 
-- [ ] `npm test` prochází — hlavně `soukromi.test.ts`, který ověřuje i sestavené APK
+- [ ] `npm test` v `mobil/` prochází — hlavně `soukromi.test.ts`, který ověřuje i sestavené APK
       přes `aapt2`, že má právě `CAMERA` a `INTERNET` a žádný `datatransport`, a `sit.test.ts`
-- [ ] `npm run verze` nezmění žádný soubor
+- [ ] `node nastroje/verze/sync.mjs` nezmění žádný soubor
 - [ ] `versionCode` v `output-metadata.json` je vyšší než naposledy nahraný do Play
 - [ ] `publishableBundle` doběhl a vypsal „Podpis ověřen“
 - [ ] aplikace nainstalovaná z release APK na telefonu funguje: fotka tiketu, sken kódu,
       stažení výsledků po otevření i tlačítkem, import souboru, vyhodnocení
 - [ ] v režimu letadlo se aplikace otevře bez chyby a stažení ohlásí, že server není dostupný
 - [ ] obrazovka „O aplikaci“ ukazuje správné číslo verze
-- [ ] doména v `app/src/app/data/adresa-backendu.ts` (`kontrolatiketu.petrf22.cz`) odpovídá
+- [ ] doména v `src/app/data/adresa-backendu.ts` (`kontrolatiketu.petrf22.cz`) odpovídá
       nasazenému backendu, backend na ní
-      běží a `curl -sI …/v1/manifest.json` vrací `text/plain` (docs/backend.md)
+      běží a `curl -sI …/v1/manifest.json` vrací `text/plain` (`backend/docs/backend.md`)
 
 ## Co vydání ještě blokuje
 

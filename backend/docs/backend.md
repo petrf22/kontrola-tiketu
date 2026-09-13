@@ -1,13 +1,13 @@
 # Backend: hlídání losování a výsledky pro aplikaci
 
-Runbook i zápis rozhodnutí. Stav k **12. 9. 2026**.
+Runbook i zápis rozhodnutí. Stav k **13. 9. 2026**.
 
 ---
 
 ## Proč vůbec backend
 
-Aplikace dřív dostávala výsledky jedině importem souboru, který se musel vyrobit fetcherem na
-desktopu a ručně přenést do telefonu. Pro kontrolu dvakrát týdně je to nepoužitelné.
+Aplikace dřív dostávala výsledky jedině importem souboru, který se musel vyrobit desktopovým
+fetcherem a ručně přenést do telefonu. Pro kontrolu dvakrát týdně je to nepoužitelné.
 Zadání tuhle variantu předvídá (`zadani-kontrola-tiketu.md`, sekce Architektura): síťové
 oprávnění je přípustné, pokud se **stahují vždy všechny tahy za období, nikdy dotaz vázaný na
 konkrétní tiket.**
@@ -15,7 +15,7 @@ konkrétní tiket.**
 Backend proto:
 
 - sám hlídá Allwyn a stahuje výherní listiny, jen když to dává smysl (viz Rozvrh),
-- staví z nich **tentýž JSON**, jaký vyrábí fetcher,
+- staví z nich JSON s tahy a tabulkami výher (stejný formát, jaký jde do aplikace importovat),
 - vystavuje ho jako statické soubory, které si aplikace stáhne celé.
 
 Allwyn se o uživateli nedozví nic — mluví jen s backendem, a to o veřejných listinách.
@@ -51,34 +51,37 @@ jednořádkový odkaz do `bin/cron.php` mimo docroot. Pravidla:
 - Odpověď je jen `ok` (200) nebo `chyba` (500), podrobnosti jdou do `var/tik.log`.
 - S aplikací nemá nic společného — aplikace chodí jen na `v1/*.json`.
 
-### Parser existuje dvakrát — a hlídá se to
+### Backend je jediný zdroj výsledků
 
-Parser listiny je přepsaný z `fetcher/src/zdroje/allwyn-vyherka.ts` do PHP jedna k jedné,
-protože sdílený hosting nemá Node. Aby se oba nerozešly:
+Parser listiny vznikl jako port desktopového fetcheru v TypeScriptu (sdílený hosting nemá Node).
+Po dobu souběhu testy hlídaly, že oba parsery vyrábějí nad celým archivem bajtově totéž.
+13. 9. 2026 byl fetcher smazán a **parser existuje jen tady**. Pojistky dnes:
 
-1. PHPUnit čte **tytéž fixtury** jako fetcher (`fetcher/test/fixtures/`), backend žádnou kopii nemá.
-2. `backend/tests/ShodaSFetcheremTest.php`: z fixtur vyjde **bajt po bajtu** tentýž soubor jako
-   `app/test/fixtures/vysledky-2026-35-az-37.json`.
-3. `test/backend.test.ts` (běží v `npm test`): oba parsery nad **celým archivem**
-   (`fetcher/.cache`, 1994–2026) musí vyrobit bajtově stejný výstup. Bez PHP nebo bez archivu
-   se přeskočí.
+1. `tests/fixtures/` — skutečné listiny (viz `PUVOD.md`), regresní korpus parseru.
+2. `tests/VystupZFixturTest.php`: z fixtur vyjde **bajt po bajtu** ukázkový balík
+   `tests/fixtures/vysledky-2026-35-az-37.json`. Tentýž soubor má aplikace v `mobil/test/fixtures/`
+   — je to smlouva o formátu. Kdo formát záměrně změní, zvedne `verzeFormatu` a vymění obě kopie.
 
-**Kdo opravuje parser, opravuje oba.** `npm test` rozejití zachytí.
-
-Pasti při portu, na které se narazilo:
+Pasti při portu z JavaScriptu, na které se narazilo:
 
 - `\s` v PCRE podle verze knihovny nemusí chytat nedělitelnou mezeru (U+00A0), v JS ano. Vzory
   ji proto píšou výslovně (`Regex::MEZERA`).
 - `preg_match` při chybě enginu vrací `false`, které se v podmínce tváří jako „nenalezeno“.
   Všechna volání jdou přes `Regex`, který chybu vyhodí.
-- Pořadí klíčů v poli určuje bajtovou shodu JSON — tahy se staví ve stejném pořadí jako v TS.
+- Pořadí klíčů v poli určuje bajtovou shodu JSON — je součástí formátu, ne náhoda.
 - Listina obsahuje `nonce` skriptu Akamai, který se mění při každém stažení. Změnu listiny proto
   **nejde poznat podle hashe surového HTML** — porovnávají se vyparsované tahy.
 
-### Archiv ve formátu fetcheru
+### Archiv listin
 
-`var/archiv/<hra>-<rok>-<TT>.html.gz` — stejně jako `fetcher/.cache`. Server se naplní nahráním
+`var/archiv/<hra>-<rok>-<TT>.html.gz`, surové HTML každé listiny. Server se naplní nahráním
 archivu z desktopu místo dvou tisíc dotazů na Allwyn a archiv jde předávat oběma směry.
+Naplnění od nuly: `php bin/vyherka stahni --hra sportka --od 1994-01 --do <týden>` a totéž pro
+`eurojackpot` od `2015-01` (~2300 dotazů po 2 s, asi hodina a půl). Co v archivu je, se
+znovu nestahuje, takže přerušený běh stačí spustit znovu.
+
+**`var/archiv` je skutečný adresář, ne symlink.** 13. 9. 2026 vedl symlinkem do adresáře fetcheru
+a smazáním fetcheru archiv zmizel — musel se stáhnout znovu.
 
 ### SQLite
 
@@ -115,7 +118,7 @@ Kořen `https://kontrolatiketu.petrf22.cz/v1/`. Jen `GET`, bez parametrů, bez c
 
 - `kontrola` odpovídá na otázku „proběhla už kontrola?“ — `uplny: false` znamená, že čísla
   jsou známá, ale Allwyn ještě nezveřejnil tabulku výher.
-- Balík je přesně `VystupniSoubor` z `fetcher/src/vystup.ts`; jde i ručně naimportovat.
+- Balík jde v aplikaci i ručně naimportovat jako soubor (záloha, když server není dostupný).
 - Balík je **deterministický**: `vygenerovano` v něm je čas poslední změny dat daného roku.
   Hash se tak mění jen se změnou dat a aplikace nestahuje zbytečně.
 - Klient stahuje **všechny** balíky z manifestu (nezměněné přeskočí podle hashe) a po stažení
@@ -184,9 +187,9 @@ Návratové kódy: 0 v pořádku, 1 chyba, 2 špatné argumenty, 3 zákaz v robo
 Vývoj:
 
 ```bash
-cd backend && composer install
-npm run backend:test          # PHPUnit
-npm run backend:phpstan       # statická analýza, level max
+composer install
+composer test                 # PHPUnit
+composer phpstan              # statická analýza, level max
 
 # lokální server se stejnými hlavičkami jako .htaccess (vestavěný server PHP .htaccess nečte)
 php -S localhost:8080 -t public tools/vyvojovy-server.php
@@ -206,7 +209,7 @@ cron z příkazové řádky; subdoména s vlastním document rootem a HTTPS.
    ```bash
    cd backend && composer install --no-dev --optimize-autoloader
    ```
-   Nahrát `backend/` bez `tests/` (SFTP nebo rsync). Po nahrání vrátit vývojové závislosti
+   Nahrát `backend/` bez `tests/` a `docs/` (SFTP nebo rsync). Po nahrání vrátit vývojové závislosti
    (`composer install`).
 3. **Lokální konfigurace** `config/konfigurace.lokalni.php`, jen pokud se liší cesty:
    ```php
@@ -215,7 +218,7 @@ cron z příkazové řádky; subdoména s vlastním document rootem a HTTPS.
    ```
 4. **Naplnění archivem** z desktopu — místo stahování z Allwynu:
    ```bash
-   rsync -av fetcher/.cache/ ucet@hosting:backend/var/archiv/
+   rsync -av var/archiv/ ucet@hosting:backend/var/archiv/
    ssh ucet@hosting 'cd backend && php bin/vyherka obnov && php bin/vyherka plan'
    ```
 5. **Cron** každou hodinu (minuta 5 dává Allwynu čas po celé hodině):
@@ -262,12 +265,12 @@ Databáze a publikace se bez SSH na serveru nestaví — vyrobí se lokálně a 
 ```bash
 cd backend && composer install --no-dev --optimize-autoloader
 php bin/vyherka obnov                  # var/stav.sqlite a public/v1 z archivu
-# FTPS; -L kvůli symlinku var/archiv → fetcher/.cache
+# FTPS
 lftp -u <ucet> <ftp-server> -e '   # údaje z administrace Gigaserveru
   set ftp:ssl-force true;
-  mirror -R -L --exclude-glob .phpunit* public/ /kontrolatiketu.petrf22.cz/;
-  mirror -R -L --exclude tests/ --exclude-glob tik.lock --exclude-glob "*.log" \
-    --exclude public/ --exclude tools/ ./ /kontrolatiketu-backend/;
+  mirror -R --exclude-glob .phpunit* public/ /kontrolatiketu.petrf22.cz/;
+  mirror -R --exclude tests/ --exclude docs/ --exclude-glob tik.lock --exclude-glob "*.log" \
+    --exclude-glob "*.zaloha-*" --exclude public/ --exclude tools/ ./ /kontrolatiketu-backend/;
   bye'
 composer install                       # vrátit vývojové závislosti
 ```
@@ -293,14 +296,14 @@ smazat a cron přenastavit. Po prvních bězích stáhnout `var/tik.log` a v man
 
 ### Záloha
 
-`var/` (archiv a databáze) patří do zálohy stejně jako `fetcher/.cache`. Databáze se dá z archivu
+`var/` (archiv a databáze) patří do domácí zálohy — v gitu není. Databáze se dá z archivu
 kdykoliv postavit znovu (`obnov`), archiv ne — bez něj by se muselo znovu stahovat.
 
 ### Sazby Extra 6
 
-Na hosting jde jen `backend/`, proto má backend kopii `data/sazby-extra6.json` v
-`config/sazby-extra6.json`. Zdrojem pravdy zůstává `data/`; že kopie sedí, hlídá
-`tests/SazbyTest.php`. Po změně sazeb: zkopírovat, nasadit, `php bin/vyherka publikuj`.
+Listina sazby Extra 6 nepublikuje, pevné částky z herního plánu drží `config/sazby-extra6.json`
+— jediný zdroj pravdy o sazbách. Backend je přibaluje ke každému balíku, aplikace je odtud
+dostává. Po změně sazeb: upravit, nasadit, `php bin/vyherka publikuj`.
 
 ---
 

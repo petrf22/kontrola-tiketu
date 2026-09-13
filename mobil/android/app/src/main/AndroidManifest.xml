@@ -3,13 +3,13 @@
     Tvrdé požadavky na soukromí ze zadání jsou akceptační kritéria, ne doporučení.
     Většina z nich je vidět právě tady a dá se ověřit v sestavené aplikaci bez důvěry v kód.
 
-    INTERNET tu je kvůli stažení výsledků z backendu (docs/backend.md). Zadání to připouští jen
+    INTERNET tu je kvůli stažení výsledků z backendu (backend/docs/backend.md). Zadání to připouští jen
     s tvrdým pravidlem: stahují se vždy všechny tahy, nikdy dotaz vázaný na tiket. Záruku, kterou
-    dřív dávala absence oprávnění, teď drží tři věci a všechny hlídá app/test/soukromi.test.ts:
+    dřív dávala absence oprávnění, teď drží tři věci a všechny hlídá mobil/test/soukromi.test.ts:
 
     1. network_security_config pustí TLS jedině na server výsledků,
     2. Googlí vrstva pro odesílání záznamů z ML Kitu je ze sloučeného manifestu odstraněná,
-    3. na síť sahá jediný modul aplikace a ten o tiketech neví (app/test/sit.test.ts).
+    3. na síť sahá jediný modul aplikace a ten o tiketech neví (mobil/test/sit.test.ts).
 
     Žádné další síťové oprávnění sem nepatří.
 -->

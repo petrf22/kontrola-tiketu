@@ -1,7 +1,7 @@
 /**
  * Datový model losování a tiketů.
  *
- * Zdrojem struktury je výherní listina Allwyn (viz docs/data-source.md), zdrojem pravidel
+ * Zdrojem struktury je výherní listina Allwyn (viz backend/docs/data-source.md), zdrojem pravidel
  * herní plán. Model záměrně neobsahuje žádné výherní částky — ty vždy pocházejí z konkrétního
  * tahu. Jedinou výjimkou je Extra 6, jejíž sazby listina nepublikuje; ty se načítají zvlášť
  * jako data, ne jako konstanty v kódu.

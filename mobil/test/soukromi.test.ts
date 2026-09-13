@@ -36,7 +36,7 @@ describe('Android manifest', () => {
       .map((znacka) => /android:name="([^"]+)"/.exec(znacka)?.[1]);
 
   it('žádá právě o kameru a o internet, nic víc', () => {
-    // INTERNET je tu kvůli stažení výsledků (docs/backend.md). Kam smí spojení vést,
+    // INTERNET je tu kvůli stažení výsledků (backend/docs/backend.md). Kam smí spojení vést,
     // hlídá blok „síťový allowlist“ níž.
     expect(pozadovana()).toEqual(['android.permission.CAMERA', 'android.permission.INTERNET']);
   });

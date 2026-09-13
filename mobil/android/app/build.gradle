@@ -149,7 +149,7 @@ def androidSdkDir() {
     def adresar = vlastnosti.getProperty('sdk.dir') ?: System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT')
     if (!adresar) {
         throw new GradleException(
-            'Nenašel jsem Android SDK — chybí sdk.dir v app/android/local.properties i ANDROID_HOME.')
+            'Nenašel jsem Android SDK — chybí sdk.dir v mobil/android/local.properties i ANDROID_HOME.')
     }
     return new File(adresar)
 }

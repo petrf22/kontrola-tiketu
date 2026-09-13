@@ -1,18 +1,19 @@
 # Změny
 
 Formát vychází z [Keep a Changelog](https://keepachangelog.com/cs/), text je česky (konvence
-repa, viz `CLAUDE.md`). Postup vydání popisuje [`docs/vydani.md`](docs/vydani.md).
+repa, viz `CLAUDE.md`). Postup vydání popisuje [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
 
 Tenhle soubor a kořenový `VERSION` jsou **zdroj pravdy o verzi**. Čísla verzí v `package.json`,
-`versionCode`/`versionName` v `app/android/app/build.gradle` i historie zobrazená v aplikaci
-z nich vznikají přes `npm run verze` — needituj je ručně.
+`versionCode`/`versionName` v `mobil/android/app/build.gradle` i historie zobrazená v aplikaci
+z nich vznikají přes `node nastroje/verze/sync.mjs` — needituj je ručně.
 
 **Každá položka musí být na jednom řádku** — parser víceřádkové položky neumí a raději spadne,
 než by je tiše uřízl. Dlouhý řádek je tu žádoucí kompromis za jednoduchost skriptu.
 
 Suffix v závorce na konci položky říká, čeho se změna týká: `(aplikace)`, `(jádro)`,
-`(fetcher)`, `(build)`. Do historie v aplikaci se dostanou jen položky označené `aplikace` —
-uživatele mobilu nezajímá, co se změnilo v CLI na desktopu ani v sestavování. Vydání, ve kterém
+`(backend)`, `(build)`; `(fetcher)` zůstává jen ve starých položkách. Do historie v aplikaci se
+dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co se změnilo na serveru
+ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
 ## [Nezveřejněno]
@@ -20,7 +21,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ### Přidáno
 - Backend v PHP pro levný sdílený hosting: sám hlídá nová losování a vystavuje výsledky jako statické soubory, které si aplikace stáhne celé — bez jediné informace o tom, jaké tikety kdo drží (backend)
 - Rozvrh dotazů na Allwyn: v den losování se backend ptá každou hodinu, jen dokud výsledek i s tabulkou výher nemá; v den bez losování neudělá jediný dotaz (backend)
-- Parser výherní listiny přepsaný do PHP; že ze stejných listin vyrobí bajt po bajtu totéž co fetcher, hlídají testy nad celým archivem (backend, fetcher)
+- Parser výherní listiny přepsaný do PHP; backend je jediný zdroj výsledků a desktopový fetcher v TypeScriptu končí (backend)
 - Výsledky losování se po otevření aplikace stáhnou samy a na obrazovce výsledků je tlačítko „Stáhnout výsledky“; import souboru zůstává jako záloha (aplikace)
 - Aplikace stahuje vždy všechny výsledky, pro každého stejně — na server nejde žádné vsazené číslo, sériové číslo tiketu ani nic, podle čeho by se dalo poznat, kdo se ptá (aplikace)
 - V patičce je vidět, kdy server naposledy kontroloval losování a jestli se u některé hry ještě čeká na tabulku výher (aplikace)
@@ -28,6 +29,8 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ### Změněno
 - Aplikace žádá o přístup k internetu, ale spojit se umí jedině se serverem výsledků — jinam systém šifrované spojení nepustí; Googlí vrstva pro odesílání záznamů z ML Kitu je z aplikace odstraněná (aplikace)
 - Import výsledků ukládá jen nové tahy místo přepisu celého seznamu (aplikace)
+- Import souboru počítá s ročním balíkem ze serveru výsledků; hlášky už neodkazují na desktopový fetcher (aplikace)
+- Repozitář rozdělený na tři nezávislé části — `backend/`, `mobil/` a `nastroje/` — bez sdíleného kódu a s vlastními testy (build)
 
 ### Opraveno
 - Výhra v Šanci nebo v Extra 6 se popisuje česky („trojčíslí“) místo klíčem z modelu („pořadí trojcisli“) (aplikace)

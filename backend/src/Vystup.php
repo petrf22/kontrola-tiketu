@@ -81,7 +81,7 @@ final class Vystup
     }
 
     /**
-     * Načte sazby Extra 6 ze souboru ve tvaru `data/sazby-extra6.json`.
+     * Načte sazby Extra 6 ze souboru ve tvaru `config/sazby-extra6.json`.
      *
      * @return list<SazbyExtra6>
      */

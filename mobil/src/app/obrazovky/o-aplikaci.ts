@@ -4,7 +4,7 @@ import { HISTORIE, VERZE } from '../data/verze.generated.js';
 
 /**
  * Verze a historie změn. Obojí je zabudované v bundlu (`verze.generated.ts` generuje
- * `npm run verze` z kořenového CHANGELOG.md), takže se kvůli téhle obrazovce nikam nechodí
+ * `node nastroje/verze/sync.mjs` z kořenového CHANGELOG.md), takže se kvůli téhle obrazovce nikam nechodí
  * a nic se nečte ze souborů. Na síť smí jen stažení výsledků (`data/stahovani.ts`).
  */
 @Component({

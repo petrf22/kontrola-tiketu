@@ -19,9 +19,9 @@ return (static function (): array {
         'databaze' => "{$koren}/var/stav.sqlite",
         // Web servíruje tenhle adresář jako /v1/. Musí ležet v document rootu, var/ naopak mimo něj.
         'verejne' => "{$koren}/public/v1",
-        // Kopie data/sazby-extra6.json z repozitáře; že sedí, hlídá SazbyTest.
+        // Pevné částky Extra 6 z herního plánu — jediný zdroj pravdy o sazbách.
         'sazby' => "{$koren}/config/sazby-extra6.json",
-        // Stejné období jako dosavadní data/vysledky.json.
+        // Aplikace dostává výsledky od roku 2021; starší tahy zůstávají jen v databázi a archivu.
         'odRoku' => 2021,
 
         /*

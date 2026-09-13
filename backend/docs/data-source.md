@@ -3,6 +3,10 @@
 Výstup fáze 0. Stav k **9. 9. 2026**. Všechna tvrzení v dokumentu byla ověřena reálnými dotazy;
 u každého je uvedeno, jak se ověření zopakuje.
 
+> **13. 9. 2026:** Tam, kde dokument mluví o fetcheru, dnes platí backend (`backend/`).
+> Desktopový fetcher v TypeScriptu byl smazán; `stahni` a `preparsuj` umí `bin/vyherka`
+> se stejnými pravidly.
+
 ---
 
 ## Závěr
@@ -330,9 +334,9 @@ Fetcher proto bude mít dva režimy: `stahni` (síť → archiv) a `preparsuj` (
 
 ### Změna adresy nevyžaduje aktualizaci aplikace
 
-Aplikace URL Allwynu nezná — zná jen adresu vlastního backendu a čte JSON ve formátu fetcheru.
-Když Allwyn adresu změní nebo stránky zavře, **mění se jen fetcher a backend**, aplikace ne.
-URL a parsovací kotvy proto žijí v jednom adaptéru (a jeho PHP portu v `backend/src/Zdroj/`),
+Aplikace URL Allwynu nezná — zná jen adresu vlastního backendu a čte jeho JSON.
+Když Allwyn adresu změní nebo stránky zavře, **mění se jen backend**, aplikace ne.
+URL a parsovací kotvy proto žijí v jednom adaptéru (`src/Zdroj/AllwynVyherka.php`),
 ne rozeseté po kódu.
 
 ---
@@ -343,7 +347,7 @@ ne rozeseté po kódu.
    **tabulku výher pro ni ne** — Extra 6 má pevné částky uvedené v herním plánu. Zadání zakazuje
    mít částky natvrdo v kódu, takže se jednorázově vytáhnou z herního plánu
    (`static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf`)
-   do verzovaného datového souboru `data/sazby-extra6.json` s polem `platnostOd`. Kód sazby nezná,
+   do verzovaného datového souboru `config/sazby-extra6.json` s polem `platnostOd`. Kód sazby nezná,
    jen je čte. Šance tenhle problém nemá.
 2. **Přesná hranice archivu Sportky.** Ověřeno: 1994 ano, 1993 ne. Uvnitř roku 1993 nedohledáno —
    nepodstatné, backfill prostě začne prvním týdnem, který vrátí data.

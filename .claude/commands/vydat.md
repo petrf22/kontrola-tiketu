@@ -4,7 +4,7 @@ argument-hint: [X.Y.Z|major|minor|patch]
 arguments: [bump]
 ---
 
-Vydej novou verzi projektu. Postup je popsaný v `docs/vydani.md`, sekce „Postup vydání“ —
+Vydej novou verzi projektu. Postup je popsaný v `mobil/docs/vydani.md`, sekce „Postup vydání“ —
 při rozporu platí ten dokument.
 
 ## Aktuální stav
@@ -36,27 +36,30 @@ položky z commitů od posledního tagu — ale **uživatelsky**, ne přepisem c
 člověk uvidí, ne co se změnilo v kódu.
 
 Pravidla formátu jsou v hlavičce `CHANGELOG.md`. Podstatné: každá položka na jednom řádku
-a suffix `(aplikace)`, `(jádro)` nebo `(fetcher)` podle toho, čeho se změna týká.
+a suffix `(aplikace)`, `(jádro)`, `(backend)` nebo `(build)` podle toho, čeho se změna týká.
 
 ## Krok 3: Generované soubory
 
 ```bash
 echo "X.Y.Z" > VERSION
-npm run verze
+node nastroje/verze/sync.mjs
 git diff --stat
 ```
 
-Musí se změnit právě těch osm generovaných souborů plus `VERSION` a `CHANGELOG.md`.
+Musí se změnit právě ty čtyři generované soubory (`mobil/package.json`,
+`mobil/android/app/build.gradle`, `mobil/src/app/data/verze.generated.ts`,
+`backend/src/Verze.php`) plus `VERSION` a `CHANGELOG.md`.
 **Cokoli navíc — zastav se a zeptej.**
 
 ## Krok 4: Kontrola
 
 ```bash
-npm test
-npm run typecheck
+(cd mobil && npm test && npm run typecheck)
+(cd backend && composer test && composer phpstan)
+node --test 'nastroje/**/*.test.mjs'
 ```
 
-Obojí musí projít. `soukromi.test.ts` je tu ta podstatná část — hlídá akceptační kritéria
+Všechno musí projít. `soukromi.test.ts` je tu ta podstatná část — hlídá akceptační kritéria
 ze zadání.
 
 ## Krok 5: Commit a tag
@@ -83,28 +86,28 @@ Stavět se musí z tagu a v odděleném worktree, ne z hlavního checkoutu:
 ```bash
 WORKDIR=$(mktemp -d -t kontrola-tiketu-vX.Y.Z-XXXX)
 git worktree add "$WORKDIR" vX.Y.Z
-cp app/android/local.properties "$WORKDIR/app/android/"
-cd "$WORKDIR" && npm ci
+cp mobil/android/local.properties "$WORKDIR/mobil/android/"
+cd "$WORKDIR/mobil" && npm ci
 export ANDROID_HOME=$HOME/Android/Sdk JAVA_HOME=/usr/lib/jvm/java-21-openjdk-amd64
-cd app && npx ng build && npx cap sync android
+npx ng build && npx cap sync android
 cd android
 ./gradlew :app:publishableBundle    # AAB pro Play
 ./gradlew :app:publishableApk       # APK na vyzkoušení na telefonu
 ```
 
 **Zvlášť, ne najednou** — rozdělení APK podle architektur se se sestavením bundlu nesnese
-a build se v takovém případě zastaví už v konfiguraci. Viz `docs/vydani.md`, „Past: AAB
+a build se v takovém případě zastaví už v konfiguraci. Viz `mobil/docs/vydani.md`, „Past: AAB
 a rozdělená APK se nesnesou“.
 
 `local.properties` se negituje — bez zkopírování build spadne na chybějící `sdk.dir`.
-`publishableBundle` bez podpisového klíče selže; to je záměr, viz `docs/vydani.md`.
+`publishableBundle` bez podpisového klíče selže; to je záměr, viz `mobil/docs/vydani.md`.
 
 Artefakt ulož mimo worktree a worktree ukliď:
 
 ```bash
 mkdir -p ~/releases/kontrola-tiketu/vX.Y.Z
-cp "$WORKDIR/app/android/app/build/outputs/bundle/release/app-release.aab" ~/releases/kontrola-tiketu/vX.Y.Z/
-cp "$WORKDIR/app/android/app/build/outputs/apk/release/app-arm64-v8a-release.apk" ~/releases/kontrola-tiketu/vX.Y.Z/
+cp "$WORKDIR/mobil/android/app/build/outputs/bundle/release/app-release.aab" ~/releases/kontrola-tiketu/vX.Y.Z/
+cp "$WORKDIR/mobil/android/app/build/outputs/apk/release/app-arm64-v8a-release.apk" ~/releases/kontrola-tiketu/vX.Y.Z/
 git worktree remove "$WORKDIR"
 ```
 
@@ -112,6 +115,6 @@ git worktree remove "$WORKDIR"
 
 Vypiš verzi, `versionCode`, cestu k `.aab` a připomeň, co musí udělat člověk ručně:
 
-- projít kontrolní seznam v `docs/vydani.md`,
+- projít kontrolní seznam v `mobil/docs/vydani.md`,
 - nahrát AAB do Play Console a vyplnit „Co je nového“ z čerstvé sekce `CHANGELOG.md`,
 - **do Play Console se nepřihlašuj a nic tam nenahrávej sám.**

@@ -1,6 +1,6 @@
 # Čtení tiketu: co jde, co nejde a proč
 
-Stav k **9. 9. 2026**. Logika čtení tiketu je hotová a otestovaná v `packages/ocr`, ale její
+Stav k **9. 9. 2026**. Logika čtení tiketu je hotová a otestovaná v `knihovny/ocr`, ale její
 napojení na zařízení naráží na dvě věci, které se nedají obejít bez rozhodnutí.
 
 ---
@@ -23,8 +23,8 @@ napojení na zařízení naráží na dvě věci, které se nedají obejít bez 
 >
 > Podmínkou je, že snímek **vždycky** zmizí — při úspěchu, při chybě rozpoznávání i při
 > výjimce — a že se nikdy nedostane do galerie. Postup je proto v jedné funkci
-> (`app/src/app/data/snimekTiketu.ts`) s `finally` a s vyměnitelnými závislostmi, aby na to
-> šel napsat test. Hlídají to `app/test/snimekTiketu.test.ts` a `app/test/soukromi.test.ts`.
+> (`src/app/data/snimekTiketu.ts`) s `finally` a s vyměnitelnými závislostmi, aby na to
+> šel napsat test. Hlídají to `test/snimekTiketu.test.ts` a `test/soukromi.test.ts`.
 >
 > Co to znamená v praxi, ověřeno na zařízení 9. 9. 2026: snímek vznikne v adresáři
 > `Android/data/cz.petrf22.kontrolatiketu/files/Pictures/`, tedy v prostoru privátním pro
@@ -61,7 +61,7 @@ které se nepoužívají.
    je to nativní kód k údržbě.
 3. **Povolit dočasný soubor v privátní cache aplikace** a hned ho mazat. ← **zvoleno**
 
-Vyhodnocovací část je na tom nezávislá: `packages/ocr` přijímá útržky textu s rámečky
+Vyhodnocovací část je na tom nezávislá: `knihovny/ocr` přijímá útržky textu s rámečky
 (`zMlKit`) a je jedno, odkud přijdou. Až se způsob pořízení snímku vyřeší, napojení je
 otázka několika řádků.
 

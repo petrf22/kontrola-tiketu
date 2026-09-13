@@ -7,7 +7,7 @@
  * konkrétní tiket.** Tenhle modul to pravidlo drží tak, aby se nedalo porušit omylem:
  *
  * - o tiketech neví nic — nemá je jak dostat, nic z úložiště ani ze stavu neimportuje
- *   (hlídá `app/test/sit.test.ts`),
+ *   (hlídá `test/sit.test.ts`),
  * - dotaz je pro všechny stejný: jen `GET` na pevnou adresu, bez parametrů, bez cookies,
  *   s pevným User-Agentem místo toho, který by prozradil model telefonu,
  * - nepoužívá podmíněné hlavičky (`If-None-Match`…); co je nové, pozná z hashů v manifestu,
@@ -235,7 +235,7 @@ async function stahni(sit: Sit, url: string): Promise<Uint8Array<ArrayBuffer> | 
     odpoved = await sit(url);
   } catch (e) {
     return e instanceof NecekanyTypObsahu
-      ? 'Server posílá výsledky s nečekaným typem obsahu. Má je posílat jako text/plain (docs/backend.md).'
+      ? 'Server posílá výsledky s nečekaným typem obsahu. Má je posílat jako text/plain.'
       : 'Server s výsledky není dostupný. Jsi připojený k internetu?';
   }
   if (odpoved.stav !== 200) return `Server s výsledky odpověděl chybou ${odpoved.stav}.`;

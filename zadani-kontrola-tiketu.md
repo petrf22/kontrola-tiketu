@@ -4,6 +4,8 @@
 
 Android aplikace, která zkontroluje papírové tikety Allwyn (Eurojackpot, Sportka) proti výsledkům losování tak, aby se **provozovatel ani nikdo jiný nedozvěděl, že konkrétní osoba sází nebo vyhrála**. Ochrana soukromí je primární požadavek, ne doplněk — každé designové rozhodnutí se poměřuje proti němu.
 
+> **Rozšířeno 13. 9. 2026 o Euromiliony** (česká loterie Allwynu: 7 čísel z 35 a 1 z 5, doplňková hra Eurošance). Výsledky dává tatáž výherní listina (`game=euromiliony`), pevné výhry Eurošance se vedou jako data stejně jako u Extra 6. Druhá šance Euromilionů se nevyhodnocuje. Všechna pravidla níže platí pro Euromiliony stejně.
+
 ## Co už je zjištěné (neověřuj znovu, stav k 9/2026)
 
 ### Čárový kód na tiketu

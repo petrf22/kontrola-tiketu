@@ -25,11 +25,14 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 - Výsledky losování se po otevření aplikace stáhnou samy a na obrazovce výsledků je tlačítko „Stáhnout výsledky“; import souboru zůstává jako záloha (aplikace)
 - Aplikace stahuje vždy všechny výsledky, pro každého stejně — na server nejde žádné vsazené číslo, sériové číslo tiketu ani nic, podle čeho by se dalo poznat, kdo se ptá (aplikace)
 - V patičce je vidět, kdy server naposledy kontroloval losování a jestli se u některé hry ještě čeká na tabulku výher (aplikace)
+- Euromiliony: tiket jde vyfotit i zadat ručně (7 čísel z 35 a 1 z 5) a aplikace ho vyhodnotí včetně Eurošance proti tabulce výher konkrétního tahu (aplikace)
+- Backend čte a publikuje Euromiliony včetně archivu listin od roku 2013 a pevných výher Eurošance; formát výsledků je ve verzi 2 (backend)
 - Při zadání tiketu jde vybrat, na které dny losování platí — Sportka středa, pátek, neděle, Eurojackpot úterý, pátek; tiket jen na neděle se tak vyhodnotí proti nedělním tahům, ne proti všem po sobě (aplikace)
 
 ### Změněno
 - Aplikace žádá o přístup k internetu, ale spojit se umí jedině se serverem výsledků — jinam systém šifrované spojení nepustí; Googlí vrstva pro odesílání záznamů z ML Kitu je z aplikace odstraněná (aplikace)
 - Import výsledků ukládá jen nové tahy místo přepisu celého seznamu (aplikace)
+- Výsledky hry, kterou aplikace nezná, se při stažení přeskočí a zbytek se načte — přidání další hry na serveru už aplikaci nerozbije (aplikace)
 - Import souboru počítá s ročním balíkem ze serveru výsledků; hlášky už neodkazují na desktopový fetcher (aplikace)
 - Repozitář rozdělený na tři nezávislé části — `backend/`, `mobil/` a `nastroje/` — bez sdíleného kódu a s vlastními testy (build)
 

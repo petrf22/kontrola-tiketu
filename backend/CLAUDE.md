@@ -12,7 +12,7 @@ Zdroj dat a jeho pasti: `docs/data-source.md`.
 
 ```bash
 composer install
-composer test        # PHPUnit, 86 testů
+composer test        # PHPUnit, 93 testů
 composer phpstan     # statická analýza, level max
 
 php bin/vyherka stav
@@ -33,7 +33,8 @@ parser, pracuj vždy proti archivu nebo fixturám — nikdy nestahuj znovu to, c
 src/Zdroj/             AllwynVyherka.php (parser listiny), Html.php
 src/                   Rozvrh.php, Tik.php, Archiv.php, Publikace.php, Vystup.php, Json.php, Model.php
 src/Cli/               Cli.php (bin/vyherka), Cron.php (spouštěč cronu voláním URL)
-config/                konfigurace.php, sazby-extra6.json (pevné částky Extra 6 — listina je nepublikuje)
+config/                konfigurace.php, sazby-extra6.json a sazby-eurosance.json (pevné výhry
+                       doplňkových her — listina je nepublikuje)
 public/                document root: .htaccess, robots.txt, v1/ (generované, mimo git)
 var/                   archiv/ (surové listiny), stav.sqlite — mimo git, patří do zálohy
 tests/fixtures/        skutečné listiny v .html.gz + ukázkový balík — regresní korpus parseru
@@ -58,4 +59,7 @@ tests/fixtures/        skutečné listiny v .html.gz + ukázkový balík — reg
   odpověď rozparsoval a aplikace by neověřila hash. Viz `docs/backend.md`, API.
 - Pravidla ze zadání pro Allwyn: poctivý User-Agent, respektovat robots.txt (zákaz = konec
   s kódem 3, ne obejít), prodleva 2 s, minimum dotazů.
-- Výherní částky Eurojackpotu jsou totalizátorové: **nikdy natvrdo v kódu**, vždy z listiny.
+- Výherní částky Eurojackpotu i Euromilionů jsou totalizátorové: **nikdy natvrdo v kódu**, vždy
+  z listiny. Pevné výhry Extra 6 a Eurošance jsou data v `config/`, ne konstanty.
+- **Hry jsou tři:** `eurojackpot`, `sportka`, `euromiliony` (`Model::HRY`). Druhou šanci
+  Euromilionů parser záměrně nečte — viz `docs/data-source.md`, Euromiliony.

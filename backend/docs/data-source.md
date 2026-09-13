@@ -6,6 +6,9 @@ u každého je uvedeno, jak se ověření zopakuje.
 > **13. 9. 2026:** Tam, kde dokument mluví o fetcheru, dnes platí backend (`backend/`).
 > Desktopový fetcher v TypeScriptu byl smazán; `stahni` a `preparsuj` umí `bin/vyherka`
 > se stejnými pravidly.
+>
+> **13. 9. 2026:** Přibyly Euromiliony — tatáž listina s `game=euromiliony`, viz sekci
+> Euromiliony níže.
 
 ---
 
@@ -14,7 +17,7 @@ u každého je uvedeno, jak se ověření zopakuje.
 Fetcher bude číst **tiskovou výherní listinu** na adrese:
 
 ```
-https://www.allwyn.cz/system/vyherka?year=<rok>&week=<týden>&game=<eurojackpot|sportka>
+https://www.allwyn.cz/system/vyherka?year=<rok>&week=<týden>&game=<eurojackpot|sportka|euromiliony>
 ```
 
 Je to server-rendered HTML, robots.txt ji nezakazuje, obsahuje kompletní tabulky výher
@@ -74,7 +77,7 @@ argument pro vlastní archiv (viz níže).
 | Bot protection | Neblokuje; obyčejný `curl` s vlastním User-Agentem vrací 200 |
 | `Content-Type` | `text/html; charset=utf-8` |
 | Velikost odpovědi | 13–59 kB |
-| `game=` | `eurojackpot`, `sportka` |
+| `game=` | `eurojackpot`, `sportka`, `euromiliony` |
 | `week=` | Číslo týdne, od roku 1998 odpovídá ISO týdnu (výhrada níže) |
 | Pokrytí | **Jeden dotaz = všechny tahy daného týdne** |
 | Prázdná data | HTTP 200, tělo o velikosti **přesně 2537 B**, bez řetězce `Losování dne` |
@@ -98,13 +101,14 @@ curl -s "https://www.allwyn.cz/system/vyherka?year=2026&week=45&game=sportka" | 
 |---|---|---|
 | Sportka | **1994**, týden 10 | 1993 |
 | Eurojackpot | **2015**, týden 20 | 2014 (ČR do Eurojackpotu vstoupila až 2015) |
+| Euromiliony | **2013**, týden 25 | 2013, týden 24 (dřív listina Euromiliony nevede) |
 
 ### Frekvence losování se v čase mění
 
-| Období | Sportka | Eurojackpot |
-|---|---|---|
-| 1994–2010 | neděle, středa | — |
-| dnes (2026) | **středa, pátek, neděle** | úterý, pátek |
+| Období | Sportka | Eurojackpot | Euromiliony |
+|---|---|---|---|
+| 1994–2010 | neděle, středa | — | — |
+| dnes (2026) | **středa, pátek, neděle** | úterý, pátek | úterý, sobota |
 
 Sportka tedy dnes losuje **třikrát týdně**, ne dvakrát. Každý tah Sportky má vlastní losování
 Šance. Fetcher ani model nesmí počet tahů v týdnu předpokládat — sekce se prostě vyčtou všechny,
@@ -211,6 +215,53 @@ koncové číslo +/- 1        —         32484        30 Kč
 
 Na rozdíl od Extra 6 publikuje listina u Šance i částky, takže se nikde nemusí doplňovat.
 
+### Euromiliony
+
+Česká loterie Allwynu (s mezinárodní EuroMillions nemá nic společného). Ověřeno na 2026/36
+a 2026/37 (13. 9. 2026). Dvě sekce (úterý, sobota), v každé:
+
+- `EUROMILIONY ÚTERÝ` / `SOBOTA`, `Losování dne: DD. MM. RRRR`
+- 1. osudí: 7 čísel (1–35), 2. osudí: 1 číslo (1–5) — v jednom řádku `loscisla`, osm buněk
+- druhý řádek `loscisla`: 5 číslic **Eurošance** a vedle nich buňka **Druhé šance**
+  (komentář `<!-- druhá šance -->`, třída `b2 s18`, ne `b2 s32b` — parser ji proto nesebere)
+- `Vsazeno`, `Na výhry`
+- **Tabulka deseti pořadí** pod `<!-- vyhry -->` ve stejném tvaru jako u Eurojackpotu
+- `<!-- prevod -->`: `Převod hlavní část`, `JACKPOT`, `Předpokládaná částka pro 2.–4. pořadí`
+
+Ukázka (2026, týden 37, úterý 8. 9. 2026):
+
+```
+EUROMILIONY ÚTERÝ      Losování dne: 08. 09. 2026
+1. osudí: 18 17 28 3 2 12 22     2. osudí: 5
+Eurošance: 3 7 9 6 0             Druhá šance: (prázdné)
+Vsazeno: 1 102 380 Kč            Na výhry: 93 682 682,00 Kč
+
+Pořadí  Uhodnuto  Počet výher  Výše výher
+I       7+1                 0        0 Kč
+II      7                   0        0 Kč
+III     6+1                 1   22 047 Kč
+IV      6                   2   12 401 Kč
+V       5+1                 8    3 100 Kč
+VI      5                  39      777 Kč
+VII     4+1               120      321 Kč
+VIII    4                 528      140 Kč
+IX      3+1               736      108 Kč
+X       2+1              2074       65 Kč
+Převod hlavní část: 89 192 413 Kč   JACKPOT: 89 400 000 Kč
+```
+
+Pravidla z herního plánu (oddíl Euromiliony):
+
+- **Pořadí (bod 9):** listina píše shodu bez druhého osudí jako `7`, `6`, … — ne `7+0`.
+  3+0 a méně nevyhrává, 2+1 ano.
+- **Eurošance (body 10, 16, 17):** shoda koncového pětičíslí až koncového čísla, **bez
+  sousedního čísla**. Výhry jsou pevné — 500 000 / 20 000 / 2 000 / 200 / 50 Kč při sázce 30 Kč
+  — a **listina je nepublikuje**. Vedou se proto v `config/sazby-eurosance.json` stejně jako
+  sazby Extra 6.
+- **Druhá šance:** z pětimístných kódů přidělených sázkám se losuje pět; výhra závisí na počtu
+  vsazených sloupců (20 000–180 000 Kč). Losuje se jen, když má fond aspoň 1 mil. Kč — v září
+  2026 buňka zůstává prázdná. **Projekt ji nečte ani nevyhodnocuje** (rozhodnutí 13. 9. 2026).
+
 ---
 
 ## Kotvy pro parser
@@ -305,10 +356,11 @@ takže pojistkou je **vlastní archiv**, ne alternativní web.
 |---|---|---|---|
 | Sportka 1994–2026 (~1700 týdnů) | 1700 | 100 MB | **5,4 MB** |
 | Eurojackpot 2015–2026 (~620 týdnů) | 620 | 14 MB | **1,4 MB** |
-| **celkem** | **~2320** | ~114 MB | **~6,8 MB** |
+| Euromiliony 2011–2026 (819 týdnů, data od 2013/25) | 819 | 16 MB | **1,6 MB** |
+| **celkem** | **~3140** | ~130 MB | **~8,4 MB** |
 
-Jednorázové naplnění při prodlevě 2 s trvá **~1,3 hodiny**. Průběžný provoz je pak
-**2 dotazy týdně** (jeden na hru), tedy ~104 za rok.
+Jednorázové naplnění při prodlevě 2 s trvá **necelé dvě hodiny** (Euromiliony samy 13. 9. 2026 asi 35 minut). Průběžný provoz je pak
+**3 dotazy týdně** (jeden na hru), tedy ~156 za rok.
 
 ### Velikost výstupního JSON (změřeno, ne odhadnuto)
 

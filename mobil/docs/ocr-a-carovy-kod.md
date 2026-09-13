@@ -112,6 +112,24 @@ maskovat (`b & 0xff`). Bez toho se šifrovaný blok rozsype a offsety přestanou
 
 ---
 
+## Euromiliony: neověřeno na papíře
+
+Podpora Euromilionů (13. 9. 2026) stojí na předpokladech, které nikdo neviděl na skutečném
+tiketu:
+
+- **Rozvržení sloupců** se čeká stejné jako u Eurojackpotu: vlevo pořadí a sedm čísel, vpravo
+  jedno číslo z druhého osudí. Testy v `knihovny/ocr/test/tiket.test.ts` jsou syntetické.
+- **Popisek Eurošance** hledá `euro šance` s diakritikou i bez, v délce pěti číslic. Předpona
+  „euro“ je povinná, aby se nesebral pětimístný kód Druhé šance, kdyby byl na tiketu vytištěný.
+- **Čárový kód** se čte se stejnou hlavičkou `RBF16M` a sériovým číslem na offsetu 89. Když
+  tiket Euromilionů nese jinou hlavičku, čtení kódu skončí chybou a tiket dostane náhradní
+  identifikátor — vyhodnocení to neovlivní, jen deduplikaci.
+
+Čísla i kód Eurošance uživatel vždy potvrzuje ve formuláři, takže chybné čtení nepropadne
+tiše. Až bude po ruce skutečný tiket, stačí jedna fotka.
+
+---
+
 ## Poznámka k velikosti APK
 
 Debug APK má ~78 MB, protože obsahuje nativní knihovny pro **všechny čtyři ABI**:

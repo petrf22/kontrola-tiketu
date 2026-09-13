@@ -36,8 +36,8 @@ sám. Ve starší historii gitu a v `CHANGELOG.md` se s ním ještě setkáš.
 Ověřené příkazy:
 
 ```bash
-cd backend && composer test && composer phpstan      # PHPUnit 86 testů, PHPStan level max
-cd mobil && npm test && npm run typecheck            # vitest 340 testů, tsc strict
+cd backend && composer test && composer phpstan      # PHPUnit 93 testů, PHPStan level max
+cd mobil && npm test && npm run typecheck            # vitest 395 testů, tsc strict
 node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 25 testů
 node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí projít bez změny souborů
 ```
@@ -47,6 +47,10 @@ node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí
 Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace se šesti obrazovkami**
 a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
 
+**Euromiliony** (13. 9. 2026) jsou hotové v backendu i aplikaci, ale **nejsou nasazené** a tiket
+Euromilionů nikdo neviděl na papíře. Přinesly `verzeFormatu` 2 — aplikace do 0.1.1 ho odmítne,
+takže backend a aplikace jdou ven společně (`backend/docs/backend.md`, Otevřené body).
+
 **Stahování výsledků zatím není na telefonu ověřené.** Backend je nasazený na
 `kontrolatiketu.petrf22.cz` (13. 9. 2026; Gigaserver, jen FTP — viz `backend/docs/backend.md`). Síťový allowlist s prázdnými `<trust-anchors />` a chod ML Kitu bez
 odstraněného `datatransport` se musí vyzkoušet na zařízení — viz `mobil/docs/vydani.md`, „Co
@@ -54,7 +58,7 @@ vydání ještě blokuje“.
 
 ## Účel a hlavní omezení
 
-Offline kontrola papírových tiketů Allwyn (Eurojackpot, Sportka) tak, aby se provozovatel
+Offline kontrola papírových tiketů Allwyn (Eurojackpot, Sportka, od 13. 9. 2026 i Euromiliony) tak, aby se provozovatel
 nedozvěděl, že konkrétní osoba sází nebo vyhrála. **Soukromí je primární požadavek** — každé
 designové rozhodnutí se poměřuje proti němu, ne naopak.
 

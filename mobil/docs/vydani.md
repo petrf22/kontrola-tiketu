@@ -256,13 +256,13 @@ Verzované tady, ne jen v Play Console.
 **Krátký popis** (max 80 znaků):
 
 ```
-Zkontrolujte tiket Eurojackpotu a Sportky. Tikety se nikam neodesílají.
+Zkontrolujte tiket Eurojackpotu, Sportky i Euromilionů. Nic se neodesílá.
 ```
 
 **Dlouhý popis** (max 4000 znaků):
 
 ```
-Zkontrolujte si papírový tiket Eurojackpotu nebo Sportky přímo v telefonu — bez toho, aby se
+Zkontrolujte si papírový tiket Eurojackpotu, Sportky nebo Euromilionů přímo v telefonu — bez toho, aby se
 kdokoli dozvěděl, že sázíte nebo že jste vyhráli.
 
 Vsazená čísla ani sériová čísla tiketů telefon neopouštějí. Na internet aplikace chodí jen
@@ -272,7 +272,7 @@ Spojit se umí jedině se serverem výsledků; k jiné adrese jí systém spojen
 CO APLIKACE UMÍ
 • Vyfoťte tiket a aplikace z něj přečte vsazená čísla, doplňkovou hru i sériové číslo
 • Nebo zadejte čísla ručně, když se fotka nepovede
-• Vyhodnotí Eurojackpot i Sportku včetně Šance, Extra 6 a Bonusu
+• Vyhodnotí Eurojackpot, Sportku i Euromiliony včetně Šance, Extra 6, Eurošance a Bonusu
 • Ukáže bilanci: kolik tiket stál a kolik zatím vynesl
 • Drží tikety v šifrované databázi, klíč je v Android Keystore
 
@@ -299,7 +299,7 @@ vždy kontrola na terminálu provozovatele. Výhru lze uplatnit pouze tam, s pla
 tiketem a ve stanovené lhůtě.
 
 Aplikace není oficiální aplikací provozovatele loterie a není s ním nijak spojená.
-Eurojackpot a Sportka jsou ochranné známky svých vlastníků.
+Eurojackpot, Sportka a Euromiliony jsou ochranné známky svých vlastníků.
 ```
 
 ### Screenshoty
@@ -433,3 +433,8 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 - **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
   je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
   a míří na uzavřený test, ne rovnou do produkce.
+- **Tiket Euromilionů není ověřený na papíře** — rozvržení sloupců, popisek Eurošance ani
+  čárový kód. Viz `docs/ocr-a-carovy-kod.md`, „Euromiliony: neověřeno na papíře“.
+- **Backend s formátem 2 a aplikace se nasazují společně.** Aplikace do 0.1.1 balík ve formátu 2
+  (Euromiliony) odmítne s výzvou k aktualizaci. Backend s Euromiliony proto na hosting až ve
+  chvíli, kdy je nová verze aplikace na telefonu. Viz `backend/docs/backend.md`, API.

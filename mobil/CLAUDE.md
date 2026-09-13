@@ -8,7 +8,7 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 340 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm test             # vitest, 395 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -22,7 +22,8 @@ cd android && ./gradlew :app:assembleDebug
 
 ```
 knihovny/jadro/src/    model.ts, validace.ts, koncoveCislice.ts, slucovani.ts,
-                       eurojackpot.ts, sportka.ts, sance.ts, extra6.ts, vyhodnoceni.ts
+                       eurojackpot.ts, sportka.ts, sance.ts, extra6.ts,
+                       euromiliony.ts, eurosance.ts, vyhodnoceni.ts
 knihovny/ocr/src/      radky.ts (párování podle rámečků), cisla.ts, tiket.ts, carovyKod.ts
 src/app/data/          import.ts, stahovani.ts, uloziste.ts, stav.ts, tokeny.ts
 src/app/obrazovky/     seznam.ts, novy-tiket.ts, sken.ts, sken-cisel.ts, detail.ts,
@@ -63,7 +64,9 @@ Snímání je sjednocené: **jedna fotka dá čísla, `Extra 6` i sériové čí
 zůstává pro případ, že fotka kód nezachytí nebo uživatel nechce pořizovat snímek vůbec.
 
 Podoba doplňkové hry na tiketu Eurojackpotu: `Extra 6: 845991`, cena `400 Kč`. Podoba Šance
-u Sportky ověřená není — vzor je proto volnější.
+u Sportky ověřená není — vzor je proto volnější. **Tiket Euromilionů neviděl nikdo vůbec**:
+rozvržení (7 čísel + 1 z druhého osudí), popisek Eurošance (pět číslic) i čárový kód jsou
+předpoklad, viz `docs/ocr-a-carovy-kod.md`.
 
 **Pozor u čtení částek:** skládání řádků podle rámečků může cenu spojit s okolím, takže se
 nesmí kotvit na konec řádku. Zároveň částka nesmí začít uprostřed jiného čísla — jinak

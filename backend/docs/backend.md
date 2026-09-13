@@ -77,8 +77,8 @@ Pasti při portu z JavaScriptu, na které se narazilo:
 `var/archiv/<hra>-<rok>-<TT>.html.gz`, surové HTML každé listiny. Server se naplní nahráním
 archivu z desktopu místo dvou tisíc dotazů na Allwyn a archiv jde předávat oběma směry.
 Naplnění od nuly: `php bin/vyherka stahni --hra sportka --od 1994-01 --do <týden>` a totéž pro
-`eurojackpot` od `2015-01` (~2300 dotazů po 2 s, asi hodina a půl). Co v archivu je, se
-znovu nestahuje, takže přerušený běh stačí spustit znovu.
+`eurojackpot` od `2015-01` a `euromiliony` od `2011-01` (~3100 dotazů po 2 s, necelé dvě hodiny).
+Co v archivu je, se znovu nestahuje, takže přerušený běh stačí spustit znovu.
 
 **`var/archiv` je skutečný adresář, ne symlink.** 13. 9. 2026 vedl symlinkem do adresáře fetcheru
 a smazáním fetcheru archiv zmizel — musel se stáhnout znovu.
@@ -103,12 +103,13 @@ Kořen `https://kontrolatiketu.petrf22.cz/v1/`. Jen `GET`, bez parametrů, bez c
 ```json
 {
   "verzeManifestu": 1,
-  "verzeFormatu": 1,
+  "verzeFormatu": 2,
   "vygenerovano": "2026-09-08T20:05:00.000Z",
   "kontrola": {
     "posledniDotaz": "2026-09-08T20:05:00.000Z",
     "eurojackpot": { "posledniTah": "2026-09-08", "uplny": true },
-    "sportka": { "posledniTah": "2026-09-06", "uplny": true }
+    "sportka": { "posledniTah": "2026-09-06", "uplny": true },
+    "euromiliony": { "posledniTah": "2026-09-08", "uplny": true }
   },
   "baliky": [
     { "soubor": "2026.json", "hash": "sha256:…", "od": "2026-01-02", "do": "2026-09-08", "tahu": 112 }
@@ -116,6 +117,10 @@ Kořen `https://kontrolatiketu.petrf22.cz/v1/`. Jen `GET`, bez parametrů, bez c
 }
 ```
 
+- `verzeFormatu` 2 (13. 9. 2026) přidala Euromiliony a `sazbyEurosance`. Aplikace do 0.1.1 zná
+  jen verzi 1 a balík ve verzi 2 odmítne s výzvou k aktualizaci — backend a aplikaci s formátem 2
+  je proto potřeba nasadit společně. Novější aplikace tah hry, kterou nezná, přeskočí, takže
+  další hra už verzi formátu zvedat nemusí.
 - `kontrola` odpovídá na otázku „proběhla už kontrola?“ — `uplny: false` znamená, že čísla
   jsou známá, ale Allwyn ještě nezveřejnil tabulku výher.
 - Balík jde v aplikaci i ručně naimportovat jako soubor (záloha, když server není dostupný).
@@ -162,7 +167,7 @@ dotazy na každé losování a dva v pondělí. **V den bez losování nevznikne
 
 ### Časy zveřejnění zatím nejsou ověřené
 
-`prvniDotaz` (Eurojackpot 22:00, Sportka 21:00) je odhad. Nevadí to — v okně se backend ptá
+`prvniDotaz` (Eurojackpot 22:00, Sportka 21:00, Euromiliony 21:00) je odhad. Nevadí to — v okně se backend ptá
 každou hodinu, dokud výsledek nemá. Databáze si ale u každého tahu zapisuje, **kdy byl poprvé
 úplný**, a `bin/vyherka stav` to vypíše. Po pár týdnech provozu podle toho upravit
 `config/konfigurace.lokalni.php`.
@@ -339,11 +344,13 @@ smazat a cron přenastavit. Po prvních bězích stáhnout `var/tik.log` a v man
 `var/` (archiv a databáze) patří do domácí zálohy — v gitu není. Databáze se dá z archivu
 kdykoliv postavit znovu (`obnov`), archiv ne — bez něj by se muselo znovu stahovat.
 
-### Sazby Extra 6
+### Sazby Extra 6 a Eurošance
 
-Listina sazby Extra 6 nepublikuje, pevné částky z herního plánu drží `config/sazby-extra6.json`
-— jediný zdroj pravdy o sazbách. Backend je přibaluje ke každému balíku, aplikace je odtud
-dostává. Po změně sazeb: upravit, nasadit, `php bin/vyherka publikuj`.
+Listina pevné výhry doplňkových her nepublikuje. Částky z herního plánu drží
+`config/sazby-extra6.json` (násobky sázky) a `config/sazby-eurosance.json` (přímo koruny —
+násobky v plánu jsou zaokrouhlené) — jediný zdroj pravdy o sazbách. Backend je přibaluje ke
+každému balíku jako `sazbyExtra6` a `sazbyEurosance`, aplikace je odtud dostává. Po změně sazeb:
+upravit, nasadit, `php bin/vyherka publikuj`.
 
 ---
 
@@ -353,6 +360,12 @@ dostává. Po změně sazeb: upravit, nasadit, `php bin/vyherka publikuj`.
   Eurojackpot 2015–2026), databáze a publikace postavené lokálně příkazem `obnov`. Ruční zavolání
   spouštěče cronu vrátilo `ok` a zapsalo `var/tik.log`. Cron v administraci zadává uživatel —
   po prvním losování ověřit v logu a v `kontrola.posledniDotaz`, že opravdu běží každou hodinu.
+
+- **Euromiliony zatím nejsou nasazené** (13. 9. 2026). Na hosting patří nový kód, soubor
+  `config/sazby-eurosance.json`, listiny `euromiliony-*` do archivu a nová databáze s publikací
+  (`obnov` lokálně). Pozor na `config/konfigurace.lokalni.php`: přepisuje klíče celé, takže
+  kdyby na serveru definoval `rozvrh`, Euromiliony v něm chybět nesmí. Nasadit až spolu
+  s aplikací, která umí formát 2 — viz API.
 
 - **Doména backendu** (`kontrolatiketu.petrf22.cz`) je natvrdo v aplikaci (adresa API i síťový
   allowlist). Změna domény znamená novou verzi aplikace.

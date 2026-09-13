@@ -1,6 +1,6 @@
 # kontrola-tiketu
 
-Offline kontrola papírových tiketů Allwyn (Eurojackpot, Sportka) na vlastním zařízení —
+Offline kontrola papírových tiketů Allwyn (Eurojackpot, Sportka, Euromiliony) na vlastním zařízení —
 bez toho, aby se provozovatel dozvěděl, že sázíte nebo že jste vyhráli.
 
 > [!WARNING]
@@ -73,8 +73,8 @@ nastroje/    generátor verze, ikony a screenshoty pro Google Play
 - **Backend** — `backend`. PHP 8.2 bez běhových závislostí: rozvrh dotazů, archiv surových
   listin, parser, SQLite a publikace do statických souborů.
 - **Vyhodnocovací jádro** — `mobil/knihovny/jadro`. Čistá knihovna bez UI, I/O a sítě. Umí
-  Eurojackpot i Sportku včetně Šance, Extra 6 a Bonusu. Testy jedou proti reálným tahům
-  z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher.
+  Eurojackpot, Sportku i Euromiliony včetně Šance, Extra 6, Eurošance a Bonusu. Testy jedou
+  proti reálným tahům z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher.
 - **Čtení tiketu** — `mobil/knihovny/ocr`. Skládá rozpoznaný text na sloupce (páruje levou
   a pravou část řádku podle rámečků, snese nakloněný snímek) a čte sériové číslo z čárového
   kódu. Nezávisí na ML Kitu, takže jde otestovat bez zařízení.
@@ -104,6 +104,7 @@ Aby nevznikl mylný dojem, že je všechno vyzkoušené:
 - **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
   je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
   a míří na uzavřený test, ne rovnou do produkce.
+- **Tiket Euromilionů není ověřený na papíře** a Euromiliony zatím nejsou na serveru výsledků.
 - **Aplikace zatím není v Google Play** — viz [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
 - **Stahování výsledků se ještě neověřovalo na telefonu.** Backend běží na
   `kontrolatiketu.petrf22.cz` (od 13. 9. 2026), ale síťový allowlist se na zařízení nezkoušel.

@@ -13,7 +13,7 @@ import { HISTORIE, VERZE } from '../data/verze.generated.js';
     <p class="verze">Verze {{ verze }}</p>
 
     <p>
-      Kontrola papírových tiketů Eurojackpotu a Sportky na vlastním zařízení. Na síť aplikace
+      Kontrola papírových tiketů Eurojackpotu, Sportky a Euromilionů na vlastním zařízení. Na síť aplikace
       chodí jen pro veřejné výsledky losování — stáhne je celé, pro každého stejně, a tikety
       vyhodnotí až v telefonu. Nikam tedy neodesílá, které tikety držíš ani jestli jsi vyhrál.
     </p>

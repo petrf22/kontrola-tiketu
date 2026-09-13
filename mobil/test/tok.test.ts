@@ -127,7 +127,33 @@ describe('od serveru k vyhodnocení', () => {
     const sazby = zpracovano.baliky[0]!.sazbyExtra6;
     const vysledek = vyhodnotTiket(tiketEJ([47, 14, 27, 34, 1], [4, 1], null), tahy, sazby);
     expect(vysledek.celkemKc).toBe(5780);
-    expect(shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno)).toBe('Staženo: 6 nových tahů.');
+    expect(shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno)).toBe('Staženo: 10 nových tahů.');
+  });
+
+  it('stažený balík vyhodnotí i Euromiliony se sazbami Eurošance', async () => {
+    const stazeno = await stahniVysledky(sit, new Map());
+    if (stazeno.stav !== 'ok') throw new Error(stazeno.duvod);
+    const zpracovano = zpracujStazene([], stazeno.nove);
+    if (zpracovano.stav !== 'ok') throw new Error(zpracovano.duvod);
+
+    const balik = zpracovano.baliky[0]!;
+    // 12. 9. 2026: 6 17 9 34 3 12 29 | 2, Eurošance 17781. Pět čísel a druhé osudí je
+    // V. pořadí za 1 527 Kč, koncové trojčíslí 781 v Eurošanci 2 000 Kč.
+    const tiket: Tiket = {
+      id: 'em',
+      hra: 'euromiliony',
+      sloupce: [{ hra: 'euromiliony', cisla: [6, 17, 9, 34, 3, 1, 2], druheOsudi: [2] }],
+      slosovani: { prvni: '2026-09-12', pocet: 1, dny: null },
+      kodDoplnkoveHry: '00781',
+      cenaKc: null,
+      vlozeno: '2026-09-11T10:00:00Z',
+    };
+    const vysledek = vyhodnotTiket(tiket, balik.tahy, balik.sazbyExtra6, balik.sazbyEurosance);
+    expect(vysledek.slosovani[0]?.vyhry.map((v) => [v.poradi, v.castkaKc])).toEqual([
+      ['V', 1527],
+      ['trojcisli', 2000],
+    ]);
+    expect(vysledek.soucetJisty).toBe(true);
   });
 
   it('podruhé už nic nestahuje a nic nepřibude', async () => {

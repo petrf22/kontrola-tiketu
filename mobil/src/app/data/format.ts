@@ -5,6 +5,8 @@
  * Uživateli se ale nikdy nemá ukazovat — čte se špatně a v Česku se tak datum nepíše.
  */
 
+import type { Hra } from '@kontrola-tiketu/jadro';
+
 const DATUM = new Intl.DateTimeFormat('cs-CZ', {
   day: 'numeric',
   month: 'numeric',
@@ -72,6 +74,30 @@ const PORADI_DOPLNKOVE: Readonly<Record<string, string>> = {
 
 export function nazevPoradiDoplnkoveHry(klic: string): string {
   return PORADI_DOPLNKOVE[klic] ?? klic;
+}
+
+const NAZVY_HER: Readonly<Record<Hra, string>> = {
+  eurojackpot: 'Eurojackpot',
+  sportka: 'Sportka',
+  euromiliony: 'Euromiliony',
+};
+
+/** Hry v pořadí, v jakém je aplikace nabízí. */
+export const HRY: readonly Hra[] = ['eurojackpot', 'sportka', 'euromiliony'];
+
+export function nazevHry(hra: Hra): string {
+  return NAZVY_HER[hra];
+}
+
+const NAZVY_DOPLNKOVYCH_HER: Readonly<Record<Hra, string>> = {
+  eurojackpot: 'Extra 6',
+  sportka: 'Šance',
+  euromiliony: 'Eurošance',
+};
+
+/** Extra 6, Šance, nebo Eurošance. */
+export function nazevDoplnkoveHry(hra: Hra): string {
+  return NAZVY_DOPLNKOVYCH_HER[hra];
 }
 
 /** `1 sloupec`, `3 sloupce`, `5 sloupců` — čeština má tři tvary, ne dva. */

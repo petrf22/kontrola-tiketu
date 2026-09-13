@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
+import type { SazbyEurosance, SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
 import { UlozisteVPameti, type Uloziste } from '../src/app/data/uloziste.js';
 import { EJ_2026_09_01, EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
 import { SP_2026_09_02 } from '../knihovny/jadro/test/fixtures/sportka.js';
@@ -114,6 +114,21 @@ function smlouvaUloziste(jmeno: string, vyrob: () => Uloziste): void {
       const u = vyrob();
       await u.ulozSazby([sazba]);
       expect(await u.nactiSazby()).toEqual([sazba]);
+    });
+
+    it('sazby Eurošance se stejným datem platnosti nepřepíšou sazby Extra 6', async () => {
+      const eurosance: SazbyEurosance = {
+        platnostOd: sazba.platnostOd,
+        sazkaKc: 30,
+        vyhryKc: { peticisli: 500000, ctyrcisli: 20000, trojcisli: 2000, dvojcisli: 200, 'koncove-cislo': 50 },
+        zdroj: 'test',
+      };
+      const u = vyrob();
+      expect(await u.nactiSazbyEurosance()).toEqual([]);
+      await u.ulozSazby([sazba]);
+      await u.ulozSazbyEurosance([eurosance]);
+      expect(await u.nactiSazby()).toEqual([sazba]);
+      expect(await u.nactiSazbyEurosance()).toEqual([eurosance]);
     });
 
     it('čtení nevrací odkaz na vnitřní stav — změna venku nic nerozbije', async () => {

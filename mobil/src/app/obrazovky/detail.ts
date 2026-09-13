@@ -1,10 +1,12 @@
 import { Component, computed, inject, input, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import type { Sloupec, VysledekSlosovani, VysledekTiketu, Vyhra } from '@kontrola-tiketu/jadro';
+import type { Hra, Sloupec, VysledekSlosovani, VysledekTiketu, Vyhra } from '@kontrola-tiketu/jadro';
 import {
   formatujDatum,
   formatujDatumCas,
   nazevDne,
+  nazevDoplnkoveHry,
+  nazevHry,
   nazevPoradiDoplnkoveHry,
   pocetSloupcu,
   popisDnuSlosovani,
@@ -24,21 +26,26 @@ const DELKA_SHODY: Readonly<Record<string, number>> = {
 };
 
 const POPIS_VYHRADY: Readonly<Record<string, string>> = {
-  'chybi-sazby': 'chybí sazby Extra 6 — naimportuj novější soubor s výsledky',
   'delene-prvni-poradi': 'při více než dvou výhrách se první pořadí dělí, částka je horní odhad',
   'chybi-v-tabulce': 'listina tohle pořadí neuvádí',
 };
+
+/** Euročísla, nebo číslo z druhého osudí; Sportka druhé osudí nemá. */
+function druheOsudiSloupce(sloupec: Sloupec | undefined): readonly number[] {
+  if (sloupec === undefined || sloupec.hra === 'sportka') return [];
+  return sloupec.hra === 'eurojackpot' ? sloupec.eurocisla : sloupec.druheOsudi;
+}
 
 @Component({
   selector: 'app-detail',
   template: `
     @if (tiket(); as t) {
-      <h2>{{ t.hra === 'eurojackpot' ? 'Eurojackpot' : 'Sportka' }}</h2>
+      <h2>{{ nazevHry(t.hra) }}</h2>
       <p class="popis">
         {{ pocetSloupcu(t.sloupce.length) }}, {{ t.slosovani.pocet }} slosování od
         {{ formatujDatum(t.slosovani.prvni) }}{{ t.slosovani.dny ? ', ' + popisDnuSlosovani(t.slosovani.dny) : '' }}.
         @if (t.kodDoplnkoveHry) {
-          <br />{{ t.hra === 'eurojackpot' ? 'Extra 6' : 'Šance' }}: {{ t.kodDoplnkoveHry }}
+          <br />{{ nazevDoplnkoveHry(t.hra) }}: {{ t.kodDoplnkoveHry }}
         }
       </p>
 
@@ -80,9 +87,9 @@ const POPIS_VYHRADY: Readonly<Record<string, string>> = {
                       <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
                     }
                   </span>
-                  @if (radek.eurocisla.length > 0) {
+                  @if (radek.druheOsudi.length > 0) {
                     <span class="cisla euro">
-                      @for (c of radek.eurocisla; track $index) {
+                      @for (c of radek.druheOsudi; track $index) {
                         <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
                       }
                     </span>
@@ -251,6 +258,8 @@ export class Detail {
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujDatumCas = formatujDatumCas;
+  protected readonly nazevHry = nazevHry;
+  protected readonly nazevDoplnkoveHry = nazevDoplnkoveHry;
   protected readonly popisDnuSlosovani = popisDnuSlosovani;
   protected readonly pocetSloupcu = pocetSloupcu;
 
@@ -265,14 +274,13 @@ export class Detail {
     return /^\d{20}$/.test(id) ? id : null;
   });
 
-  protected readonly odkazNaVysledky = computed(() =>
-    this.tiket()?.hra === 'sportka'
-      ? 'https://www.allwyn.cz/loterie/sportka/kontrola-a-vysledky'
-      : 'https://www.allwyn.cz/loterie/eurojackpot/kontrola-a-vysledky',
+  protected readonly odkazNaVysledky = computed(
+    () => `https://www.allwyn.cz/loterie/${this.tiket()?.hra ?? 'eurojackpot'}/kontrola-a-vysledky`,
   );
 
   protected denSlosovani(slosovani: VysledekSlosovani): string {
-    const tah = this.stav.tahy().find((t) => t.datum === slosovani.datum);
+    const hra = this.tiket()?.hra;
+    const tah = this.stav.tahy().find((t) => t.datum === slosovani.datum && t.hra === hra);
     return tah === undefined ? '' : ` (${nazevDne(tah.den)})`;
   }
 
@@ -294,29 +302,28 @@ export class Detail {
     return slosovani.sloupce.map((s) => {
       const sloupec: Sloupec | undefined = tiket.sloupce[s.index];
       const trefene = new Set<number>(
-        s.hra === 'eurojackpot'
-          ? s.vysledek.shoda.hlavniCisla
-          : s.vysledky.flatMap((v) => v.shoda.cisla),
+        s.hra === 'sportka' ? s.vysledky.flatMap((v) => v.shoda.cisla) : s.vysledek.shoda.hlavniCisla,
       );
-      const trefeneEuro = new Set<number>(
-        s.hra === 'eurojackpot' ? s.vysledek.shoda.euroCisla : [],
+      const trefeneDruhe = new Set<number>(
+        s.hra === 'eurojackpot'
+          ? s.vysledek.shoda.euroCisla
+          : s.hra === 'euromiliony'
+            ? s.vysledek.shoda.druheCisla
+            : [],
       );
 
       const oznac = (cisla: readonly number[], kde: ReadonlySet<number>) =>
         cisla.map((hodnota) => ({ hodnota, shoda: kde.has(hodnota) }));
 
       const poradi =
-        s.hra === 'eurojackpot'
-          ? s.vysledek.poradi
-          : s.vysledky.map((v) => v.poradi).filter((p) => p !== null)[0] ?? null;
+        s.hra === 'sportka'
+          ? (s.vysledky.map((v) => v.poradi).filter((p) => p !== null)[0] ?? null)
+          : s.vysledek.poradi;
 
       return {
         index: s.index,
         cisla: oznac(sloupec?.cisla ?? [], trefene),
-        eurocisla: oznac(
-          sloupec !== undefined && sloupec.hra === 'eurojackpot' ? sloupec.eurocisla : [],
-          trefeneEuro,
-        ),
+        druheOsudi: oznac(druheOsudiSloupce(sloupec), trefeneDruhe),
         popis: poradi === null ? '—' : `pořadí ${poradi}`,
       };
     });
@@ -339,10 +346,16 @@ export class Detail {
 
     const tah = this.stav.tahy().find((t) => t.datum === slosovani.datum && t.hra === tiket.hra);
     const vylosovane =
-      tah === undefined ? null : tah.hra === 'eurojackpot' ? tah.extra6 : (tah.sance?.cislice ?? null);
+      tah === undefined
+        ? null
+        : tah.hra === 'eurojackpot'
+          ? tah.extra6
+          : tah.hra === 'euromiliony'
+            ? tah.eurosance
+            : (tah.sance?.cislice ?? null);
 
     return {
-      nazev: tiket.hra === 'eurojackpot' ? 'Extra 6' : 'Šance',
+      nazev: nazevDoplnkoveHry(tiket.hra),
       // Shoda se počítá od konce, proto se index porovnává s délkou.
       tvoje: [...kod].map((hodnota, i) => ({ hodnota, shoda: i >= kod.length - shodnych })),
       vylosovane,
@@ -367,6 +380,10 @@ export class Detail {
   }
 
   protected popisVyhrady(vyhrada: string): string {
+    const hra: Hra = this.tiket()?.hra ?? 'eurojackpot';
+    if (vyhrada === 'chybi-sazby') {
+      return `chybí sazby ${nazevDoplnkoveHry(hra)} — stáhni nebo naimportuj novější výsledky`;
+    }
     return POPIS_VYHRADY[vyhrada] ?? vyhrada;
   }
 

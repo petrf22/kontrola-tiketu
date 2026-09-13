@@ -37,6 +37,9 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
         <button type="button" [disabled]="pracuje()" (click)="vyfot('sportka')">
           @if (pracuje() === 'sportka') { Rozpoznávám… } @else { Vyfotit Sportku }
         </button>
+        <button type="button" [disabled]="pracuje()" (click)="vyfot('euromiliony')">
+          @if (pracuje() === 'euromiliony') { Rozpoznávám… } @else { Vyfotit Euromiliony }
+        </button>
       </div>
     }
 

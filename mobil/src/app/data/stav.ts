@@ -9,6 +9,7 @@ import { Injectable, computed, inject, signal } from '@angular/core';
 import {
   sloucTahy,
   vyhodnotTiket,
+  type SazbyEurosance,
   type SazbyExtra6,
   type Tah,
   type Tiket,
@@ -32,6 +33,7 @@ export class Stav {
   readonly tikety = signal<readonly Tiket[]>([]);
   readonly tahy = signal<readonly Tah[]>([]);
   readonly sazby = signal<readonly SazbyExtra6[]>([]);
+  readonly sazbyEurosance = signal<readonly SazbyEurosance[]>([]);
   readonly nacteno = signal(false);
 
   /** Proč se úložiště nepodařilo otevřít. `null`, když je všechno v pořádku. */
@@ -63,14 +65,16 @@ export class Stav {
       return;
     }
 
-    const [tikety, tahy, sazby] = await Promise.all([
+    const [tikety, tahy, sazby, sazbyEurosance] = await Promise.all([
       this.uloziste.nactiTikety(),
       this.uloziste.nactiTahy(),
       this.uloziste.nactiSazby(),
+      this.uloziste.nactiSazbyEurosance(),
     ]);
     this.tikety.set(tikety);
     this.tahy.set(tahy);
     this.sazby.set(sazby);
+    this.sazbyEurosance.set(sazbyEurosance);
     this.nacteno.set(true);
   }
 
@@ -97,10 +101,7 @@ export class Stav {
     await this.uloziste.ulozTahy(vysledek.tahy);
     this.tahy.set(sloucTahy(this.tahy(), vysledek.tahy));
 
-    if (vysledek.sazbyExtra6.length > 0) {
-      await this.uloziste.ulozSazby(vysledek.sazbyExtra6);
-      this.sazby.set(vysledek.sazbyExtra6);
-    }
+    await this.ulozSazby(vysledek);
 
     return { uspech: true, zprava: shrnutiImportu(vysledek) };
   }
@@ -127,10 +128,7 @@ export class Stav {
 
       for (const balik of zpracovano.baliky) {
         await this.uloziste.ulozTahy(balik.tahy);
-        if (balik.sazbyExtra6.length > 0) {
-          await this.uloziste.ulozSazby(balik.sazbyExtra6);
-          this.sazby.set(balik.sazbyExtra6);
-        }
+        await this.ulozSazby(balik);
         // Hash až po datech: kdyby aplikace mezitím spadla, balík se příště stáhne znovu.
         await this.uloziste.ulozHash(balik.soubor, balik.hash);
         this.tahy.set(sloucTahy(this.tahy(), balik.tahy));
@@ -148,12 +146,27 @@ export class Stav {
     }
   }
 
+  /** Uloží sazby doplňkových her z balíku. Balík bez sazeb dosavadní nepřepíše. */
+  private async ulozSazby(balik: {
+    readonly sazbyExtra6: readonly SazbyExtra6[];
+    readonly sazbyEurosance: readonly SazbyEurosance[];
+  }): Promise<void> {
+    if (balik.sazbyExtra6.length > 0) {
+      await this.uloziste.ulozSazby(balik.sazbyExtra6);
+      this.sazby.set(balik.sazbyExtra6);
+    }
+    if (balik.sazbyEurosance.length > 0) {
+      await this.uloziste.ulozSazbyEurosance(balik.sazbyEurosance);
+      this.sazbyEurosance.set(balik.sazbyEurosance);
+    }
+  }
+
   private zapis(zprava: Zprava): Zprava {
     this.posledniStazeni.set(zprava);
     return zprava;
   }
 
   vyhodnot(tiket: Tiket): VysledekTiketu {
-    return vyhodnotTiket(tiket, this.tahy(), this.sazby());
+    return vyhodnotTiket(tiket, this.tahy(), this.sazby(), this.sazbyEurosance());
   }
 }

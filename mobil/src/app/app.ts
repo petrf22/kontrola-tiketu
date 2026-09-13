@@ -1,6 +1,6 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
-import { formatujDatum, formatujDatumCas } from './data/format.js';
+import { formatujDatum, formatujDatumCas, nazevHry } from './data/format.js';
 import type { StavHry } from './data/stahovani.js';
 import { Stav } from './data/stav.js';
 
@@ -21,8 +21,9 @@ export class App {
     const kontrola = this.stav.kontrolaServeru();
     if (kontrola === null) return [];
     const hry: [string, StavHry | null][] = [
-      ['Eurojackpot', kontrola.eurojackpot],
-      ['Sportka', kontrola.sportka],
+      [nazevHry('eurojackpot'), kontrola.eurojackpot],
+      [nazevHry('sportka'), kontrola.sportka],
+      [nazevHry('euromiliony'), kontrola.euromiliony],
     ];
     return hry.flatMap(([nazev, hra]) =>
       hra !== null && !hra.uplny ? [`${nazev} ${formatujDatum(hra.posledniTah)}`] : [],

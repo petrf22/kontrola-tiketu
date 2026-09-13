@@ -88,6 +88,7 @@ export interface KontrolaServeru {
   readonly posledniDotaz: string | null;
   readonly eurojackpot: StavHry | null;
   readonly sportka: StavHry | null;
+  readonly euromiliony: StavHry | null;
 }
 
 export interface Manifest {
@@ -181,6 +182,7 @@ export function prectiManifest(text: string): Manifest | string {
       posledniDotaz: typeof kontrola['posledniDotaz'] === 'string' ? kontrola['posledniDotaz'] : null,
       eurojackpot: stavHry(kontrola['eurojackpot']),
       sportka: stavHry(kontrola['sportka']),
+      euromiliony: stavHry(kontrola['euromiliony']),
     },
     baliky: polozky,
   };

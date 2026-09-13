@@ -18,7 +18,7 @@ import {
   SQLiteConnection,
   type SQLiteDBConnection,
 } from '@capacitor-community/sqlite';
-import type { SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
+import type { SazbyEurosance, SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
 import type { Uloziste } from './uloziste.js';
 
 const NAZEV_DB = 'kontrola-tiketu';
@@ -39,6 +39,10 @@ CREATE TABLE IF NOT EXISTS tahy (
   data TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS sazby (
+  platnostOd TEXT PRIMARY KEY NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS sazby_eurosance (
   platnostOd TEXT PRIMARY KEY NOT NULL,
   data TEXT NOT NULL
 );
@@ -134,6 +138,20 @@ export class UlozisteSqlite implements Uloziste {
     const prikazy = sazby.map((s) => ({
       statement:
         'INSERT INTO sazby (platnostOd, data) VALUES (?, ?) ' +
+        'ON CONFLICT(platnostOd) DO UPDATE SET data = excluded.data',
+      values: [s.platnostOd, JSON.stringify(s)],
+    }));
+    if (prikazy.length > 0) await this.spojeniDb.executeSet(prikazy);
+  }
+
+  async nactiSazbyEurosance(): Promise<SazbyEurosance[]> {
+    return this.precti<SazbyEurosance>('SELECT data FROM sazby_eurosance ORDER BY platnostOd ASC');
+  }
+
+  async ulozSazbyEurosance(sazby: readonly SazbyEurosance[]): Promise<void> {
+    const prikazy = sazby.map((s) => ({
+      statement:
+        'INSERT INTO sazby_eurosance (platnostOd, data) VALUES (?, ?) ' +
         'ON CONFLICT(platnostOd) DO UPDATE SET data = excluded.data',
       values: [s.platnostOd, JSON.stringify(s)],
     }));

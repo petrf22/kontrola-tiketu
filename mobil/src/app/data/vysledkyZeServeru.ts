@@ -6,7 +6,7 @@
  * kontrolou jako soubor vybraný ručně.
  */
 
-import { type SazbyExtra6, type Tah } from '@kontrola-tiketu/jadro';
+import { type SazbyEurosance, type SazbyExtra6, type Tah } from '@kontrola-tiketu/jadro';
 import { nactiVysledky } from './import.js';
 import type { StazenyBalik } from './stahovani.js';
 
@@ -15,6 +15,7 @@ export interface PrectenyBalik {
   readonly hash: string;
   readonly tahy: readonly Tah[];
   readonly sazbyExtra6: readonly SazbyExtra6[];
+  readonly sazbyEurosance: readonly SazbyEurosance[];
 }
 
 export type VysledekZpracovani =
@@ -49,6 +50,7 @@ export function zpracujStazene(
       hash: balik.hash,
       tahy: precteno.tahy,
       sazbyExtra6: precteno.sazbyExtra6,
+      sazbyEurosance: precteno.sazbyEurosance,
     });
   }
 

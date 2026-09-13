@@ -24,6 +24,10 @@ import { Stav } from '../data/stav.js';
             <dt>Sportka</dt>
             <dd>poslední tah {{ formatujDatum(sp.posledniTah) }}{{ sp.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
           }
+          @if (k.euromiliony; as em) {
+            <dt>Euromiliony</dt>
+            <dd>poslední tah {{ formatujDatum(em.posledniTah) }}{{ em.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
+          }
           @if (k.posledniDotaz) {
             <dt>Server kontroloval</dt>
             <dd>{{ formatujDatumCas(k.posledniDotaz) }}</dd>

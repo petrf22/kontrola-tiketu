@@ -6,7 +6,13 @@
  * v Android Keystore) — viz UlozisteVPameti níž, kde je stav popsaný.
  */
 
-import { sloucTahy, type SazbyExtra6, type Tah, type Tiket } from '@kontrola-tiketu/jadro';
+import {
+  sloucTahy,
+  type SazbyEurosance,
+  type SazbyExtra6,
+  type Tah,
+  type Tiket,
+} from '@kontrola-tiketu/jadro';
 
 export interface Uloziste {
   /**
@@ -31,6 +37,10 @@ export interface Uloziste {
   nactiSazby(): Promise<SazbyExtra6[]>;
   ulozSazby(sazby: readonly SazbyExtra6[]): Promise<void>;
 
+  /** Sazby Eurošance. Vedou se zvlášť — mohou mít stejné datum platnosti jako Extra 6. */
+  nactiSazbyEurosance(): Promise<SazbyEurosance[]>;
+  ulozSazbyEurosance(sazby: readonly SazbyEurosance[]): Promise<void>;
+
   /** Hashe balíků stažených z backendu (`soubor` → `hash`) — co se znovu stahovat nemusí. */
   nactiHashe(): Promise<Map<string, string>>;
   ulozHash(soubor: string, hash: string): Promise<void>;
@@ -47,6 +57,7 @@ export class UlozisteVPameti implements Uloziste {
   private tikety = new Map<string, Tiket>();
   private tahy: Tah[] = [];
   private sazby: SazbyExtra6[] = [];
+  private sazbyEurosance: SazbyEurosance[] = [];
   private hashe = new Map<string, string>();
 
   async nactiTikety(): Promise<Tiket[]> {
@@ -76,6 +87,14 @@ export class UlozisteVPameti implements Uloziste {
 
   async ulozSazby(sazby: readonly SazbyExtra6[]): Promise<void> {
     this.sazby = [...sazby];
+  }
+
+  async nactiSazbyEurosance(): Promise<SazbyEurosance[]> {
+    return [...this.sazbyEurosance];
+  }
+
+  async ulozSazbyEurosance(sazby: readonly SazbyEurosance[]): Promise<void> {
+    this.sazbyEurosance = [...sazby];
   }
 
   async nactiHashe(): Promise<Map<string, string>> {

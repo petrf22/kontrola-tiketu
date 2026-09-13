@@ -3,6 +3,7 @@ import { VERZE_FORMATU } from '@kontrola-tiketu/jadro';
 import { nactiVysledky, shrnutiImportu, type UspesnyImport } from '../src/app/data/import.js';
 import { EJ_2026_09_01, EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
 import { SP_2026_09_02 } from '../knihovny/jadro/test/fixtures/sportka.js';
+import { EM_2026_09_08 } from '../knihovny/jadro/test/fixtures/euromiliony.js';
 
 function soubor(zmeny: Record<string, unknown> = {}): string {
   return JSON.stringify({
@@ -31,6 +32,27 @@ describe('nactiVysledky — platný soubor', () => {
     const bezSazeb = nactiVysledky(soubor({ sazbyExtra6: undefined }));
     expect(bezSazeb.stav).toBe('ok');
     if (bezSazeb.stav === 'ok') expect(bezSazeb.sazbyExtra6).toEqual([]);
+  });
+
+  it('přečte Euromiliony i sazby Eurošance', () => {
+    const sazba = { platnostOd: '2025-09-05', sazkaKc: 30, vyhryKc: {}, zdroj: 'test' };
+    const v = nactiVysledky(soubor({ tahy: [EM_2026_09_08], sazbyEurosance: [sazba] }));
+    expect(v.stav).toBe('ok');
+    if (v.stav !== 'ok') return;
+    expect(v.tahy).toEqual([EM_2026_09_08]);
+    expect(v.sazbyEurosance).toEqual([sazba]);
+  });
+
+  it('chybějící sazby Eurošance nejsou chyba', () => {
+    const v = nactiVysledky(soubor());
+    expect(v.stav === 'ok' && v.sazbyEurosance).toEqual([]);
+  });
+
+  it('tah hry, kterou aplikace nezná, přeskočí a zbytek přečte', () => {
+    // Přibude-li na serveru další hra, aplikace kvůli ní nesmí přestat stahovat.
+    const v = nactiVysledky(soubor({ tahy: [EJ_2026_09_01, { hra: 'keno', datum: '2026-09-01', cokoliv: 1 }] }));
+    expect(v.stav).toBe('ok');
+    if (v.stav === 'ok') expect(v.tahy).toEqual([EJ_2026_09_01]);
   });
 
   it('chybějící období nezabrání importu', () => {
@@ -71,8 +93,13 @@ describe('nactiVysledky — vadný soubor', () => {
     expect(duvod('[]')).toMatch(/čekal se objekt/);
   });
 
-  it('pozná tah s neznámou hrou', () => {
-    expect(duvod(soubor({ tahy: [{ hra: 'keno', datum: '2026-09-01' }] }))).toMatch(/neznámou hru/);
+  it('pozná tah bez uvedené hry', () => {
+    expect(duvod(soubor({ tahy: [{ datum: '2026-09-01' }] }))).toMatch(/nemá uvedenou hru/);
+  });
+
+  it('pozná Euromiliony bez Eurošance', () => {
+    const { eurosance, ...bezEurosance } = EM_2026_09_08;
+    expect(duvod(soubor({ tahy: [bezEurosance] }))).toMatch(/Eurošanci/);
   });
 
   it('pozná tah, kterému pole s tabulkou výher úplně chybí', () => {

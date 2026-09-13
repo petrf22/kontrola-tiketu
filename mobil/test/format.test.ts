@@ -3,6 +3,8 @@ import {
   formatujDatum,
   formatujDatumCas,
   nazevDne,
+  nazevDoplnkoveHry,
+  nazevHry,
   nazevPoradiDoplnkoveHry,
   pocetSloupcu,
   popisDnuSlosovani,
@@ -42,6 +44,16 @@ describe('nazevDne', () => {
 
   it('neznámou zkratku nechá být', () => {
     expect(nazevDne('xx')).toBe('xx');
+  });
+});
+
+describe('nazevHry a nazevDoplnkoveHry', () => {
+  it('pojmenují všechny tři hry i jejich doplňkové hry', () => {
+    expect(nazevHry('euromiliony')).toBe('Euromiliony');
+    expect(nazevHry('sportka')).toBe('Sportka');
+    expect(nazevDoplnkoveHry('eurojackpot')).toBe('Extra 6');
+    expect(nazevDoplnkoveHry('sportka')).toBe('Šance');
+    expect(nazevDoplnkoveHry('euromiliony')).toBe('Eurošance');
   });
 });
 

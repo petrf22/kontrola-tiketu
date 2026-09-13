@@ -26,12 +26,13 @@ function manifest(baliky: { soubor: string; hash: string }[], navic: Record<stri
   return `${JSON.stringify(
     {
       verzeManifestu: 1,
-      verzeFormatu: 1,
+      verzeFormatu: 2,
       vygenerovano: '2026-09-08T20:05:00.000Z',
       kontrola: {
         posledniDotaz: '2026-09-08T20:05:00.000Z',
         eurojackpot: { posledniTah: '2026-09-08', uplny: true },
         sportka: { posledniTah: '2026-09-06', uplny: false },
+        euromiliony: { posledniTah: '2026-09-12', uplny: true },
       },
       baliky: baliky.map((b) => ({ ...b, od: '2026-09-01', do: '2026-09-08', tahu: 6 })),
       ...navic,
@@ -71,6 +72,7 @@ describe('stahniVysledky', () => {
     const precteno = nactiVysledky(vysledek.nove[0]!.text);
     expect(precteno.stav).toBe('ok');
     expect(vysledek.manifest.kontrola.sportka).toEqual({ posledniTah: '2026-09-06', uplny: false });
+    expect(vysledek.manifest.kontrola.euromiliony).toEqual({ posledniTah: '2026-09-12', uplny: true });
   });
 
   it('balík se známým hashem znovu nestahuje', async () => {

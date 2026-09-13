@@ -1,6 +1,7 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
+  DELKA_KODU_DOPLNKOVE_HRY,
   DNY_LOSOVANI,
   dnyZVyberu,
   ROZSAHY,
@@ -11,13 +12,50 @@ import {
   type Tiket,
 } from '@kontrola-tiketu/jadro';
 import { prectiCisla } from '@kontrola-tiketu/ocr';
-import { nazevDne } from '../data/format.js';
+import { HRY, nazevDne, nazevDoplnkoveHry, nazevHry } from '../data/format.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { Stav } from '../data/stav.js';
 
 interface Radek {
   cisla: string;
-  eurocisla: string;
+  /** Euročísla (Eurojackpot) nebo číslo z druhého osudí (Euromiliony). */
+  druheOsudi: string;
+}
+
+/**
+ * Kolik sloupců formulář dovolí přidat. Euromiliony: jedna až devět sázek na sázence
+ * (herní plán, Euromiliony bod 2).
+ */
+const NEJVIC_SLOUPCU: Readonly<Record<Hra, number>> = {
+  eurojackpot: 6,
+  sportka: ROZSAHY.sportka.cisla.pocet + 4,
+  euromiliony: 9,
+};
+
+/** Nápověda v polích sloupce, odvozená z rozsahů jádra. */
+function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOsudiNazev: string } {
+  switch (hra) {
+    case 'eurojackpot': {
+      const { cisla, eurocisla } = ROZSAHY.eurojackpot;
+      return {
+        cisla: `${cisla.pocet} čísel z ${cisla.min}–${cisla.max}`,
+        druheOsudi: `${eurocisla.pocet} z ${eurocisla.min}–${eurocisla.max}`,
+        druheOsudiNazev: 'Euročísla',
+      };
+    }
+    case 'euromiliony': {
+      const { cisla, druheOsudi } = ROZSAHY.euromiliony;
+      return {
+        cisla: `${cisla.pocet} čísel z ${cisla.min}–${cisla.max}`,
+        druheOsudi: `${druheOsudi.pocet} z ${druheOsudi.min}–${druheOsudi.max}`,
+        druheOsudiNazev: 'Číslo z druhého osudí',
+      };
+    }
+    case 'sportka': {
+      const { cisla } = ROZSAHY.sportka;
+      return { cisla: `${cisla.pocet} čísel z ${cisla.min}–${cisla.max}`, druheOsudi: null, druheOsudiNazev: '' };
+    }
+  }
 }
 
 /**
@@ -34,10 +72,10 @@ interface Radek {
     <form (submit)="uloz($event)">
       <fieldset>
         <legend>Hra</legend>
-        <label><input type="radio" name="hra" value="eurojackpot"
-          [checked]="hra() === 'eurojackpot'" (change)="zmenHru('eurojackpot')" /> Eurojackpot</label>
-        <label><input type="radio" name="hra" value="sportka"
-          [checked]="hra() === 'sportka'" (change)="zmenHru('sportka')" /> Sportka</label>
+        @for (h of hry; track h) {
+          <label><input type="radio" name="hra" [value]="h"
+            [checked]="hra() === h" (change)="zmenHru(h)" /> {{ nazevHry(h) }}</label>
+        }
       </fieldset>
 
       <div class="dvojice">
@@ -68,8 +106,9 @@ interface Radek {
           [value]="cena()" (input)="cena.set($any($event.target).value)" />
       </label>
 
-      <label>{{ hra() === 'eurojackpot' ? 'Extra 6' : 'Šance' }} — šest číslic (nepovinné)
-        <input type="text" inputmode="numeric" maxlength="6" placeholder="např. 236412"
+      <label>{{ nazevDoplnkoveHry(hra()) }} — {{ delkaKodu() === 5 ? 'pět' : 'šest' }} číslic (nepovinné)
+        <input type="text" inputmode="numeric" [attr.maxlength]="delkaKodu()"
+          [placeholder]="delkaKodu() === 5 ? 'např. 37960' : 'např. 236412'"
           [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
       </label>
 
@@ -113,12 +152,12 @@ interface Radek {
           <span class="poradi">{{ $index + 1 }}.</span>
           <input type="text" inputmode="numeric" [value]="radek.cisla"
             [attr.aria-label]="'Čísla sloupce ' + ($index + 1)"
-            [placeholder]="hra() === 'eurojackpot' ? '5 čísel z 1–50' : '6 čísel z 1–49'"
+            [placeholder]="napoveda().cisla"
             (input)="zmenCisla($index, $any($event.target).value)" />
-          @if (hra() === 'eurojackpot') {
-            <input type="text" inputmode="numeric" class="euro" [value]="radek.eurocisla"
-              aria-label="Euročísla" placeholder="2 z 1–12"
-              (input)="zmenEuro($index, $any($event.target).value)" />
+          @if (napoveda().druheOsudi; as druhe) {
+            <input type="text" inputmode="numeric" class="euro" [value]="radek.druheOsudi"
+              [attr.aria-label]="napoveda().druheOsudiNazev" [placeholder]="druhe"
+              (input)="zmenDruheOsudi($index, $any($event.target).value)" />
           }
           @if (radky().length > 1) {
             <button type="button" class="odebrat" (click)="odeber($index)" aria-label="Odebrat sloupec">×</button>
@@ -205,6 +244,11 @@ export class NovyTiket {
   protected readonly zaskrtnuteDny = signal<readonly Den[]>(DNY_LOSOVANI[this.hra()]);
   protected readonly nabidkaDnu = computed(() => DNY_LOSOVANI[this.hra()]);
   protected readonly nazevDne = nazevDne;
+  protected readonly nazevHry = nazevHry;
+  protected readonly nazevDoplnkoveHry = nazevDoplnkoveHry;
+  protected readonly hry = HRY;
+  protected readonly napoveda = computed(() => napoveda(this.hra()));
+  protected readonly delkaKodu = computed(() => DELKA_KODU_DOPLNKOVE_HRY[this.hra()]);
   protected readonly doplnkova = signal(this.rozpoznane?.kodDoplnkoveHry ?? '');
   protected readonly cena = signal(
     this.rozpoznane?.cenaKc === null || this.rozpoznane?.cenaKc === undefined
@@ -213,10 +257,10 @@ export class NovyTiket {
   );
   protected readonly radky = signal<Radek[]>(
     this.rozpoznane === null || this.rozpoznane.sloupce.length === 0
-      ? [{ cisla: '', eurocisla: '' }]
+      ? [{ cisla: '', druheOsudi: '' }]
       : this.rozpoznane.sloupce.map((s) => ({
           cisla: s.cisla.join(' '),
-          eurocisla: s.eurocisla.join(' '),
+          druheOsudi: s.druheOsudi.join(' '),
         })),
   );
 
@@ -225,15 +269,18 @@ export class NovyTiket {
 
   protected readonly navrh = computed<Tiket>(() => {
     const hra = this.hra();
-    const sloupce: Sloupec[] = this.radky().map((radek) =>
-      hra === 'eurojackpot'
-        ? {
-            hra,
-            cisla: prectiCisla(radek.cisla).map((c) => c.hodnota),
-            eurocisla: prectiCisla(radek.eurocisla).map((c) => c.hodnota),
-          }
-        : { hra, cisla: prectiCisla(radek.cisla).map((c) => c.hodnota) },
-    );
+    const sloupce: Sloupec[] = this.radky().map((radek): Sloupec => {
+      const cisla = prectiCisla(radek.cisla).map((c) => c.hodnota);
+      const druhe = prectiCisla(radek.druheOsudi).map((c) => c.hodnota);
+      switch (hra) {
+        case 'eurojackpot':
+          return { hra, cisla, eurocisla: druhe };
+        case 'euromiliony':
+          return { hra, cisla, druheOsudi: druhe };
+        case 'sportka':
+          return { hra, cisla };
+      }
+    });
 
     return {
       // Sériové číslo z kódu je nejlepší identifikátor — díky němu druhý sken téhož tiketu
@@ -273,16 +320,15 @@ export class NovyTiket {
     this.radky.update((r) => r.map((radek, i) => (i === index ? { ...radek, cisla: hodnota } : radek)));
   }
 
-  protected zmenEuro(index: number, hodnota: string): void {
+  protected zmenDruheOsudi(index: number, hodnota: string): void {
     this.radky.update((r) =>
-      r.map((radek, i) => (i === index ? { ...radek, eurocisla: hodnota } : radek)),
+      r.map((radek, i) => (i === index ? { ...radek, druheOsudi: hodnota } : radek)),
     );
   }
 
   protected pridej(): void {
-    const nejvic = this.hra() === 'eurojackpot' ? 6 : ROZSAHY.sportka.cisla.pocet + 4;
-    if (this.radky().length >= nejvic) return;
-    this.radky.update((r) => [...r, { cisla: '', eurocisla: '' }]);
+    if (this.radky().length >= NEJVIC_SLOUPCU[this.hra()]) return;
+    this.radky.update((r) => [...r, { cisla: '', druheOsudi: '' }]);
   }
 
   protected odeber(index: number): void {

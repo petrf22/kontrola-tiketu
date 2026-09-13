@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace KontrolaTiketu\Test;
 
 use KontrolaTiketu\Konfigurace;
+use KontrolaTiketu\Model;
 use PHPUnit\Framework\TestCase;
 
 final class KonfiguraceTest extends TestCase
@@ -23,14 +24,14 @@ final class KonfiguraceTest extends TestCase
     {
         $k = Konfigurace::nacti();
         $public = realpath(Konfigurace::KOREN) . '/public';
-        foreach ([$k->archiv, $k->databaze, $k->sazby] as $cesta) {
+        foreach ([$k->archiv, $k->databaze, $k->sazby, $k->sazbyEurosance] as $cesta) {
             self::assertStringStartsNotWith($public, $cesta);
         }
         self::assertStringStartsWith(realpath(Konfigurace::KOREN) . '/public/', (string) realpath(dirname($k->verejne)) . '/');
     }
 
-    public function testRozvrhZnaObeHry(): void
+    public function testRozvrhZnaVsechnyHry(): void
     {
-        self::assertSame(['eurojackpot', 'sportka'], array_keys(Konfigurace::nacti()->rozvrh));
+        self::assertSame(Model::HRY, array_keys(Konfigurace::nacti()->rozvrh));
     }
 }

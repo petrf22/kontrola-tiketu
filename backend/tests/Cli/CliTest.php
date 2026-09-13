@@ -81,10 +81,10 @@ final class CliTest extends TestCase
 
         $obsah = Json::cti((string) file_get_contents($cil));
         self::assertIsArray($obsah);
-        self::assertSame(1, $obsah['verzeFormatu']);
+        self::assertSame(2, $obsah['verzeFormatu']);
         self::assertSame(['od' => '2026-35', 'do' => '2026-37'], $obsah['obdobi']);
         self::assertIsArray($obsah['tahy']);
-        self::assertCount(6, $obsah['tahy']);
+        self::assertCount(10, $obsah['tahy']);
     }
 
     public function testSpatnyArgumentVratiKod2SNapovedou(): void

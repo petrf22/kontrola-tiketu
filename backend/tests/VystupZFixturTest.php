@@ -40,6 +40,7 @@ final class VystupZFixturTest extends TestCase
         self::assertStejnyText($ocekavany, Json::zapis(Vystup::sestav(
             $vysledek['tahy'],
             Vystup::nactiSazby(Fixtury::KOREN . '/config/sazby-extra6.json'),
+            Vystup::nactiSazby(Fixtury::KOREN . '/config/sazby-eurosance.json'),
             ['od' => $od, 'do' => $doTydne],
             new \DateTimeImmutable($puvodni['vygenerovano']),
         )));

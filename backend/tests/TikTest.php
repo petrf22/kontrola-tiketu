@@ -8,6 +8,7 @@ use KontrolaTiketu\Archiv;
 use KontrolaTiketu\Databaze;
 use KontrolaTiketu\Json;
 use KontrolaTiketu\Konfigurace;
+use KontrolaTiketu\Model;
 use KontrolaTiketu\Publikace;
 use KontrolaTiketu\Sit\Odpoved;
 use KontrolaTiketu\Sit\ZakazanoRobots;
@@ -49,14 +50,16 @@ final class TikTest extends TestCase
         $this->archiv = new Archiv($this->konfigurace->archiv);
         $this->sit = new FalesnaSit([self::ROBOTS => new Odpoved(200, RobotsTest::ALLWYN)]);
 
-        foreach (['eurojackpot-2026-36', 'sportka-2026-36'] as $jmeno) {
+        // Euromiliony týdne 37 jsou v archivu celé předem, i s úterním tahem 8. 9. Testy tu sledují
+        // jednu hru na síti, Eurojackpot; Euromiliony tak rozvrh nechá na pokoji.
+        foreach (['eurojackpot-2026-36', 'sportka-2026-36', 'euromiliony-2026-36', 'euromiliony-2026-37'] as $jmeno) {
             [$hra, $rok, $tyden] = explode('-', $jmeno);
             $this->archiv->uloz(['hra' => $hra, 'rok' => (int) $rok, 'tyden' => (int) $tyden], Fixtury::listina($jmeno));
         }
         $this->tik()->obnov(self::cas('2026-09-08 12:00'));
         // Starší týdny uzavřené, ať se do testu nemíchá jejich uzavírání.
         foreach (range(32, 36) as $tyden) {
-            foreach (['eurojackpot', 'sportka'] as $hra) {
+            foreach (Model::HRY as $hra) {
                 $this->db->zaznamenejStazeni($hra, 2026, $tyden, self::cas('2026-09-07 11:00'));
             }
         }
@@ -237,6 +240,7 @@ final class TikTest extends TestCase
         self::assertIsArray($ukazkovy);
         self::assertSame(Json::zapis($ukazkovy['tahy']), Json::zapis($balik['tahy']));
         self::assertSame($ukazkovy['sazbyExtra6'], $balik['sazbyExtra6']);
-        self::assertSame(1, $balik['verzeFormatu']);
+        self::assertSame($ukazkovy['sazbyEurosance'], $balik['sazbyEurosance']);
+        self::assertSame(2, $balik['verzeFormatu']);
     }
 }

@@ -27,6 +27,20 @@ namespace KontrolaTiketu;
  *     poradi: list<Poradi>,
  *     jackpotKc: ?int
  * }
+ * @phpstan-type TahEuromiliony array{
+ *     hra: 'euromiliony',
+ *     datum: string,
+ *     den: string,
+ *     sazkovyTyden: SazkovyTyden,
+ *     vsazenoKc: int,
+ *     naVyhryKc: ?int,
+ *     cisla: list<int>,
+ *     druheOsudi: int,
+ *     eurosance: string,
+ *     poradi: list<Poradi>,
+ *     prevodHlavniCastKc: ?int,
+ *     jackpotKc: ?int
+ * }
  * @phpstan-type SportkaTah array{
  *     poradiTahu: int,
  *     cisla: list<int>,
@@ -50,15 +64,19 @@ namespace KontrolaTiketu;
  *     prevodBonusKc: ?int,
  *     superJackpotKc: ?int
  * }
- * @phpstan-type Tah TahEurojackpot|TahSportka
+ * @phpstan-type Tah TahEurojackpot|TahSportka|TahEuromiliony
  */
 final class Model
 {
-    /** Verze formátu JSON. Aplikace balík s jinou verzí odmítne. */
-    public const VERZE_FORMATU = 1;
+    /**
+     * Verze formátu JSON. Aplikace balík s jinou verzí odmítne.
+     *
+     * 2 (13. 9. 2026): Euromiliony a `sazbyEurosance`.
+     */
+    public const VERZE_FORMATU = 2;
 
     /** @var list<string> */
-    public const HRY = ['eurojackpot', 'sportka'];
+    public const HRY = ['eurojackpot', 'sportka', 'euromiliony'];
 
     private function __construct()
     {

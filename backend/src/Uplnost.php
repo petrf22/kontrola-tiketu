@@ -22,7 +22,7 @@ final class Uplnost
     /** @param Tah $tah */
     public static function jeUplny(array $tah): bool
     {
-        if ($tah['hra'] === 'eurojackpot') {
+        if ($tah['hra'] === 'eurojackpot' || $tah['hra'] === 'euromiliony') {
             return $tah['poradi'] !== [];
         }
         return $tah['tahy'][0]['poradi'] !== []

@@ -17,6 +17,7 @@ use KontrolaTiketu\Model;
  * @phpstan-import-type Tah from Model
  * @phpstan-import-type TahEurojackpot from Model
  * @phpstan-import-type TahSportka from Model
+ * @phpstan-import-type TahEuromiliony from Model
  * @phpstan-import-type SportkaTah from Model
  * @phpstan-import-type LosovaniSance from Model
  * @phpstan-import-type Poradi from Model
@@ -48,7 +49,7 @@ final class AllwynVyherka
     ];
 
     private const NADPIS_SEKCE =
-        '/(SPORTKA|ŠANCE|EUROJACKPOT)[\s\x{00a0}]+(NEDĚLE|PONDĚLÍ|ÚTERÝ|STŘEDA|ČTVRTEK|PÁTEK|SOBOTA)/u';
+        '/(SPORTKA|ŠANCE|EUROJACKPOT|EUROMILIONY)[\s\x{00a0}]+(NEDĚLE|PONDĚLÍ|ÚTERÝ|STŘEDA|ČTVRTEK|PÁTEK|SOBOTA)/u';
 
     /**
      * Listina, u které Allwyn tabulku výher nezveřejnil.
@@ -63,6 +64,7 @@ final class AllwynVyherka
 
     private const PORADI_EJ = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
     private const PORADI_SPORTKA = ['bonus', 'I', 'II', 'III', 'IV', 'V'];
+    private const PORADI_EM = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
     private const KOTVA_2_TAHU = '<!-- vyhry 2 tah. -->';
 
@@ -103,6 +105,8 @@ final class AllwynVyherka
         foreach ($sekce as $s) {
             if ($s['typ'] === 'EUROJACKPOT') {
                 $tahy[] = self::parsujEurojackpot($s);
+            } elseif ($s['typ'] === 'EUROMILIONY') {
+                $tahy[] = self::parsujEuromiliony($s);
             } elseif ($s['typ'] === 'SPORTKA') {
                 $tah = self::parsujSportku($s);
                 $sportky[$tah['datum']] = $tah;
@@ -249,6 +253,60 @@ final class AllwynVyherka
             'eurocisla' => array_map('intval', array_slice($hlavni, 5)),
             'extra6' => implode('', $extra),
             'poradi' => $poradi,
+            'jackpotKc' => Html::castkaZa($sekce['obsah'], 'JACKPOT:'),
+        ];
+    }
+
+    /**
+     * Euromiliony: 7 čísel z 1–35 a jedno z 1–5, doplňková hra Eurošance (pět číslic).
+     *
+     * Druhý řádek losovaných čísel nese vedle Eurošance i buňku Druhé šance. Ta má jinou třídu
+     * (`b2 s18`), takže ji `vylosovanaCisla` nesebere — a aplikace Druhou šanci nevyhodnocuje.
+     * Eurošance má pevné výhry, tabulku pro ni listina nepublikuje (viz config/sazby-eurosance.json).
+     *
+     * @param Sekce $sekce
+     * @return TahEuromiliony
+     */
+    private static function parsujEuromiliony(array $sekce): array
+    {
+        $datum = Html::datumLosovani($sekce['obsah']);
+        if ($datum === null) {
+            throw new ChybaParsovani('Sekce Euromilionů nemá datum losování.');
+        }
+
+        $losy = Html::vylosovanaCisla($sekce['obsah']);
+        $hlavni = $losy[0] ?? null;
+        $eurosance = $losy[1] ?? null;
+        if ($hlavni === null || count($hlavni) !== 8) {
+            $nalezeno = $hlavni === null ? 'undefined' : count($hlavni);
+            throw new ChybaParsovani("{$datum}: čekáno 7 čísel a 1 z druhého osudí, nalezeno {$nalezeno}.");
+        }
+        if ($eurosance === null || count($eurosance) !== 5) {
+            $nalezeno = $eurosance === null ? 'undefined' : count($eurosance);
+            throw new ChybaParsovani("{$datum}: Eurošance nemá pět číslic ({$nalezeno}).");
+        }
+
+        $poradi = self::radkyTabulky($sekce['obsah'], '<!-- vyhry -->', $datum);
+        $klice = array_column($poradi, 'klic');
+        $bezTabulky = $poradi === [] && str_contains($sekce['obsah'], self::BEZ_TABULKY);
+
+        if (!$bezTabulky && $klice !== self::PORADI_EM) {
+            $nalezeno = implode(',', $klice);
+            throw new ChybaParsovani("{$datum}: čekáno 10 pořadí I–X, nalezeno {$nalezeno}.");
+        }
+
+        return [
+            'hra' => 'euromiliony',
+            'datum' => $datum,
+            'den' => $sekce['den'],
+            'sazkovyTyden' => ['rok' => $sekce['rok'], 'tyden' => $sekce['tyden']],
+            'vsazenoKc' => Html::castkaZa($sekce['obsah'], 'Vsazeno:') ?? 0,
+            'naVyhryKc' => Html::castkaZa($sekce['obsah'], 'Na výhry:'),
+            'cisla' => array_map('intval', array_slice($hlavni, 0, 7)),
+            'druheOsudi' => (int) $hlavni[7],
+            'eurosance' => implode('', $eurosance),
+            'poradi' => $poradi,
+            'prevodHlavniCastKc' => Html::castkaZa($sekce['obsah'], 'Převod hlavní část:'),
             'jackpotKc' => Html::castkaZa($sekce['obsah'], 'JACKPOT:'),
         ];
     }

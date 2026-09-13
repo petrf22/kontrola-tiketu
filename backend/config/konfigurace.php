@@ -21,6 +21,8 @@ return (static function (): array {
         'verejne' => "{$koren}/public/v1",
         // Pevné částky Extra 6 z herního plánu — jediný zdroj pravdy o sazbách.
         'sazby' => "{$koren}/config/sazby-extra6.json",
+        // Pevné částky Eurošance (Euromiliony) z herního plánu — listina je taky nepublikuje.
+        'sazbyEurosance' => "{$koren}/config/sazby-eurosance.json",
         // Aplikace dostává výsledky od roku 2021; starší tahy zůstávají jen v databázi a archivu.
         'odRoku' => 2021,
 
@@ -39,6 +41,8 @@ return (static function (): array {
         'rozvrh' => [
             'eurojackpot' => ['dny' => ['ut', 'pa'], 'prvniDotaz' => '22:00', 'oknoHodin' => 4],
             'sportka' => ['dny' => ['st', 'pa', 'ne'], 'prvniDotaz' => '21:00', 'oknoHodin' => 4],
+            // Losuje se od 19 do 23 hodin (herní plán, Euromiliony bod 7); čas je zatím odhad.
+            'euromiliony' => ['dny' => ['ut', 'so'], 'prvniDotaz' => '21:00', 'oknoHodin' => 4],
         ],
         // Jednou denně se zkusí, co okno nestihlo, a v pondělí se uzavře minulý týden.
         'denniDohaneni' => '10:00',

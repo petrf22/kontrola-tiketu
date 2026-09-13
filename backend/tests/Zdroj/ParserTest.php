@@ -222,6 +222,81 @@ final class ParserTest extends TestCase
         }
     }
 
+    public function testEuromilionyZJednohoDotazuPrectouUteriISobotu(): void
+    {
+        $tahy = AllwynVyherka::parsujListinu(Fixtury::listina('euromiliony-2026-37'));
+        self::assertSame(['2026-09-08', '2026-09-12'], array_column($tahy, 'datum'));
+        self::assertSame(['ut', 'so'], array_column($tahy, 'den'));
+    }
+
+    public function testEuromilionyZ8Zari2026SediNaListinuDoPoslednihoRadku(): void
+    {
+        [$tah] = AllwynVyherka::parsujListinu(Fixtury::listina('euromiliony-2026-37'));
+        self::assertSame([
+            'hra' => 'euromiliony',
+            'datum' => '2026-09-08',
+            'den' => 'ut',
+            'sazkovyTyden' => ['rok' => 2026, 'tyden' => 37],
+            'vsazenoKc' => 1102380,
+            'naVyhryKc' => 93682682,
+            'cisla' => [18, 17, 28, 3, 2, 12, 22],
+            'druheOsudi' => 5,
+            'eurosance' => '37960',
+            'poradi' => [
+                ['klic' => 'I', 'popis' => '7+1', 'pocetVyher' => 0, 'vyseVyhryKc' => 0],
+                ['klic' => 'II', 'popis' => '7', 'pocetVyher' => 0, 'vyseVyhryKc' => 0],
+                ['klic' => 'III', 'popis' => '6+1', 'pocetVyher' => 1, 'vyseVyhryKc' => 22047],
+                ['klic' => 'IV', 'popis' => '6', 'pocetVyher' => 2, 'vyseVyhryKc' => 12401],
+                ['klic' => 'V', 'popis' => '5+1', 'pocetVyher' => 8, 'vyseVyhryKc' => 3100],
+                ['klic' => 'VI', 'popis' => '5', 'pocetVyher' => 39, 'vyseVyhryKc' => 777],
+                ['klic' => 'VII', 'popis' => '4+1', 'pocetVyher' => 120, 'vyseVyhryKc' => 321],
+                ['klic' => 'VIII', 'popis' => '4', 'pocetVyher' => 528, 'vyseVyhryKc' => 140],
+                ['klic' => 'IX', 'popis' => '3+1', 'pocetVyher' => 736, 'vyseVyhryKc' => 108],
+                ['klic' => 'X', 'popis' => '2+1', 'pocetVyher' => 2074, 'vyseVyhryKc' => 65],
+            ],
+            'prevodHlavniCastKc' => 89192413,
+            'jackpotKc' => 89400000,
+        ], $tah);
+    }
+
+    public function testDruhaSanceSeNesmichaSEurosanci(): void
+    {
+        // V druhém řádku losovaných čísel stojí vedle Eurošance i (prázdná) buňka Druhé šance.
+        $html = Fixtury::listina('euromiliony-2026-36');
+        $vyplnena = str_replace('<td colspan="5" class="b2 s18"></td>', '<td colspan="5" class="b2 s18">12345</td>', $html);
+        self::assertNotSame($html, $vyplnena, 'Fixtura má mít buňku Druhé šance.');
+
+        $tahy = AllwynVyherka::parsujListinu($vyplnena);
+        self::assertSame(['47489', '33055'], array_column($tahy, 'eurosance'));
+    }
+
+    public function testUseknutaTabulkaEuromilionuSePoznaPodlePoctuPoradi(): void
+    {
+        $poskozena = (string) preg_replace(
+            '/<td class="ac b2">\s*X\s*<\/td>/',
+            '<td class="ac b2">XI</td>',
+            Fixtury::listina('euromiliony-2026-37'),
+            1,
+        );
+        $this->expectException(ChybaParsovani::class);
+        $this->expectExceptionMessageMatches('/10 pořadí/');
+        AllwynVyherka::parsujListinu($poskozena);
+    }
+
+    public function testEuromilionySePrectouIBezTabulky(): void
+    {
+        $bezTabulky = (string) preg_replace(
+            '/<!-- vyhry -->[\s\S]*?<\/table>/',
+            '<!-- vyhry --> Probíhá zpracování výsledků. </table>',
+            Fixtury::listina('euromiliony-2026-37'),
+            1,
+        );
+        $tahy = AllwynVyherka::parsujListinu($bezTabulky);
+        self::assertSame([18, 17, 28, 3, 2, 12, 22], $tahy[0]['cisla'] ?? null);
+        self::assertSame([], $tahy[0]['poradi']);
+        self::assertCount(10, $tahy[1]['poradi'] ?? [], 'Nahrazena je jen první tabulka.');
+    }
+
     public function testChybejiciTabulkaDruhehoTahuShodiParser(): void
     {
         $poskozena = str_replace('<!-- vyhry 2 tah. -->', '', Fixtury::listina('sportka-2026-36'));

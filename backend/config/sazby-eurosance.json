@@ -1,0 +1,17 @@
+{
+  "poznamka": "Výhry v Eurošanci jsou stanovené násobkem sázky, ne totalizátorem, a výherní listina je nepublikuje. Proto se vedou tady jako data s obdobím platnosti a v kódu nejsou. Částky jsou opsané ze závorek v herním plánu — násobky v plánu (např. 1,66667) jsou zaokrouhlené a vedly by na necelé koruny. Sousední číslo Eurošance nezná.",
+  "sazby": [
+    {
+      "platnostOd": "2025-09-05",
+      "sazkaKc": 30,
+      "vyhryKc": {
+        "peticisli": 500000,
+        "ctyrcisli": 20000,
+        "trojcisli": 2000,
+        "dvojcisli": 200,
+        "koncove-cislo": 50
+      },
+      "zdroj": "https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf (oddíl Euromiliony, body 10, 11 a 16; datum platnosti odvozeno z názvu souboru, v textu plánu uvedeno není)"
+    }
+  ]
+}

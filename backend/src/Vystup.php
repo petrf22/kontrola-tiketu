@@ -12,12 +12,14 @@ use KontrolaTiketu\Zdroj\AllwynVyherka;
  * @phpstan-import-type Tah from Model
  * @phpstan-import-type Tyden from Obdobi
  * @phpstan-type SazbyExtra6 array<string, mixed>
+ * @phpstan-type SazbyEurosance array<string, mixed>
  * @phpstan-type VystupniSoubor array{
  *     verzeFormatu: int,
  *     vygenerovano: string,
  *     zdroj: string,
  *     obdobi: array{od: string, do: string}|null,
  *     sazbyExtra6: list<SazbyExtra6>,
+ *     sazbyEurosance: list<SazbyEurosance>,
  *     tahy: list<Tah>
  * }
  */
@@ -30,12 +32,14 @@ final class Vystup
     /**
      * @param list<Tah> $tahy
      * @param list<SazbyExtra6> $sazbyExtra6
+     * @param list<SazbyEurosance> $sazbyEurosance
      * @param array{od: Tyden, do: Tyden}|null $obdobi
      * @return VystupniSoubor
      */
     public static function sestav(
         array $tahy,
         array $sazbyExtra6,
+        array $sazbyEurosance,
         ?array $obdobi,
         \DateTimeImmutable $vygenerovano,
     ): array {
@@ -47,6 +51,7 @@ final class Vystup
                 ? null
                 : ['od' => Obdobi::formatujTyden($obdobi['od']), 'do' => Obdobi::formatujTyden($obdobi['do'])],
             'sazbyExtra6' => $sazbyExtra6,
+            'sazbyEurosance' => $sazbyEurosance,
             'tahy' => self::serad($tahy),
         ];
     }
@@ -81,15 +86,16 @@ final class Vystup
     }
 
     /**
-     * Načte sazby Extra 6 ze souboru ve tvaru `config/sazby-extra6.json`.
+     * Načte sazby doplňkové hry ze souboru ve tvaru `config/sazby-extra6.json`
+     * nebo `config/sazby-eurosance.json`. Obsah sazeb backend nevykládá, jen je předá aplikaci.
      *
-     * @return list<SazbyExtra6>
+     * @return list<array<string, mixed>>
      */
     public static function nactiSazby(string $cesta): array
     {
         $text = file_get_contents($cesta);
         if ($text === false) {
-            throw new \RuntimeException("Sazby Extra 6 v {$cesta} nejdou přečíst.");
+            throw new \RuntimeException("Sazby v {$cesta} nejdou přečíst.");
         }
         $obsah = Json::cti($text);
         if (!is_array($obsah) || !isset($obsah['sazby']) || !is_array($obsah['sazby']) || !array_is_list($obsah['sazby'])) {
@@ -100,7 +106,7 @@ final class Vystup
             if (!is_array($sazba)) {
                 throw new \RuntimeException("Soubor {$cesta} obsahuje sazbu, která není objekt.");
             }
-            /** @var SazbyExtra6 $sazba */
+            /** @var array<string, mixed> $sazba */
             $sazby[] = $sazba;
         }
         return $sazby;

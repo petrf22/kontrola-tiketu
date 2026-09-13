@@ -39,6 +39,7 @@ final class Publikace
     public static function publikuj(Databaze $db, Konfigurace $k, \DateTimeImmutable $ted): array
     {
         $sazby = Vystup::nactiSazby($k->sazby);
+        $sazbyEurosance = Vystup::nactiSazby($k->sazbyEurosance);
 
         /** @var array<string, array{tahy: list<Tah>, zmeneno: string}> $roky */
         $roky = [];
@@ -55,6 +56,7 @@ final class Publikace
             $text = Json::zapis(Vystup::sestav(
                 $tahy,
                 $sazby,
+                $sazbyEurosance,
                 ['od' => $prvni['sazkovyTyden'], 'do' => $posledni['sazkovyTyden']],
                 new \DateTimeImmutable($zmeneno),
             ));

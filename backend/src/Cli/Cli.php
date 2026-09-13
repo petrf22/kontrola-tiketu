@@ -43,9 +43,11 @@ final class Cli
           vyherka stahni --od 2026-01 --do 2026-37 [--hra sportka] [--archiv CESTA]
           vyherka preparsuj --out vysledky.json [--od RRRR-TT] [--do RRRR-TT]
                             [--hra sportka] [--archiv CESTA] [--sazby CESTA]
+                            [--sazby-eurosance CESTA]
           vyherka stav [--archiv CESTA]
 
-        Týden se zadává jako RRRR-TT. Bez --hra se pracuje s oběma hrami.
+        Týden se zadává jako RRRR-TT. Bez --hra se pracuje se všemi hrami
+        (eurojackpot, sportka, euromiliony).
         Týden, který už v archivu je, stahni znovu nestahuje.
         Výchozí cesty jsou v config/konfigurace.php.
         TXT;
@@ -79,7 +81,7 @@ final class Cli
     public function hlavni(array $argv): int
     {
         try {
-            $a = Argumenty::rozeber($argv, ['od', 'do', 'hra', 'archiv', 'out', 'sazby', 'ted']);
+            $a = Argumenty::rozeber($argv, ['od', 'do', 'hra', 'archiv', 'out', 'sazby', 'sazby-eurosance', 'ted']);
             return match ($a->prikaz) {
                 'tik' => $this->tik(),
                 'plan' => $this->plan($a),
@@ -278,6 +280,7 @@ final class Cli
         $sestaveny = Vystup::sestav(
             $vysledek['tahy'],
             Vystup::nactiSazby($a->volba('sazby') ?? $this->konfigurace->sazby),
+            Vystup::nactiSazby($a->volba('sazby-eurosance') ?? $this->konfigurace->sazbyEurosance),
             $obdobi,
             new \DateTimeImmutable(),
         );

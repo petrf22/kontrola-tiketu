@@ -17,7 +17,7 @@ namespace KontrolaTiketu;
  */
 final class Archiv
 {
-    private const NAZEV = '/^(eurojackpot|sportka)-(\d{4})-(\d{2})\.html\.gz$/';
+    private const NAZEV = '/^(eurojackpot|sportka|euromiliony)-(\d{4})-(\d{2})\.html\.gz$/';
 
     public function __construct(private readonly string $koren)
     {

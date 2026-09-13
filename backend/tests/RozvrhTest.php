@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace KontrolaTiketu\Test;
 
 use KontrolaTiketu\Konfigurace;
+use KontrolaTiketu\Model;
 use KontrolaTiketu\Rozvrh;
 use PHPUnit\Framework\TestCase;
 
 /**
  * Rozvrh na skutečném kalendáři září 2026: týden 37 je 7.–13. 9., Eurojackpot se losuje
- * v úterý 8. a v pátek 11., Sportka ve středu 9., v pátek 11. a v neděli 13.
+ * v úterý 8. a v pátek 11., Sportka ve středu 9., v pátek 11. a v neděli 13., Euromiliony
+ * v úterý 8. a v sobotu 12.
  *
  * Výchozí stav každého testu je „všechno hotové“: tahy z posledních dní jsou úplné a minulé
  * týdny uzavřené. Každý test pak rozbije jen to, co zkoumá — jinak by se mezi úkoly míchalo
@@ -45,6 +47,9 @@ final class RozvrhTest extends TestCase
             if ($dvt === 3 || $dvt === 5 || $dvt === 7) {
                 $tahy['sportka|' . $den->format('Y-m-d')] = true;
             }
+            if ($dvt === 2 || $dvt === 6) {
+                $tahy['euromiliony|' . $den->format('Y-m-d')] = true;
+            }
             $den = $den->modify('+1 day');
         }
         return $tahy;
@@ -61,7 +66,7 @@ final class RozvrhTest extends TestCase
         foreach (range(30, 36) as $tyden) {
             $pondeli = (new \DateTimeImmutable('now', new \DateTimeZone('Europe/Prague')))
                 ->setISODate(2026, $tyden + 1)->setTime(11, 0);
-            foreach (['eurojackpot', 'sportka'] as $hra) {
+            foreach (Model::HRY as $hra) {
                 $stazeno["{$hra}|2026|{$tyden}"] = $pondeli;
             }
         }
@@ -145,11 +150,19 @@ final class RozvrhTest extends TestCase
     public function testVPondeliSeJednouUzavreMinulyTyden(): void
     {
         // Tak se chytí losování mimo rozvrh — v archivu je Sportka v úterý — i opravené listiny.
-        $stazeno = ['eurojackpot|2026|37' => self::cas('2026-09-11 23:05'), 'sportka|2026|37' => self::cas('2026-09-13 22:05')];
+        $stazeno = [
+            'eurojackpot|2026|37' => self::cas('2026-09-11 23:05'),
+            'sportka|2026|37' => self::cas('2026-09-13 22:05'),
+            'euromiliony|2026|37' => self::cas('2026-09-12 23:05'),
+        ];
 
         self::assertSame([], self::ukoly('2026-09-14 09:05', self::hotoveTahy(), $stazeno));
         self::assertSame(
-            ['eurojackpot 2026-37: uzavření týdne 2026-37', 'sportka 2026-37: uzavření týdne 2026-37'],
+            [
+                'eurojackpot 2026-37: uzavření týdne 2026-37',
+                'sportka 2026-37: uzavření týdne 2026-37',
+                'euromiliony 2026-37: uzavření týdne 2026-37',
+            ],
             self::ukoly('2026-09-14 10:05', self::hotoveTahy(), $stazeno),
         );
         self::assertSame([], self::ukoly('2026-09-14 11:05', self::hotoveTahy(), self::uzavreno37()));
@@ -195,10 +208,11 @@ final class RozvrhTest extends TestCase
         $tahy = [
             'sportka|2026-10-18' => true, 'sportka|2026-10-21' => true, 'sportka|2026-10-23' => true, 'sportka|2026-10-25' => false,
             'eurojackpot|2026-10-20' => true, 'eurojackpot|2026-10-23' => true,
+            'euromiliony|2026-10-20' => true, 'euromiliony|2026-10-24' => true,
         ];
         $stazeno = [];
         foreach (range(39, 42) as $t) {
-            foreach (['eurojackpot', 'sportka'] as $hra) {
+            foreach (Model::HRY as $hra) {
                 $stazeno["{$hra}|2026|{$t}"] = new \DateTimeImmutable('2026-10-19 12:00', $utc);
             }
         }
@@ -217,6 +231,7 @@ final class RozvrhTest extends TestCase
         return [
             'eurojackpot|2026|37' => self::cas('2026-09-14 10:05'),
             'sportka|2026|37' => self::cas('2026-09-14 10:05'),
+            'euromiliony|2026|37' => self::cas('2026-09-14 10:05'),
         ];
     }
 }

@@ -13,3 +13,16 @@ dotazu na síť.
 | `prazdna.html.gz` | neplatná hra | prázdná listina, kterou Allwyn vrací s HTTP 200 |
 
 Staženo 9. 9. 2026. Adresu a strukturu popisuje `docs/data-source.md`.
+
+## Ukázkový balík
+
+`vysledky-2026-35-az-37.json` je skutečný výstup z těchto listin, ne ručně psaný soubor:
+
+```bash
+php bin/vyherka preparsuj --archiv tests/fixtures --od 2026-35 --do 2026-37 \
+  --out tests/fixtures/vysledky-2026-35-az-37.json
+```
+
+Vznikl ještě desktopovým fetcherem v TypeScriptu (9. 9. 2026). Že ho backend vyrobí bajtově
+stejně, hlídá `VystupZFixturTest`. Tentýž soubor má mobilní aplikace jako ukázku balíku
+v `mobil/test/fixtures/` — je to smlouva o formátu mezi oběma stranami.

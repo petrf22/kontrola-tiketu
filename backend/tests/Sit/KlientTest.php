@@ -10,7 +10,6 @@ use KontrolaTiketu\Sit\Odpoved;
 use KontrolaTiketu\Sit\ZakazanoRobots;
 use PHPUnit\Framework\TestCase;
 
-/** Kopíruje `fetcher/test/stahovani.test.ts`. */
 final class KlientTest extends TestCase
 {
     private const ROBOTS = "User-agent: *\nDisallow: /api/";

@@ -7,7 +7,6 @@ namespace KontrolaTiketu\Test\Sit;
 use KontrolaTiketu\Sit\Robots;
 use PHPUnit\Framework\TestCase;
 
-/** Kopíruje `fetcher/test/robots.test.ts`. */
 final class RobotsTest extends TestCase
 {
     /** Doslovný obsah https://www.allwyn.cz/robots.txt k 9. 9. 2026. */

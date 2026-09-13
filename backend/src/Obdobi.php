@@ -7,7 +7,7 @@ namespace KontrolaTiketu;
 /**
  * Práce se sázkovými týdny. Číslo týdne odpovídá ISO týdnu (viz docs/data-source.md).
  *
- * Port `fetcher/src/obdobi.ts`, navíc s převodem data na sázkový týden, který potřebuje rozvrh.
+ * Včetně převodu data na sázkový týden, který potřebuje rozvrh.
  *
  * @phpstan-type Tyden array{rok: int, tyden: int}
  */

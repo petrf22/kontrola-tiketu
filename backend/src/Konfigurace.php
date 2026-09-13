@@ -16,7 +16,7 @@ final class Konfigurace
     public const KOREN = __DIR__ . '/..';
 
     /**
-     * @param string $archiv Adresář s listinami ve formátu fetcher/.cache.
+     * @param string $archiv Adresář s listinami `<hra>-<rok>-<TT>.html.gz`.
      * @param string $databaze Soubor SQLite se stavem.
      * @param string $verejne Adresář, ze kterého web servíruje `/v1/`.
      * @param string $sazby Soubor se sazbami Extra 6.

@@ -18,13 +18,12 @@ const cti = (relativni: string) => readFileSync(join(KOREN, relativni), 'utf8');
 const GENEROVANE: Map<string, string> = generuj();
 
 describe('generované soubory sedí se zdrojem', () => {
-  it('generuje se právě osm souborů', () => {
+  it('generuje se právě sedm souborů', () => {
     expect([...GENEROVANE.keys()].sort()).toEqual([
       'app/android/app/build.gradle',
       'app/package.json',
       'app/src/app/data/verze.generated.ts',
       'backend/src/Verze.php',
-      'fetcher/package.json',
       'package.json',
       'packages/jadro/package.json',
       'packages/ocr/package.json',

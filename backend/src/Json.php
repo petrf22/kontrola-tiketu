@@ -5,10 +5,11 @@ declare(strict_types=1);
 namespace KontrolaTiketu;
 
 /**
- * Zápis JSON bajt po bajtu shodný s `JSON.stringify(data, null, 2) + '\n'` fetcheru.
+ * Zápis JSON bajt po bajtu ve tvaru `JSON.stringify(data, null, 2) + '\n'`.
  *
- * Shoda není kosmetika: díky ní se dá výstup backendu přímo porovnat s výstupem fetcheru
- * a každé rozejití parserů je vidět jako rozdíl v souboru, ne až jako špatně vyhodnocený tiket.
+ * Tvar není kosmetika: v něm vznikl ukázkový balík v `tests/fixtures/`, se kterým se výstup
+ * porovnává bajt po bajtu, a na bajtech stojí hash, podle kterého aplikace pozná změnu. Každá
+ * nechtěná změna parseru je tak vidět jako rozdíl v souboru, ne až jako špatně vyhodnocený tiket.
  *
  * Rozdíly mezi PHP a JavaScriptem, které tu jsou ošetřené:
  * - PHP odsazuje čtyřmi mezerami, JS dvěma — odsazení se půlí. Řetězce nikdy neobsahují

@@ -11,8 +11,8 @@ use KontrolaTiketu\Zdroj\Html;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Případ po případu kopíruje `fetcher/test/parser.test.ts`. Když tam přibude test, patří
- * i sem — port parseru má smysl jen tehdy, když se chová stejně.
+ * Parser nad skutečnými listinami z `tests/fixtures/`. Částky se opisují z listiny, nikdy
+ * se nevymýšlejí.
  */
 final class ParserTest extends TestCase
 {
@@ -98,7 +98,7 @@ final class ParserTest extends TestCase
     public function testTahZ8Zari2026SediNaListinuDoPoslednihoRadku(): void
     {
         [$tah] = AllwynVyherka::parsujListinu(Fixtury::listina('eurojackpot-2026-37'));
-        // assertSame hlídá i pořadí klíčů, na kterém stojí bajtová shoda s fetcherem.
+        // assertSame hlídá i pořadí klíčů, na kterém stojí bajtová shoda s ukázkovým balíkem.
         self::assertSame([
             'hra' => 'eurojackpot',
             'datum' => '2026-09-08',

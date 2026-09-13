@@ -14,7 +14,7 @@ return (static function (): array {
     $koren = dirname(__DIR__);
 
     return [
-        // Archiv listin ve formátu fetcher/.cache — naplní se nahráním archivu z desktopu.
+        // Archiv listin <hra>-<rok>-<TT>.html.gz — naplní se nahráním archivu z desktopu.
         'archiv' => "{$koren}/var/archiv",
         'databaze' => "{$koren}/var/stav.sqlite",
         // Web servíruje tenhle adresář jako /v1/. Musí ležet v document rootu, var/ naopak mimo něj.

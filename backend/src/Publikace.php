@@ -8,7 +8,7 @@ namespace KontrolaTiketu;
  * Výroba souborů, které servíruje web jako `/v1/` — tohle je celé REST API.
  *
  * - `manifest.json`: seznam balíků s hashi a stav poslední kontroly.
- * - `RRRR.json`: tahy jednoho kalendářního roku, přesně ve formátu souboru od fetcheru.
+ * - `RRRR.json`: tahy jednoho kalendářního roku, ve stejném formátu jako soubor pro ruční import.
  *
  * Klient stahuje vždy **všechny** balíky z manifestu, jen ty nezměněné přeskočí podle hashe.
  * Dotaz je tak pro všechny uživatele stejný a nenese žádnou informaci o tom, jaké kdo drží

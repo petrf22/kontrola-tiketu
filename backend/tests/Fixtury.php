@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace KontrolaTiketu\Test;
 
 /**
- * Cesty ke sdíleným testovacím datům.
+ * Cesty k testovacím datům. Backend je soběstačný — nečte nic mimo vlastní adresář.
  *
- * Backend nemá vlastní kopii fixtur — čte tytéž skutečné listiny jako fetcher. Jeden korpus
- * pro oba parsery znamená, že se nemůžou potichu rozejít v tom, na čem se testují.
+ * `tests/fixtures/` drží skutečné listiny Allwyn (viz PUVOD.md) a z nich vyrobený balík
+ * výsledků, proti kterému se hlídá bajtová stabilita výstupu.
  */
 final class Fixtury
 {
-    public const KOREN_REPA = __DIR__ . '/../..';
-    public const LISTINY = self::KOREN_REPA . '/fetcher/test/fixtures';
+    public const KOREN = __DIR__ . '/..';
+    public const LISTINY = __DIR__ . '/fixtures';
 
     public static function listina(string $jmeno): string
     {
@@ -30,7 +30,7 @@ final class Fixtury
 
     public static function soubor(string $relativne): string
     {
-        $obsah = file_get_contents(self::KOREN_REPA . '/' . $relativne);
+        $obsah = file_get_contents(self::KOREN . '/' . $relativne);
         if ($obsah === false) {
             throw new \RuntimeException("Soubor {$relativne} chybí.");
         }

@@ -7,10 +7,9 @@ namespace KontrolaTiketu;
 /**
  * Tvar dat, která backend čte z listiny a publikuje aplikaci.
  *
- * Předlohou je `packages/jadro/src/model.ts` a tvar musí sedět do posledního klíče — aplikace
- * výstup backendu čte stejným kódem jako soubor od fetcheru. Tahy jsou proto obyčejná
- * asociativní pole, ne objekty: na **pořadí klíčů** stojí bajtová shoda s výstupem fetcheru,
- * kterou hlídá `tests/ShodaSFetcheremTest.php`.
+ * Tvar je smlouva s aplikací (docs/backend.md, API) a musí sedět do posledního klíče. Tahy
+ * jsou proto obyčejná asociativní pole, ne objekty: na **pořadí klíčů** stojí bajtová shoda
+ * s ukázkovým balíkem, kterou hlídá `tests/VystupZFixturTest.php`.
  *
  * @phpstan-type SazkovyTyden array{rok: int, tyden: int}
  * @phpstan-type Poradi array{klic: string, popis: string, pocetVyher: int, vyseVyhryKc: int}
@@ -55,7 +54,7 @@ namespace KontrolaTiketu;
  */
 final class Model
 {
-    /** Verze formátu JSON. Musí sedět s `VERZE_FORMATU` v `packages/jadro/src/model.ts`. */
+    /** Verze formátu JSON. Aplikace balík s jinou verzí odmítne. */
     public const VERZE_FORMATU = 1;
 
     /** @var list<string> */

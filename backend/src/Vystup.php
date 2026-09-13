@@ -7,9 +7,7 @@ namespace KontrolaTiketu;
 use KontrolaTiketu\Zdroj\AllwynVyherka;
 
 /**
- * Sestavení souboru s výsledky — přesně toho, co dnes vyrábí fetcher a čte aplikace.
- *
- * Port `fetcher/src/vystup.ts` a `serad` z `packages/jadro/src/slucovani.ts`.
+ * Sestavení souboru s výsledky — balíku, který čte aplikace (stažením i importem souboru).
  *
  * @phpstan-import-type Tah from Model
  * @phpstan-import-type Tyden from Obdobi

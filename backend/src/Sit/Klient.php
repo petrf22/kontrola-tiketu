@@ -7,7 +7,7 @@ namespace KontrolaTiketu\Sit;
 use KontrolaTiketu\Verze;
 
 /**
- * Slušný HTTP klient pro veřejné listiny. Port `fetcher/src/stahovani.ts`.
+ * Slušný HTTP klient pro veřejné listiny.
  *
  * Pravidla ze zadání: poctivý User-Agent, respektovat robots.txt, nedělat víc dotazů, než je
  * nutné. Prodleva a kontrola robots.txt jsou proto součástí klienta, ne něčím, na co se dá

@@ -26,7 +26,6 @@ export const CASTI = ['aplikace', 'jádro', 'fetcher', 'backend', 'build'];
 const BALICKY = [
   'package.json',
   'app/package.json',
-  'fetcher/package.json',
   'packages/jadro/package.json',
   'packages/ocr/package.json',
 ];

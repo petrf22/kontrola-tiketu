@@ -7,9 +7,8 @@ namespace KontrolaTiketu;
 /**
  * Archiv stažených výherních listin.
  *
- * Port `fetcher/src/archiv.ts` **ve stejném formátu souborů** — `<hra>-<rok>-<TT>.html.gz`,
- * gzip úrovně 9. Server se tak dá naplnit nahráním `fetcher/.cache` místo dvou tisíc dotazů
- * na Allwyn a archiv se dá předávat oběma směry.
+ * Soubory `<hra>-<rok>-<TT>.html.gz`, gzip úrovně 9. Server se dá naplnit nahráním archivu
+ * z desktopu místo dvou tisíc dotazů na Allwyn a archiv se dá předávat oběma směry.
  *
  * Není to dočasná cache, ale trvalý archiv. Pravděpodobnější než zmizení zdroje je chyba ve
  * vlastním parseru; se syrovou zálohou se přeparsuje offline během vteřin.
@@ -63,7 +62,7 @@ final class Archiv
     }
 
     /**
-     * Uloží listinu. Na rozdíl od fetcheru přes dočasný soubor a přejmenování — cron může
+     * Uloží listinu. Přes dočasný soubor a přejmenování — cron může
      * doběhnout na limit hostingu uprostřed zápisu a useknutý gzip by archiv rozbil.
      *
      * @param Souradnice $s

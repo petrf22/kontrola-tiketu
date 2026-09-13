@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace KontrolaTiketu\Sit;
 
 /**
- * Vyhodnocení robots.txt. Port `fetcher/src/robots.ts`.
+ * Vyhodnocení robots.txt.
  *
  * Zadání ukládá respektovat robots.txt jako tvrdé pravidlo, a nejde o formalitu: právě kvůli
  * `Disallow: /api/` se nepoužívá JSON API, které web sám používá. Kontrola proto běží za chodu

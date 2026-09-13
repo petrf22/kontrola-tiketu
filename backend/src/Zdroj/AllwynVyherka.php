@@ -9,9 +9,8 @@ use KontrolaTiketu\Model;
 /**
  * Adaptér veřejné výherní listiny Allwyn.
  *
- * Port `fetcher/src/zdroje/allwyn-vyherka.ts` jedna k jedné — stejné kotvy, stejné kontroly,
- * stejné pořadí klíčů ve výsledku. Když se opravuje jedno, musí se opravit i druhé; že se
- * nerozešly, hlídá bajtová shoda výstupu v `tests/ShodaSFetcheremTest.php`.
+ * Jediný parser listiny v projektu. Pořadí klíčů ve výsledku je součástí formátu; že se výstup
+ * nezměnil, hlídá bajtová shoda s ukázkovým balíkem v `tests/VystupZFixturTest.php`.
  *
  * Podrobný popis zdroje a jeho pastí je v docs/data-source.md.
  *

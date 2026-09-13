@@ -7,7 +7,7 @@ namespace KontrolaTiketu\Zdroj;
 /**
  * Minimální pomůcky pro čtení výherní listiny.
  *
- * Port `fetcher/src/zdroje/html.ts` jedna k jedné. Listina je legacy tiskové HTML, ne dokument,
+ * Listina je legacy tiskové HTML, ne dokument,
  * na který má smysl pouštět DOM parser; kotvíme se na značky popsané v docs/data-source.md.
  */
 final class Html
@@ -33,7 +33,7 @@ final class Html
      * bajtech stojí `SPORTKA ST&#x158;EDA`, ne `SPORTKA STŘEDA`.
      *
      * Schválně to není `html_entity_decode`: ten zná stovky pojmenovaných entit a výsledek by se
-     * mohl rozejít s fetcherem. Neznámou entitu nechává být, stejně jako předloha.
+     * nečekaně změnil s verzí PHP. Neznámou entitu nechává být.
      */
     public static function dekodujEntity(string $text): string
     {

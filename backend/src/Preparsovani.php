@@ -10,7 +10,7 @@ use KontrolaTiketu\Zdroj\ChybaParsovani;
 /**
  * Archiv → tahy, bez jediného dotazu na síť.
  *
- * Port jádra příkazu `preparsuj` z `fetcher/src/cli.ts`. Jedna vadná listina nesmí shodit celý
+ * Jádro příkazu `preparsuj`. Jedna vadná listina nesmí shodit celý
  * běh; nad archivem o tisících položek by to znamenalo, že se kvůli jednomu týdnu nedostaneš
  * k ničemu. Vadné listiny se proto vracejí zvlášť, aby je volající mohl ohlásit.
  *

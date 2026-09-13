@@ -25,7 +25,7 @@ use KontrolaTiketu\Zdroj\AllwynVyherka;
 /**
  * Příkazová řádka backendu. Spouští ji cron i člověk při nasazení.
  *
- * Návratové kódy jsou stejné jako u fetcheru: 0 v pořádku, 1 chyba, 2 špatné argumenty,
+ * Návratové kódy: 0 v pořádku, 1 chyba, 2 špatné argumenty,
  * 3 zákaz v robots.txt.
  *
  * @phpstan-import-type Tyden from Obdobi
@@ -254,7 +254,7 @@ final class Cli
         $doTydne = self::tyden($a->volba('do'));
 
         if ($archiv->seznam() === []) {
-            throw new ChybaArgumentu("Archiv {$archiv->koren()} je prázdný. Nahraj do něj fetcher/.cache.");
+            throw new ChybaArgumentu("Archiv {$archiv->koren()} je prázdný. Nahraj do něj archiv listin z desktopu.");
         }
         $vysledek = Preparsovani::zArchivu($archiv, $hry, $od, $doTydne);
         $zaznamy = $vysledek['zaznamy'];

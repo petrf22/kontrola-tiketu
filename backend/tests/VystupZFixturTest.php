@@ -13,25 +13,21 @@ use KontrolaTiketu\Vystup;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Hlavní pojistka portu: backend musí ze stejných listin vyrobit **bajt po bajtu** stejný
- * soubor jako fetcher.
+ * Hlavní pojistka formátu: ze skutečných listin ve fixturách musí vyjít **bajt po bajtu**
+ * tentýž balík jako `tests/fixtures/vysledky-2026-35-az-37.json`.
  *
  * Porovnává se text, ne struktura. Strukturální shoda by propustila přehozené pořadí klíčů
- * nebo jinak zapsané číslo — a to jsou přesně ty rozdíly, které vzniknou při portu z JS do PHP
- * a o kterých by se jinak nikdo nedozvěděl. Liší se jen čas vygenerování, ten se převezme.
+ * nebo jinak zapsané číslo — a na obojím stojí hash, kterým aplikace balík ověřuje. Liší se
+ * jen čas vygenerování, ten se převezme.
  *
- * Srovnání nad celým archivem (TS a PHP nad týmiž listinami) je v `test/backend.test.ts`,
- * protože potřebuje oba běhy najednou.
+ * Tentýž balík má jako ukázku i mobilní aplikace ve svých testech. Kdo tady záměrně změní
+ * formát, musí zvednout `verzeFormatu` a ukázku v aplikaci vyměnit.
  */
-final class ShodaSFetcheremTest extends TestCase
+final class VystupZFixturTest extends TestCase
 {
-    /**
-     * `app/test/fixtures/vysledky-2026-35-az-37.json` je skutečný výstup fetcheru z listin,
-     * které jsou ve fixturách (viz jeho PUVOD.md), takže test běží vždy, i bez archivu.
-     */
-    public function testZFixturVyjdeTyzSouborJakoOdFetcheru(): void
+    public function testZFixturVyjdeUkazkovyBalik(): void
     {
-        $ocekavany = Fixtury::soubor('app/test/fixtures/vysledky-2026-35-az-37.json');
+        $ocekavany = Fixtury::soubor('tests/fixtures/vysledky-2026-35-az-37.json');
         $puvodni = Json::cti($ocekavany);
         self::assertIsArray($puvodni);
         self::assertIsString($puvodni['vygenerovano']);
@@ -43,7 +39,7 @@ final class ShodaSFetcheremTest extends TestCase
 
         self::assertStejnyText($ocekavany, Json::zapis(Vystup::sestav(
             $vysledek['tahy'],
-            Vystup::nactiSazby(Fixtury::KOREN_REPA . '/data/sazby-extra6.json'),
+            Vystup::nactiSazby(Fixtury::KOREN . '/config/sazby-extra6.json'),
             ['od' => $od, 'do' => $doTydne],
             new \DateTimeImmutable($puvodni['vygenerovano']),
         )));

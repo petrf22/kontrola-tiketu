@@ -8,26 +8,16 @@ use KontrolaTiketu\Konfigurace;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Na hosting se nahrává jen `backend/`, takže sazby Extra 6 musí mít vlastní kopii.
- * Zdrojem pravdy zůstává `data/sazby-extra6.json` — kdo ho změní, musí změnit i kopii,
- * jinak by aplikace z backendu dostala jiné sazby než ze souboru od fetcheru.
+ * Sazby Extra 6 výherní listina nepublikuje, takže je backend drží v `config/sazby-extra6.json`
+ * a přibaluje je ke každému balíku. Ten soubor je jediný zdroj pravdy o sazbách.
  */
 final class SazbyTest extends TestCase
 {
-    public function testKopieSazebVBackenduSediSeZdrojem(): void
-    {
-        self::assertSame(
-            Fixtury::soubor('data/sazby-extra6.json'),
-            Fixtury::soubor('backend/config/sazby-extra6.json'),
-            'Zkopíruj data/sazby-extra6.json do backend/config/.',
-        );
-    }
-
-    public function testVychoziKonfiguraceNaKopiiUkazuje(): void
+    public function testVychoziKonfiguraceNaSazbyUkazuje(): void
     {
         $konfigurace = Konfigurace::nacti();
         self::assertSame(
-            realpath(Fixtury::KOREN_REPA . '/backend/config/sazby-extra6.json'),
+            realpath(Fixtury::KOREN . '/config/sazby-extra6.json'),
             realpath($konfigurace->sazby),
         );
     }

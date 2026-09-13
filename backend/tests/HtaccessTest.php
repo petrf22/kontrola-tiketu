@@ -14,7 +14,7 @@ final class HtaccessTest extends TestCase
 {
     private static function htaccess(): string
     {
-        return Fixtury::soubor('backend/public/.htaccess');
+        return Fixtury::soubor('public/.htaccess');
     }
 
     public function testJsonJdeVenJakoTextPlain(): void
@@ -37,7 +37,7 @@ final class HtaccessTest extends TestCase
         self::assertStringContainsString("RewriteCond %{REQUEST_FILENAME} -f\n    RewriteRule ^cron/[0-9a-f]{32}\\.php$ - [L]", $pravidla);
         $bezKomentaru = (string) preg_replace('/^\\s*#.*$/m', '', $pravidla);
         self::assertSame(1, preg_match_all('/php/i', $bezKomentaru), 'jiné PHP ven nesmí');
-        self::assertSame([], glob(Fixtury::KOREN_REPA . '/backend/public/cron/*') ?: [], 'tajné jméno do gitu nepatří');
+        self::assertSame([], glob(Fixtury::KOREN . '/public/cron/*') ?: [], 'tajné jméno do gitu nepatří');
     }
 
     public function testDocasneSouboryPublikaceVenNesmi(): void
@@ -52,6 +52,6 @@ final class HtaccessTest extends TestCase
 
     public function testVyhledavaceNemajCoIndexovat(): void
     {
-        self::assertSame("User-agent: *\nDisallow: /\n", Fixtury::soubor('backend/public/robots.txt'));
+        self::assertSame("User-agent: *\nDisallow: /\n", Fixtury::soubor('public/robots.txt'));
     }
 }

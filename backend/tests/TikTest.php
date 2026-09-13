@@ -20,7 +20,7 @@ use PHPUnit\Framework\TestCase;
 /**
  * Celý běh z cronu proti falešné síti: rozvrh → stažení → databáze → publikace.
  *
- * Výchozí stav: archiv naplněný listinami týdne 36 (jako po nahrání fetcher/.cache), starší
+ * Výchozí stav: archiv naplněný listinami týdne 36 (jako po nahrání archivu z desktopu), starší
  * týdny uzavřené. Úterý 8. 9. 2026 večer se losuje Eurojackpot, jehož listina je ve fixturách.
  */
 final class TikTest extends TestCase
@@ -224,19 +224,19 @@ final class TikTest extends TestCase
         }
     }
 
-    public function testBalikJeTentyzFormatJakoSouborOdFetcheru(): void
+    public function testBalikZCronuMaTahyShodneSUkazkovymBalikem(): void
     {
-        // Aplikace ho čte stejným kódem jako import souboru — tahy musí sedět do bajtu.
+        // Tik a preparsuj musí vyrobit tytéž tahy — aplikace čte balík ze serveru i ze souboru stejně.
         $this->archiv->uloz(['hra' => 'eurojackpot', 'rok' => 2026, 'tyden' => 37], Fixtury::listina('eurojackpot-2026-37'));
         $this->tik()->obnov(self::cas('2026-09-09 12:00'));
         Publikace::publikuj($this->db, $this->konfigurace, self::cas('2026-09-09 12:00'));
 
         $balik = Json::cti((string) file_get_contents("{$this->konfigurace->verejne}/2026.json"));
-        $fetcher = Json::cti(Fixtury::soubor('app/test/fixtures/vysledky-2026-35-az-37.json'));
+        $ukazkovy = Json::cti(Fixtury::soubor('tests/fixtures/vysledky-2026-35-az-37.json'));
         self::assertIsArray($balik);
-        self::assertIsArray($fetcher);
-        self::assertSame(Json::zapis($fetcher['tahy']), Json::zapis($balik['tahy']));
-        self::assertSame($fetcher['sazbyExtra6'], $balik['sazbyExtra6']);
+        self::assertIsArray($ukazkovy);
+        self::assertSame(Json::zapis($ukazkovy['tahy']), Json::zapis($balik['tahy']));
+        self::assertSame($ukazkovy['sazbyExtra6'], $balik['sazbyExtra6']);
         self::assertSame(1, $balik['verzeFormatu']);
     }
 }

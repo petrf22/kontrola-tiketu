@@ -111,7 +111,7 @@ describe('od ML Kitu k přečtenému tiketu', () => {
         [2, 22, 37, 39, 40],
         [4, 6, 7, 12, 33],
       ]);
-      expect(tiket.sloupce.map((s) => s.eurocisla)).toEqual([
+      expect(tiket.sloupce.map((s) => s.druheOsudi)).toEqual([
         [2, 3],
         [2, 12],
         [1, 11],

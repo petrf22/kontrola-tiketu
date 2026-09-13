@@ -15,10 +15,14 @@ import { prectiKodDoplnkoveHry } from './doplnkovaHra.js';
 import { slozRadky, type NastaveniSkladani } from './radky.js';
 import type { RozpoznanyText } from './model.js';
 
-/** Kolik čísel se čeká ve sloupci které hry. */
-const OCEKAVANO: Readonly<Record<Hra, { cisla: number; eurocisla: number }>> = {
-  eurojackpot: { cisla: 5, eurocisla: 2 },
-  sportka: { cisla: 6, eurocisla: 0 },
+/**
+ * Kolik čísel se čeká ve sloupci které hry. Druhé osudí jsou u Eurojackpotu euročísla,
+ * u Euromilionů jedno číslo z 1–5; Sportka ho nemá.
+ */
+const OCEKAVANO: Readonly<Record<Hra, { cisla: number; druheOsudi: number }>> = {
+  eurojackpot: { cisla: 5, druheOsudi: 2 },
+  sportka: { cisla: 6, druheOsudi: 0 },
+  euromiliony: { cisla: 7, druheOsudi: 1 },
 };
 
 const DNY: Readonly<Record<string, Den>> = {
@@ -51,7 +55,8 @@ export interface NactenySloupec {
   /** Pořadí sloupce vytištěné na tiketu, nebo `null`, když se nepřečetlo. */
   readonly poradi: number | null;
   readonly cisla: readonly number[];
-  readonly eurocisla: readonly number[];
+  /** Euročísla (Eurojackpot) nebo číslo z druhého osudí (Euromiliony); u Sportky prázdné. */
+  readonly druheOsudi: readonly number[];
   /** Útržky, u kterých bylo potřeba opravit záměnu písmene za číslici — k zvýraznění v UI. */
   readonly opravene: readonly string[];
   /** Původní text řádku, ať má uživatel co porovnat s papírem. */
@@ -94,16 +99,31 @@ function prectiHlavicku(radky: readonly string[]): Hlavicka {
 function rozdelCisla(
   hodnoty: readonly NactenaHodnota[],
   hra: Hra,
-): { cisla: number[]; eurocisla: number[] } {
+): { cisla: number[]; druheOsudi: number[] } {
   const ocekavano = OCEKAVANO[hra];
   const cisla = hodnoty.slice(0, ocekavano.cisla).map((h) => h.hodnota);
   const zbytek = hodnoty.slice(ocekavano.cisla).map((h) => h.hodnota);
 
   // Přebývající čísla se nezahazují. Připojí se tam, kde je kontrola počtu odhalí,
   // aby o nich uživatel věděl a mohl je opravit.
-  return ocekavano.eurocisla === 0
-    ? { cisla: [...cisla, ...zbytek], eurocisla: [] }
-    : { cisla, eurocisla: zbytek };
+  return ocekavano.druheOsudi === 0
+    ? { cisla: [...cisla, ...zbytek], druheOsudi: [] }
+    : { cisla, druheOsudi: zbytek };
+}
+
+function jakoSloupecTiketu(
+  hra: Hra,
+  cisla: readonly number[],
+  druheOsudi: readonly number[],
+): Sloupec {
+  switch (hra) {
+    case 'eurojackpot':
+      return { hra, cisla, eurocisla: druheOsudi };
+    case 'euromiliony':
+      return { hra, cisla, druheOsudi };
+    case 'sportka':
+      return { hra, cisla };
+  }
 }
 
 function jakoSloupec(text: string, hra: Hra): NactenySloupec | null {
@@ -114,15 +134,13 @@ function jakoSloupec(text: string, hra: Hra): NactenySloupec | null {
   if (hodnoty.length < 2) return null; // samotné pořadí bez čísel není sloupec
 
   const poradi = hodnoty[0]!;
-  const { cisla, eurocisla } = rozdelCisla(hodnoty.slice(1), hra);
-
-  const sloupec: Sloupec =
-    hra === 'eurojackpot' ? { hra, cisla, eurocisla } : { hra, cisla };
+  const { cisla, druheOsudi } = rozdelCisla(hodnoty.slice(1), hra);
+  const sloupec = jakoSloupecTiketu(hra, cisla, druheOsudi);
 
   return {
     poradi: poradi.hodnota,
     cisla,
-    eurocisla,
+    druheOsudi,
     opravene: hodnoty.filter((h) => h.opraveno).map((h) => h.puvodni),
     text,
     problemy: zkontrolujSloupec(sloupec),
@@ -179,9 +197,7 @@ export function naTiket(
   },
 ): Tiket {
   const sloupce: Sloupec[] = vysledek.sloupce.map((s) =>
-    vysledek.hra === 'eurojackpot'
-      ? { hra: 'eurojackpot', cisla: s.cisla, eurocisla: s.eurocisla }
-      : { hra: 'sportka', cisla: s.cisla },
+    jakoSloupecTiketu(vysledek.hra, s.cisla, s.druheOsudi),
   );
 
   return {

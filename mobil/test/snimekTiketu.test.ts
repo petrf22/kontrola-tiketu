@@ -54,7 +54,7 @@ describe('nactiTiketZeSnimku', () => {
     const { z } = zavislosti();
     const { cteni } = await nactiTiketZeSnimku('eurojackpot', z);
     expect(cteni.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
-    expect(cteni.sloupce[0]?.eurocisla).toEqual([2, 3]);
+    expect(cteni.sloupce[0]?.druheOsudi).toEqual([2, 3]);
   });
 
   it('smaže dočasný soubor po úspěšném rozpoznání', async () => {

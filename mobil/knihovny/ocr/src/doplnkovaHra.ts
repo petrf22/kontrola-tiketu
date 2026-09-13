@@ -5,15 +5,22 @@
  * Na tiketu je ale vytištěný, takže ho umí přečíst OCR.
  *
  * Ověřeno na reálném tiketu Eurojackpotu (9. 9. 2026), kde má podobu `Extra 6: 845991`.
- * Popisek Šance u Sportky ověřený není, proto je vzor schválně volnější.
+ * Popisky Šance u Sportky a Eurošance u Euromilionů ověřené nejsou, proto jsou vzory
+ * schválně volnější.
  */
 
-import type { Hra } from '@kontrola-tiketu/jadro';
+import { DELKA_KODU_DOPLNKOVE_HRY, type Hra } from '@kontrola-tiketu/jadro';
 
-/** Popisek, za kterým se kód hledá. */
+/**
+ * Popisek, za kterým se kód hledá.
+ *
+ * Eurošance musí mít předponu „euro“: tiket Euromilionů může nést i pětimístný kód Druhé šance,
+ * a ten se s Eurošancí zaměnit nesmí.
+ */
 const POPISKY: Readonly<Record<Hra, RegExp>> = {
   eurojackpot: /extra\s*6\s*[:.]?/i,
   sportka: /[šs]ance\s*[:.]?/i,
+  euromiliony: /euro\s*[šs]ance\s*[:.]?/i,
 };
 
 /** Záměny termotisku. Vedoucí nula přečtená jako písmeno O by změnila celý kód. */
@@ -24,21 +31,24 @@ const ZAMENY: Readonly<Record<string, string>> = {
 };
 
 /**
- * Šest číslic, které nesousedí s další číslicí.
+ * Právě `delka` číslic, které nesousedí s další číslicí.
  *
  * Mezery mezi nimi se připouštějí — rozpoznávač je u monospace tisku občas rozseká.
- * Ohraničení na obou stranách brání tomu, aby se z delšího čísla ukously první šestky.
+ * Ohraničení na obou stranách brání tomu, aby se z delšího čísla ukously první číslice.
  */
-const SESTICISLI = /(?<![0-9])(?:[0-9][ \t]*){6}(?![0-9])/;
+function vzorKodu(delka: number): RegExp {
+  return new RegExp(`(?<![0-9])(?:[0-9][ \\t]*){${delka}}(?![0-9])`);
+}
 
 /**
  * Najde kód doplňkové hry v přečtených řádcích, nebo vrátí `null`.
  *
- * Nikdy nehádá: když se šest číslic za popiskem nenajde, vrátí `null` a uživatel kód doplní
+ * Nikdy nehádá: když se kód správné délky za popiskem nenajde, vrátí `null` a uživatel ho doplní
  * ručně. Vymyšlený kód by tiše znehodnotil vyhodnocení doplňkové hry.
  */
 export function prectiKodDoplnkoveHry(radky: readonly string[], hra: Hra): string | null {
   const popisek = POPISKY[hra];
+  const kod = vzorKodu(DELKA_KODU_DOPLNKOVE_HRY[hra]);
 
   for (const radek of radky) {
     const nalez = popisek.exec(radek);
@@ -48,7 +58,7 @@ export function prectiKodDoplnkoveHry(radky: readonly string[], hra: Hra): strin
     const zbytek = radek.slice(nalez.index + nalez[0].length);
     const opraveny = [...zbytek].map((z) => ZAMENY[z] ?? z).join('');
 
-    const cislice = SESTICISLI.exec(opraveny);
+    const cislice = kod.exec(opraveny);
     if (cislice !== null) return cislice[0].replace(/[^0-9]/g, '');
   }
 

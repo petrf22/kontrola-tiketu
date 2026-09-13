@@ -71,3 +71,23 @@ describe('Sportka', () => {
     expect(prectiKodDoplnkoveHry(['SANCE 236412'], 'sportka')).toBe('236412');
   });
 });
+
+describe('Euromiliony', () => {
+  it('přečte pětimístnou Eurošanci s diakritikou i bez ní', () => {
+    // Přesná podoba na tiketu Euromilionů ověřená není, proto je vzor volnější.
+    expect(prectiKodDoplnkoveHry(['Eurošance: 37960'], 'euromiliony')).toBe('37960');
+    expect(prectiKodDoplnkoveHry(['EUROSANCE 07781'], 'euromiliony')).toBe('07781');
+    expect(prectiKodDoplnkoveHry(['Euro šance: 3 7 9 6 0'], 'euromiliony')).toBe('37960');
+  });
+
+  it('nesebere šest číslic ani kód Druhé šance', () => {
+    expect(prectiKodDoplnkoveHry(['Eurošance: 379601'], 'euromiliony')).toBeNull();
+    expect(prectiKodDoplnkoveHry(['Druhá šance: 12345'], 'euromiliony')).toBeNull();
+    expect(prectiKodDoplnkoveHry(['Šance: 12345'], 'euromiliony')).toBeNull();
+  });
+
+  it('nezamění hry — Eurošance není Extra 6', () => {
+    expect(prectiKodDoplnkoveHry(['Extra 6: 845991'], 'euromiliony')).toBeNull();
+    expect(prectiKodDoplnkoveHry(['Eurošance: 37960'], 'eurojackpot')).toBeNull();
+  });
+});

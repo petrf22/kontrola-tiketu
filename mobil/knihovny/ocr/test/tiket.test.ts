@@ -22,9 +22,9 @@ describe('prectiTiket — Eurojackpot', () => {
 
   it('rozdělí čísla a euročísla podle rozvržení tiketu', () => {
     expect(vysledek.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
-    expect(vysledek.sloupce[0]?.eurocisla).toEqual([2, 3]);
+    expect(vysledek.sloupce[0]?.druheOsudi).toEqual([2, 3]);
     expect(vysledek.sloupce[2]?.cisla).toEqual([4, 6, 7, 12, 33]);
-    expect(vysledek.sloupce[2]?.eurocisla).toEqual([1, 11]);
+    expect(vysledek.sloupce[2]?.druheOsudi).toEqual([1, 11]);
   });
 
   it('zapamatuje si pořadí sloupce z tiketu', () => {
@@ -32,7 +32,7 @@ describe('prectiTiket — Eurojackpot', () => {
   });
 
   it('nepovažuje NT za číslo', () => {
-    expect(vysledek.sloupce.every((s) => s.eurocisla.length === 2)).toBe(true);
+    expect(vysledek.sloupce.every((s) => s.druheOsudi.length === 2)).toBe(true);
   });
 
   it('oddělovací čáry ani hlavičku nebere jako sloupec', () => {
@@ -58,7 +58,7 @@ describe('prectiTiket — nakloněný snímek', () => {
         [2, 22, 37, 39, 40],
         [4, 6, 7, 12, 33],
       ]);
-      expect(vysledek.sloupce.map((s) => s.eurocisla)).toEqual([
+      expect(vysledek.sloupce.map((s) => s.druheOsudi)).toEqual([
         [2, 3],
         [2, 12],
         [1, 11],
@@ -92,7 +92,7 @@ describe('prectiTiket — vadné čtení', () => {
 
   it('přebytečné číslo se nezahodí, ale zviditelní', () => {
     const vysledek = prectiTiket(tiketEJ([['1: 23 30 33 37 47', '02 03 04 NT']]), 'eurojackpot');
-    expect(vysledek.sloupce[0]?.eurocisla).toEqual([2, 3, 4]);
+    expect(vysledek.sloupce[0]?.druheOsudi).toEqual([2, 3, 4]);
     expect(vysledek.sloupce[0]?.problemy.map((p) => p.kod)).toContain('spatny-pocet-cisel');
   });
 
@@ -119,7 +119,7 @@ describe('prectiTiket — Sportka', () => {
       'sportka',
     );
     expect(vysledek.sloupce[0]?.cisla).toEqual([5, 12, 23, 31, 40, 49]);
-    expect(vysledek.sloupce[0]?.eurocisla).toEqual([]);
+    expect(vysledek.sloupce[0]?.druheOsudi).toEqual([]);
     expect(vysledek.sloupce[0]?.problemy).toEqual([]);
   });
 
@@ -190,5 +190,52 @@ describe('kód doplňkové hry ze snímku', () => {
     // Volající může vědět víc — třeba že uživatel kód právě opravil.
     const vysledek = prectiTiket(tiketEJ(S_EXTRA6), 'eurojackpot');
     expect(naTiket(vysledek, { id: 'a', kodDoplnkoveHry: '000000' }).kodDoplnkoveHry).toBe('000000');
+  });
+});
+
+/**
+ * Tiket Euromilionů. Na papíře ověřený není — rozvržení se předpokládá stejné jako
+ * u Eurojackpotu (sedm čísel vlevo, číslo z druhého osudí vpravo). Proto se všechno
+ * přečtené dál potvrzuje ve formuláři.
+ */
+describe('prectiTiket — Euromiliony', () => {
+  // Tři sloupce a oddělovače jako u Eurojackpotu. Útržky pomocníka nenesou úhel, takže se
+  // sklon odhaduje z rozložení — a to potřebuje víc než dva řádky čísel.
+  const TIKET_EM: readonly string[][] = [
+    ['SLOSOVÁNÍ: 2 (ÚT)', '08.09.2026'],
+    ['------------------------------------------------'],
+    ['1: 02 03 12 17 18 22 28', '05'],
+    ['2: 01 04 09 14 20 31 35', '02'],
+    ['3: 06 07 08 10 11 13 15', '01'],
+    ['------------------------------------------------'],
+    ['Eurošance: 37960'],
+    ['Druhá šance: 12345'],
+  ];
+  const vysledek = prectiTiket(tiketEJ(TIKET_EM), 'euromiliony');
+
+  it('rozdělí sedm čísel a jedno z druhého osudí', () => {
+    expect(vysledek.sloupce.map((s) => s.cisla)).toEqual([
+      [2, 3, 12, 17, 18, 22, 28],
+      [1, 4, 9, 14, 20, 31, 35],
+      [6, 7, 8, 10, 11, 13, 15],
+    ]);
+    expect(vysledek.sloupce.map((s) => s.druheOsudi)).toEqual([[5], [2], [1]]);
+    expect(jeBezProblemu(vysledek)).toBe(true);
+  });
+
+  it('přečte Eurošanci a nesplete si ji s Druhou šancí', () => {
+    expect(vysledek.kodDoplnkoveHry).toBe('37960');
+  });
+
+  it('naTiket sestaví tiket, který jde vyhodnotit', () => {
+    const tiket = naTiket(vysledek, { id: 'em' });
+    expect(zkontrolujTiket(tiket)).toEqual([]);
+    expect(tiket.sloupce[0]).toEqual({ hra: 'euromiliony', cisla: [2, 3, 12, 17, 18, 22, 28], druheOsudi: [5] });
+    expect(tiket.slosovani).toEqual({ prvni: '2026-09-08', pocet: 2, dny: null });
+  });
+
+  it('číslo 6 v druhém osudí je mimo rozsah', () => {
+    const spatny = prectiTiket(tiketEJ([['1: 02 03 12 17 18 22 28', '06']]), 'euromiliony');
+    expect(spatny.sloupce[0]?.problemy.map((p) => p.kod)).toEqual(['cislo-mimo-rozsah']);
   });
 });

@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [0.2.0] – 2026-09-13
 
 ### Přidáno
 - Backend v PHP pro levný sdílený hosting: sám hlídá nová losování a vystavuje výsledky jako statické soubory, které si aplikace stáhne celé — bez jediné informace o tom, jaké tikety kdo drží (backend)
@@ -27,7 +27,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 - V patičce je vidět, kdy server naposledy kontroloval losování a jestli se u některé hry ještě čeká na tabulku výher (aplikace)
 - Euromiliony: tiket jde vyfotit i zadat ručně (7 čísel z 35 a 1 z 5) a aplikace ho vyhodnotí včetně Eurošance proti tabulce výher konkrétního tahu (aplikace)
 - Backend čte a publikuje Euromiliony včetně archivu listin od roku 2013 a pevných výher Eurošance; formát výsledků je ve verzi 2 (backend)
-- Při zadání tiketu jde vybrat, na které dny losování platí — Sportka středa, pátek, neděle, Eurojackpot úterý, pátek; tiket jen na neděle se tak vyhodnotí proti nedělním tahům, ne proti všem po sobě (aplikace)
+- Při zadání tiketu jde vybrat, na které dny losování platí — Sportka středa, pátek, neděle, Eurojackpot úterý, pátek, Euromiliony úterý, sobota; tiket jen na neděle se tak vyhodnotí proti nedělním tahům, ne proti všem po sobě (aplikace)
 
 ### Změněno
 - Aplikace žádá o přístup k internetu, ale spojit se umí jedině se serverem výsledků — jinam systém šifrované spojení nepustí; Googlí vrstva pro odesílání záznamů z ML Kitu je z aplikace odstraněná (aplikace)

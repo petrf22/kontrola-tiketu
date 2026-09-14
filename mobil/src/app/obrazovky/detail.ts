@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, computed, inject, input, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   zkontrolujTiket,
@@ -292,15 +292,14 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
         Odkaz otevře prohlížeč; aplikace sama na stránky Allwyn nechodí a nic jim neposílá.
       </p>
 
-      @if (!mazani()) {
-        <button type="button" class="smazat" (click)="mazani.set(true)">Smazat tiket</button>
-      } @else {
-        <div class="potvrzeni">
-          <p>Opravdu smazat tenhle tiket? Vrátit to nepůjde.</p>
+      <button type="button" class="smazat" (click)="otevriMazani()">Smazat tiket</button>
+      <dialog #dialogMazani class="potvrzeni" aria-labelledby="potvrzeni-text">
+        <p id="potvrzeni-text">Opravdu smazat tenhle tiket? Vrátit to nepůjde.</p>
+        <div>
           <button type="button" class="smazat" (click)="smaz()">Ano, smazat</button>
-          <button type="button" (click)="mazani.set(false)">Ponechat</button>
+          <button type="button" autofocus (click)="ponechat()">Ponechat</button>
         </div>
-      }
+      </dialog>
     } @else {
       <p>Tiket nenalezen.</p>
     }
@@ -403,10 +402,12 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
     }
     .smazat { color: var(--barva-chyba); }
     .potvrzeni {
-      margin-top: 1.5rem; padding: 0.75rem; border: 1px solid var(--barva-chyba);
-      border-radius: 4px; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center;
+      max-width: 22rem; border: 1px solid var(--barva-chyba); border-radius: 6px;
+      background: var(--barva-pozadi); color: inherit;
     }
-    .potvrzeni p { width: 100%; margin: 0; font-size: 0.9rem; }
+    .potvrzeni::backdrop { background: #0008; }
+    .potvrzeni p { margin: 0; }
+    .potvrzeni div { display: flex; justify-content: flex-end; gap: 0.5rem; }
   `,
 })
 export class Detail {
@@ -417,8 +418,11 @@ export class Detail {
 
   protected readonly tiket = computed(() => this.stav.tikety().find((t) => t.id === this.id()));
 
-  /** Rozdělané mazání. Dvoukrokové potvrzení místo systémového dialogu — ten blokuje webview. */
-  protected readonly mazani = signal(false);
+  /**
+   * Potvrzení mazání. HTML `<dialog>` je modál uvnitř webview: neblokuje ho jako `window.confirm`
+   * a na rozdíl od nativního dialogu (samostatné okno) ho kryje FLAG_SECURE aktivity.
+   */
+  private readonly dialogMazani = viewChild<ElementRef<HTMLDialogElement>>('dialogMazani');
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujDatumCas = formatujDatumCas;
@@ -651,7 +655,16 @@ export class Detail {
     return POPIS_VYHRADY[vyhrada] ?? vyhrada;
   }
 
+  protected otevriMazani(): void {
+    this.dialogMazani()?.nativeElement.showModal();
+  }
+
+  protected ponechat(): void {
+    this.dialogMazani()?.nativeElement.close();
+  }
+
   protected async smaz(): Promise<void> {
+    this.dialogMazani()?.nativeElement.close();
     await this.stav.smazTiket(this.id());
     await this.router.navigate(['/']);
   }

@@ -17,8 +17,12 @@ import type { Hra } from '@kontrola-tiketu/jadro';
 import {
   prectiCarovyKod,
   prectiTiket,
+  rozpoznejHru,
+  slozRadky,
   zMlKit,
   type MlKitVysledek,
+  type PrectenyKod,
+  type RozpoznanaHra,
   type VysledekCteni,
 } from '@kontrola-tiketu/ocr';
 
@@ -46,7 +50,17 @@ export interface Zavislosti {
 }
 
 export interface VysledekSnimku {
-  readonly cteni: VysledekCteni;
+  /** Hra poznaná z tiketu, nebo `null` s tím, co si odporovalo — pak ji volí uživatel. */
+  readonly hra: RozpoznanaHra;
+  /** Přečtený tiket, když je hra určená. Jinak `null` a přečte se přes `prectiJako`. */
+  readonly cteni: VysledekCteni | null;
+  /**
+   * Přečte tentýž snímek jako zvolenou hru — bez dalšího focení. Drží jen rozpoznaný text
+   * v paměti; soubor se snímkem je v tu chvíli dávno smazaný.
+   */
+  readonly prectiJako: (hra: Hra) => VysledekCteni;
+  /** Je na snímku aspoň jeden sloupec? Na hře to nezávisí — řádek sloupce poznají všechny stejně. */
+  readonly maSloupce: boolean;
   /**
    * Sériové číslo z čárového kódu na témže snímku, nebo `null`, když se kód nenašel.
    *
@@ -59,7 +73,7 @@ export interface VysledekSnimku {
 }
 
 /**
- * Vytáhne sériové číslo z prvního kódu, který dává smysl.
+ * Přečte první kód, který dává smysl — sériové číslo a hru z hlavičky.
  *
  * Selhání se polyká záměrně: fotka nemusí kód zachytit a to není důvod zahodit přečtená
  * čísla. Uživatel pak sériové číslo doplní naskenováním kódu zvlášť.
@@ -67,13 +81,13 @@ export interface VysledekSnimku {
 async function zkusPrecistKod(
   cesta: string,
   prectiKody: CtenarKodu,
-): Promise<string | null> {
+): Promise<PrectenyKod | null> {
   try {
     for (const kod of await prectiKody(cesta)) {
       if (kod.bytes === undefined || kod.bytes.length === 0) continue;
       try {
         // Bajty přicházejí jako znaménkové Java hodnoty, proto maskování.
-        return prectiCarovyKod(Uint8Array.from(kod.bytes, (b) => b & 0xff)).serioveCislo;
+        return prectiCarovyKod(Uint8Array.from(kod.bytes, (b) => b & 0xff));
       } catch {
         continue; // cizí kód na snímku, zkusíme další
       }
@@ -91,16 +105,25 @@ async function zkusPrecistKod(
  * volalo napřímo z obrazovky, stačila by jedna neošetřená cesta a snímek tiketu by zůstal
  * ležet na disku.
  */
-export async function nactiTiketZeSnimku(
-  hra: Hra,
-  zavislosti: Zavislosti,
-): Promise<VysledekSnimku> {
+export async function nactiTiketZeSnimku(zavislosti: Zavislosti): Promise<VysledekSnimku> {
   const cesta = await zavislosti.poriz();
   try {
-    const vysledek = await zavislosti.rozpoznej(cesta);
+    const utrzky = zMlKit(await zavislosti.rozpoznej(cesta));
+    const kod = await zkusPrecistKod(cesta, zavislosti.prectiKody);
+
+    const hra = rozpoznejHru(
+      slozRadky(utrzky).map((r) => r.text),
+      kod?.hra ?? null,
+    );
+    const prectiJako = (zvolena: Hra) => prectiTiket(utrzky, zvolena);
+    const cteni = hra.hra === null ? null : prectiJako(hra.hra);
+
     return {
-      cteni: prectiTiket(zMlKit(vysledek), hra),
-      serioveCislo: await zkusPrecistKod(cesta, zavislosti.prectiKody),
+      hra,
+      cteni,
+      prectiJako,
+      maSloupce: (cteni ?? prectiJako('eurojackpot')).sloupce.length > 0,
+      serioveCislo: kod?.serioveCislo ?? null,
       docasnySoubor: cesta,
     };
   } finally {

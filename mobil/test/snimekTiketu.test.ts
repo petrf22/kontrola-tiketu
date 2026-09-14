@@ -52,14 +52,14 @@ function zavislosti(prepis: Partial<Zavislosti> = {}) {
 describe('nactiTiketZeSnimku', () => {
   it('přečte sloupce ze snímku', async () => {
     const { z } = zavislosti();
-    const { cteni } = await nactiTiketZeSnimku('eurojackpot', z);
-    expect(cteni.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
-    expect(cteni.sloupce[0]?.druheOsudi).toEqual([2, 3]);
+    const { cteni } = await nactiTiketZeSnimku(z);
+    expect(cteni?.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
+    expect(cteni?.sloupce[0]?.druheOsudi).toEqual([2, 3]);
   });
 
   it('smaže dočasný soubor po úspěšném rozpoznání', async () => {
     const { z, smazano } = zavislosti();
-    const { docasnySoubor } = await nactiTiketZeSnimku('eurojackpot', z);
+    const { docasnySoubor } = await nactiTiketZeSnimku(z);
     expect(smazano).toEqual([docasnySoubor]);
   });
 
@@ -70,7 +70,7 @@ describe('nactiTiketZeSnimku', () => {
         throw new Error('ML Kit selhal');
       },
     });
-    await expect(nactiTiketZeSnimku('eurojackpot', z)).rejects.toThrow('ML Kit selhal');
+    await expect(nactiTiketZeSnimku(z)).rejects.toThrow('ML Kit selhal');
     expect(smazano).toHaveLength(1);
   });
 
@@ -84,7 +84,7 @@ describe('nactiTiketZeSnimku', () => {
       },
     });
     // Uživatel se musí dozvědět, proč selhalo rozpoznávání, ne že se nepovedl úklid.
-    await expect(nactiTiketZeSnimku('eurojackpot', z)).rejects.toThrow('ML Kit selhal');
+    await expect(nactiTiketZeSnimku(z)).rejects.toThrow('ML Kit selhal');
   });
 
   it('když se snímek nepodaří pořídit, nemá se co uklízet', async () => {
@@ -95,14 +95,15 @@ describe('nactiTiketZeSnimku', () => {
       },
       ukliď,
     });
-    await expect(nactiTiketZeSnimku('eurojackpot', z)).rejects.toThrow('zrušil');
+    await expect(nactiTiketZeSnimku(z)).rejects.toThrow('zrušil');
     expect(ukliď).not.toHaveBeenCalled();
   });
 
   it('prázdný snímek nedá vymyšlený tiket', async () => {
     const { z, smazano } = zavislosti({ rozpoznej: async () => ({ blocks: [] }) });
-    const { cteni } = await nactiTiketZeSnimku('eurojackpot', z);
-    expect(cteni.sloupce).toEqual([]);
+    const { cteni, maSloupce } = await nactiTiketZeSnimku(z);
+    expect(cteni?.sloupce).toEqual([]);
+    expect(maSloupce).toBe(false);
     expect(smazano).toHaveLength(1);
   });
 });
@@ -110,16 +111,17 @@ describe('nactiTiketZeSnimku', () => {
 describe('čárový kód z téže fotky', () => {
   it('přečte sériové číslo spolu s čísly, takže se neskenuje dvakrát', async () => {
     const { z } = zavislosti();
-    const { cteni, serioveCislo } = await nactiTiketZeSnimku('eurojackpot', z);
-    expect(cteni.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
+    const { cteni, serioveCislo } = await nactiTiketZeSnimku(z);
+    expect(cteni?.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
     expect(serioveCislo).toBe('12345678901234567890');
   });
 
   it('když fotka kód nezachytí, čísla se nezahodí', async () => {
     const { z } = zavislosti({ prectiKody: async () => [] });
-    const { cteni, serioveCislo } = await nactiTiketZeSnimku('eurojackpot', z);
+    const { maSloupce, prectiJako, serioveCislo } = await nactiTiketZeSnimku(z);
     expect(serioveCislo).toBeNull();
-    expect(cteni.sloupce).toHaveLength(1);
+    expect(maSloupce).toBe(true);
+    expect(prectiJako('eurojackpot').sloupce).toHaveLength(1);
   });
 
   it('selhání čtečky kódů nesmí shodit celé rozpoznání', async () => {
@@ -128,21 +130,61 @@ describe('čárový kód z téže fotky', () => {
         throw new Error('čtečka selhala');
       },
     });
-    const { cteni, serioveCislo } = await nactiTiketZeSnimku('eurojackpot', z);
+    const { maSloupce, serioveCislo } = await nactiTiketZeSnimku(z);
     expect(serioveCislo).toBeNull();
-    expect(cteni.sloupce).toHaveLength(1);
+    expect(maSloupce).toBe(true);
     expect(smazano).toHaveLength(1); // úklid proběhl i tak
   });
 
   it('cizí kód na snímku se přeskočí', async () => {
     const cizi = [...'NECOJINEHO'].map((z) => z.charCodeAt(0));
     const { z } = zavislosti({ prectiKody: async () => [{ bytes: cizi }, { bytes: BAJTY_KODU }] });
-    expect((await nactiTiketZeSnimku('eurojackpot', z)).serioveCislo).toBe('12345678901234567890');
+    expect((await nactiTiketZeSnimku(z)).serioveCislo).toBe('12345678901234567890');
   });
 
   it('číslo klubové karty z fotky neprosákne', async () => {
     const { z } = zavislosti();
-    const vysledek = await nactiTiketZeSnimku('eurojackpot', z);
+    const vysledek = await nactiTiketZeSnimku(z);
     expect(JSON.stringify(vysledek)).not.toContain('9876543210');
+  });
+});
+
+describe('hra z téže fotky', () => {
+  /** Rozpoznaný text tiketu Sportky s popiskem Šance, bez čárového kódu. */
+  const SPORTKA: MlKitVysledek = {
+    blocks: [
+      {
+        lines: [
+          { text: '1: 05 12 23 31 40 49 NT', boundingBox: { left: 40, top: 90, right: 320, bottom: 110 } },
+          { text: 'Šance: 654321', boundingBox: { left: 40, top: 130, right: 200, bottom: 150 } },
+        ],
+      },
+    ],
+  };
+
+  it('pozná hru z čárového kódu a rovnou tiket přečte', async () => {
+    const { z } = zavislosti();
+    const { hra, cteni } = await nactiTiketZeSnimku(z);
+    expect(hra).toEqual({ hra: 'eurojackpot', podle: ['čárový kód'] });
+    expect(cteni?.hra).toBe('eurojackpot');
+  });
+
+  it('bez kódu pozná hru z popisku doplňkové hry', async () => {
+    const { z } = zavislosti({ rozpoznej: async () => SPORTKA, prectiKody: async () => [] });
+    const { hra, cteni } = await nactiTiketZeSnimku(z);
+    expect(hra.hra).toBe('sportka');
+    expect(cteni?.sloupce[0]?.cisla).toEqual([5, 12, 23, 31, 40, 49]);
+    expect(cteni?.kodDoplnkoveHry).toBe('654321');
+  });
+
+  it('rozpor mezi kódem a textem nechá hru na uživateli a snímek jde přečíst znovu', async () => {
+    // Kód Eurojackpotu, text Sportky.
+    const { z, smazano } = zavislosti({ rozpoznej: async () => SPORTKA });
+    const vysledek = await nactiTiketZeSnimku(z);
+    expect(vysledek.hra.hra).toBeNull();
+    expect(vysledek.cteni).toBeNull();
+    expect(smazano).toHaveLength(1);
+    // Volba uživatele se přečte z paměti, bez dalšího snímku.
+    expect(vysledek.prectiJako('sportka').sloupce[0]?.cisla).toEqual([5, 12, 23, 31, 40, 49]);
   });
 });

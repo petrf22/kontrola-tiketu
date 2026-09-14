@@ -5,7 +5,7 @@ import {
   BarcodeScanner,
   type Barcode,
 } from '@capacitor-mlkit/barcode-scanning';
-import { ChybaCarovehoKodu, prectiCarovyKod } from '@kontrola-tiketu/ocr';
+import { ChybaCarovehoKodu, prectiCarovyKod, type PrectenyKod } from '@kontrola-tiketu/ocr';
 import { NaskenovanyTiket } from '../data/sken.js';
 import { maTrvaleUloziste } from '../data/tokeny.js';
 
@@ -16,7 +16,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
  * modul Google Play, který se stahuje ze sítě — a aplikace síť nemá a mít nemá.
  * Snímky se tak zpracovávají za běhu a nikam se neukládají.
  *
- * Kód slouží k jedinému účelu: získat sériové číslo jako lokální identifikátor tiketu.
+ * Z kódu se bere sériové číslo jako lokální identifikátor tiketu a hra z hlavičky.
  * Vsazená čísla v něm čitelná nejsou a číslo klubové karty se zahazuje.
  */
 @Component({
@@ -104,9 +104,9 @@ export class Sken {
       return;
     }
 
-    let serioveCislo: string | null = null;
+    let prectenyKod: PrectenyKod;
     try {
-      serioveCislo = prectiCarovyKod(Uint8Array.from(bajty, (b) => b & 0xff)).serioveCislo;
+      prectenyKod = prectiCarovyKod(Uint8Array.from(bajty, (b) => b & 0xff));
     } catch (potiz) {
       this.chyba.set(
         potiz instanceof ChybaCarovehoKodu
@@ -118,7 +118,8 @@ export class Sken {
 
     await odeberPosluchac();
     await this.zastav();
-    this.naskenovany.uloz(serioveCislo);
+    // Hlavička kódu určuje i hru, takže ji formulář rovnou předvybere.
+    this.naskenovany.uloz(prectenyKod.serioveCislo, prectenyKod.hra);
     await this.router.navigate(['/tiket/novy']);
   }
 }

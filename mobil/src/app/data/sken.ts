@@ -5,14 +5,18 @@
  */
 
 import { Injectable, signal } from '@angular/core';
+import type { Hra } from '@kontrola-tiketu/jadro';
 import type { VysledekCteni } from '@kontrola-tiketu/ocr';
 
 @Injectable({ providedIn: 'root' })
 export class NaskenovanyTiket {
   private readonly serioveCislo = signal<string | null>(null);
+  private readonly hra = signal<Hra | null>(null);
 
-  uloz(cislo: string): void {
+  /** Hra je z hlavičky kódu; `null`, když ji kód neurčil. */
+  uloz(cislo: string, hra: Hra | null): void {
     this.serioveCislo.set(cislo);
+    this.hra.set(hra);
   }
 
   /**
@@ -25,9 +29,15 @@ export class NaskenovanyTiket {
     return this.serioveCislo();
   }
 
+  /** Hra z čárového kódu. Formulář ji nabídne, když nepřišel výsledek z fotky. */
+  prectiHru(): Hra | null {
+    return this.hra();
+  }
+
   /** Zavolat po uložení tiketu. Průchozí údaj nemá přežívat déle, než je potřeba. */
   zapomen(): void {
     this.serioveCislo.set(null);
+    this.hra.set(null);
   }
 }
 
@@ -37,16 +47,22 @@ export class NaskenovanyTiket {
  */
 @Injectable({ providedIn: 'root' })
 export class NactenaCisla {
-  private readonly cteni = signal<VysledekCteni | null>(null);
+  private readonly nacteno = signal<NactenyTiket | null>(null);
 
-  uloz(vysledek: VysledekCteni): void {
-    this.cteni.set(vysledek);
+  /** `hraPodle` říká, čím se hra poznala — nebo že ji zvolil uživatel. Jen pro diagnostiku. */
+  uloz(cteni: VysledekCteni, hraPodle: readonly string[]): void {
+    this.nacteno.set({ cteni, hraPodle });
   }
 
   /** Vyzvedne a zároveň zapomene. */
-  vyzvedni(): VysledekCteni | null {
-    const vysledek = this.cteni();
-    this.cteni.set(null);
+  vyzvedni(): NactenyTiket | null {
+    const vysledek = this.nacteno();
+    this.nacteno.set(null);
     return vysledek;
   }
+}
+
+export interface NactenyTiket {
+  readonly cteni: VysledekCteni;
+  readonly hraPodle: readonly string[];
 }

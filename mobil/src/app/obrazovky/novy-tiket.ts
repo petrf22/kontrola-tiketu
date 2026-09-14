@@ -177,6 +177,9 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       @if (rozpoznanoZeSnimku) {
         <p class="ze-snimku">
           Čísla jsou rozpoznaná ze snímku — projdi je prosím proti papíru.
+          @if (hraZFotky && hraPodle.length > 0) {
+            {{ nazevHry(hraZFotky) }} podle: {{ hraPodle.join(', ') }}.
+          }
           @if (opravene.length > 0) {
             Rozpoznávač musel opravit: {{ opravene.join(', ') }}.
           }
@@ -365,9 +368,16 @@ export class NovyTiket {
   protected readonly serioveCislo = this.naskenovany.precti();
 
   /** Čísla rozpoznaná ze snímku. Jsou jen návrh — uživatel je tu potvrzuje a opravuje. */
-  private readonly rozpoznane = inject(NactenaCisla).vyzvedni();
+  private readonly nacteny = inject(NactenaCisla).vyzvedni();
+  private readonly rozpoznane = this.nacteny?.cteni ?? null;
+  /** Čím se hra z fotky poznala. Zobrazuje se, ať je špatně určená hra hned vidět. */
+  protected readonly hraPodle = this.nacteny?.hraPodle ?? [];
+  protected readonly hraZFotky = this.rozpoznane?.hra ?? null;
 
-  protected readonly hra = signal<Hra>(this.rozpoznane?.hra ?? 'eurojackpot');
+  // Hra z fotky má přednost; po samotném skenu kódu poslouží hra z jeho hlavičky.
+  protected readonly hra = signal<Hra>(
+    this.rozpoznane?.hra ?? this.naskenovany.prectiHru() ?? 'eurojackpot',
+  );
   // Ruční zadání předvyplní dnešek. Tiket z fotky ne: nepřečtené datum musí zůstat prázdné,
   // jinak by se tiket potichu vyhodnotil proti dnešnímu tahu místo toho na papíře.
   protected readonly prvni = signal(

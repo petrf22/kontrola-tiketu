@@ -8,7 +8,7 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 421 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm test             # vitest, 458 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -23,11 +23,12 @@ cd android && ./gradlew :app:assembleDebug
 ```
 knihovny/jadro/src/    model.ts, validace.ts, koncoveCislice.ts, slucovani.ts,
                        eurojackpot.ts, sportka.ts, sance.ts, extra6.ts,
-                       euromiliony.ts, eurosance.ts, vyhodnoceni.ts
+                       euromiliony.ts, eurosance.ts, vyhodnoceni.ts,
+                       rozsah.ts (virtuální tiket, překryvy), bilance.ts
 knihovny/ocr/src/      radky.ts (párování podle rámečků), cisla.ts, tiket.ts, carovyKod.ts
-src/app/data/          import.ts, stahovani.ts, uloziste.ts, stav.ts, tokeny.ts
-src/app/obrazovky/     seznam.ts, novy-tiket.ts, sken.ts, sken-cisel.ts, detail.ts,
-                       import-vysledku.ts, o-aplikaci.ts
+src/app/data/          import.ts, stahovani.ts, uloziste.ts, stav.ts, tokeny.ts, kontrola.ts
+src/app/obrazovky/     seznam.ts, prehled.ts + kolac.ts, novy-tiket.ts, sken.ts, sken-cisel.ts,
+                       detail.ts, import-vysledku.ts, o-aplikaci.ts
 test/                  testy aplikace; fixtures/ má ukázkový balík od backendu
 android/               nativní projekt, zatvrzený manifest
 docs/                  vydani.md (podpis, Play, postup vydání), ocr-a-carovy-kod.md,
@@ -80,6 +81,17 @@ z `07.09.2026 400 Kč` vyjde 2 026 400.
 HyperOS (`INSTALL_FAILED_USER_RESTRICTED`) a je nutné ho otevřít ve správci souborů. Play
 Protect navíc u velkých APK vypršel — proto jsou APK rozdělené podle architektur
 (arm64-v8a ~25 MB).
+
+## Virtuální tiket a přehled
+
+Tiket s vyplněným `kontrola` (rozsah od–do, `do: null` = bez konce) je **virtuální**: kontroluje
+se na všechna slosování v rozsahu podle dnů tiketu, ne podle `slosovani.pocet`. Údaje z papíru
+zůstávají beze změny. Pole je nepovinné, aby tikety uložené dřív platily bez migrace. Vsazeno
+je `cenaZaSlosovaniKc × počet zkontrolovaných slosování` — Allwyn ceny mění, u starých slosování
+je to odhad. Rozsah shodný s papírem se neukládá (`sestavKontrolu` v `data/kontrola.ts`).
+
+Koláče v přehledu jsou vlastní SVG bez knihovny. Barvy `--barva-vsazeno` a `--barva-vyhrano`
+jsou ověřené na rozlišitelnost pro barvoslepé; hnědá a zelená aplikace to nesplňují.
 
 ## Věci, na které se nesmí zapomenout
 

@@ -37,14 +37,14 @@ Ověřené příkazy:
 
 ```bash
 cd backend && composer test && composer phpstan      # PHPUnit 93 testů, PHPStan level max
-cd mobil && npm test && npm run typecheck            # vitest 421 testů, tsc strict
+cd mobil && npm test && npm run typecheck            # vitest 458 testů, tsc strict
 node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 25 testů
 node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí projít bez změny souborů
 ```
 
 ## Stav
 
-Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace se šesti obrazovkami**
+Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace se sedmi obrazovkami**
 a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
 
 **Euromiliony** (13. 9. 2026) jsou vydané ve verzi 0.2.0 a backend s nimi je nasazený, ale tiket

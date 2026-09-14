@@ -66,7 +66,8 @@ describe('nevymýšlí kód', () => {
 
 describe('Sportka', () => {
   it('přečte Šanci s diakritikou i bez ní', () => {
-    // Přesná podoba na tiketu Sportky ověřená není, proto je vzor volnější.
+    // Na tiketu 14. 9. 2026: `Šance:  229087  ANO`.
+    expect(prectiKodDoplnkoveHry(['Šance:  236412  ANO'], 'sportka')).toBe('236412');
     expect(prectiKodDoplnkoveHry(['Šance: 236412'], 'sportka')).toBe('236412');
     expect(prectiKodDoplnkoveHry(['SANCE 236412'], 'sportka')).toBe('236412');
   });
@@ -74,7 +75,8 @@ describe('Sportka', () => {
 
 describe('Euromiliony', () => {
   it('přečte pětimístnou Eurošanci s diakritikou i bez ní', () => {
-    // Přesná podoba na tiketu Euromilionů ověřená není, proto je vzor volnější.
+    // Na tiketu 14. 9. 2026: `Eurošance:  18546  ANO`.
+    expect(prectiKodDoplnkoveHry(['Eurošance:  37960  ANO'], 'euromiliony')).toBe('37960');
     expect(prectiKodDoplnkoveHry(['Eurošance: 37960'], 'euromiliony')).toBe('37960');
     expect(prectiKodDoplnkoveHry(['EUROSANCE 07781'], 'euromiliony')).toBe('07781');
     expect(prectiKodDoplnkoveHry(['Euro šance: 3 7 9 6 0'], 'euromiliony')).toBe('37960');

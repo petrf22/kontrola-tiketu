@@ -4,26 +4,26 @@
  * Z čárového kódu ho vzít nejde — je v šifrovaném bloku a ten se podle zadání neláme.
  * Na tiketu je ale vytištěný, takže ho umí přečíst OCR.
  *
- * Ověřeno na reálném tiketu Eurojackpotu (9. 9. 2026), kde má podobu `Extra 6: 845991`.
- * Popisky Šance u Sportky a Eurošance u Euromilionů ověřené nejsou, proto jsou vzory
- * schválně volnější.
+ * Podoba ověřená na tiketech (Eurojackpot 9. 9. 2026, všechny tři hry 14. 9. 2026):
+ * `Extra 6:  845991  ANO`, `Šance:  229087  ANO`, `Eurošance:  18546  ANO`.
  */
 
 import { DELKA_KODU_DOPLNKOVE_HRY, type Hra } from '@kontrola-tiketu/jadro';
 import { ZAMENY } from './cisla.js';
 
 /**
- * Popisek, za kterým se kód hledá.
+ * Popisek doplňkové hry. Podle něj se čte kód a pozná i hra (`hra.ts`).
  *
- * Eurošance musí mít předponu „euro“: tiket Euromilionů může nést i pětimístný kód Druhé šance,
- * a ten se s Eurošancí zaměnit nesmí.
+ * Pozor na dvě pasti:
+ * - všechny tři tikety mají nahoře reklamu `EXTRA ŠANCE NA VÝHRU S ALLWYN KLUBEM.` — ta nesmí
+ *   projít jako Šance ani jako Extra 6,
+ * - „Šance“ je obsažená v „Eurošance“ (i rozdělené mezerou) a v „Druhé šanci“.
  */
-const POPISKY: Readonly<Record<Hra, RegExp>> = {
-  eurojackpot: /extra\s*6\s*[:.]?/i,
-  sportka: /[šs]ance\s*[:.]?/i,
-  euromiliony: /euro\s*[šs]ance\s*[:.]?/i,
+export const POPISKY_DOPLNKOVE_HRY: Readonly<Record<Hra, RegExp>> = {
+  eurojackpot: /(?<!\p{L})extra\s*6\s*[:.]?/iu,
+  sportka: /(?<!\p{L})(?<!eur[o0]\s*)(?<!extra\s*)(?<!druh[áa]\s*)[šs]ance(?!\s*na\s)\s*[:.]?/iu,
+  euromiliony: /(?<!\p{L})eur[o0]\s*[šs]ance\s*[:.]?/iu,
 };
-
 
 /**
  * Právě `delka` číslic, které nesousedí s další číslicí.
@@ -42,7 +42,7 @@ function vzorKodu(delka: number): RegExp {
  * ručně. Vymyšlený kód by tiše znehodnotil vyhodnocení doplňkové hry.
  */
 export function prectiKodDoplnkoveHry(radky: readonly string[], hra: Hra): string | null {
-  const popisek = POPISKY[hra];
+  const popisek = POPISKY_DOPLNKOVE_HRY[hra];
   const kod = vzorKodu(DELKA_KODU_DOPLNKOVE_HRY[hra]);
 
   for (const radek of radky) {

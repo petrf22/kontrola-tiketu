@@ -4,5 +4,6 @@ export * from './cisla.js';
 export * from './cena.js';
 export * from './doplnkovaHra.js';
 export * from './tiket.js';
+export * from './hra.js';
 export * from './carovyKod.js';
 export * from './mlkit.js';

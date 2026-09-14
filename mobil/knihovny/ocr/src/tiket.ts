@@ -147,7 +147,7 @@ function prectiDny(hlavicka: string): readonly Den[] | null {
  * řádek se `SLOSOVÁNÍ`; když rozpoznávač odtrhl datum do vedlejšího řádku, vezme se datum
  * nejbližší k němu. Teprve bez řádku `SLOSOVÁNÍ` rozhoduje první datum shora.
  */
-function prectiHlavicku(radky: readonly string[]): Hlavicka {
+export function prectiHlavicku(radky: readonly string[]): Hlavicka {
   const indexSlosovani = radky.findIndex((r) => SLOSOVANI.test(r));
   const sDatem = radky
     .map((radek, index) => ({ radek, index, datum: najdiDatum(radek) }))

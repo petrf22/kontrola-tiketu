@@ -5,7 +5,7 @@
  * Uživateli se ale nikdy nemá ukazovat — čte se špatně a v Česku se tak datum nepíše.
  */
 
-import type { Hra } from '@kontrola-tiketu/jadro';
+import type { Hra, Problem } from '@kontrola-tiketu/jadro';
 
 const DATUM = new Intl.DateTimeFormat('cs-CZ', {
   day: 'numeric',
@@ -105,4 +105,37 @@ export function pocetSloupcu(pocet: number): string {
   if (pocet === 1) return '1 sloupec';
   if (pocet >= 2 && pocet <= 4) return `${pocet} sloupce`;
   return `${pocet} sloupců`;
+}
+
+/** Pole sloupce ve formuláři. Euročísla i druhé osudí sdílejí jedno políčko. */
+export type PoleSloupce = 'cisla' | 'druhe';
+
+const CESTA_SLOUPCE = /^sloupce\[(\d+)\]\.(cisla|eurocisla|druheOsudi)(?:\[|$)/;
+
+const NAZVY_POLI: Readonly<Record<string, string>> = {
+  cisla: 'čísla',
+  eurocisla: 'euročísla',
+  druheOsudi: 'druhé osudí',
+};
+
+/**
+ * `sloupce[1].eurocisla[0]` → `{ index: 1, pole: 'druhe', nazev: 'euročísla' }`. Problém mimo
+ * sloupce (kód doplňkové hry, slosování) vrací `null`.
+ */
+export function mistoVeSloupci(
+  cesta: string,
+): { index: number; pole: PoleSloupce; nazev: string } | null {
+  const shoda = CESTA_SLOUPCE.exec(cesta);
+  if (shoda === null) return null;
+  const klic = shoda[2]!;
+  return { index: Number(shoda[1]), pole: klic === 'cisla' ? 'cisla' : 'druhe', nazev: NAZVY_POLI[klic]! };
+}
+
+/**
+ * Hláška pro uživatele: `2. sloupec, euročísla: Očekávají se 2 čísla, zadáno 0.` Bez místa
+ * by u víc sloupců nebylo poznat, kde chyba je. Pořadí sloupce se píše jako ve formuláři.
+ */
+export function popisProblemu(problem: Problem): string {
+  const misto = mistoVeSloupci(problem.cesta);
+  return misto === null ? problem.zprava : `${misto.index + 1}. sloupec, ${misto.nazev}: ${problem.zprava}`;
 }

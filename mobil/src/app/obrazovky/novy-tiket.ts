@@ -12,7 +12,15 @@ import {
   type Tiket,
 } from '@kontrola-tiketu/jadro';
 import { prectiCisla } from '@kontrola-tiketu/ocr';
-import { HRY, nazevDne, nazevDoplnkoveHry, nazevHry } from '../data/format.js';
+import {
+  HRY,
+  mistoVeSloupci,
+  nazevDne,
+  nazevDoplnkoveHry,
+  nazevHry,
+  popisProblemu,
+  type PoleSloupce,
+} from '../data/format.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { Stav } from '../data/stav.js';
 
@@ -20,7 +28,15 @@ interface Radek {
   cisla: string;
   /** Euročísla (Eurojackpot) nebo číslo z druhého osudí (Euromiliony). */
   druheOsudi: string;
+  /**
+   * Jestli už uživatel pole opustil. Do té doby se jeho chyby neukazují — prázdný sloupec
+   * by jinak hlásil chyby hned po otevření formuláře. Příznak žije v řádku, aby se při
+   * odebrání sloupce posunul s ním.
+   */
+  dotceno: Record<PoleSloupce, boolean>;
 }
+
+const PRAZDNY_RADEK: Radek = { cisla: '', druheOsudi: '', dotceno: { cisla: false, druhe: false } };
 
 /**
  * Kolik sloupců formulář dovolí přidat. Euromiliony: jedna až devět sázek na sázence
@@ -153,11 +169,13 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
           <input type="text" inputmode="numeric" [value]="radek.cisla"
             [attr.aria-label]="'Čísla sloupce ' + ($index + 1)"
             [placeholder]="napoveda().cisla"
-            (input)="zmenCisla($index, $any($event.target).value)" />
+            (input)="zmenCisla($index, $any($event.target).value)"
+            (blur)="dotkni($index, 'cisla')" />
           @if (napoveda().druheOsudi; as druhe) {
             <input type="text" inputmode="numeric" class="euro" [value]="radek.druheOsudi"
               [attr.aria-label]="napoveda().druheOsudiNazev" [placeholder]="druhe"
-              (input)="zmenDruheOsudi($index, $any($event.target).value)" />
+              (input)="zmenDruheOsudi($index, $any($event.target).value)"
+              (blur)="dotkni($index, 'druhe')" />
           }
           @if (radky().length > 1) {
             <button type="button" class="odebrat" (click)="odeber($index)" aria-label="Odebrat sloupec">×</button>
@@ -166,10 +184,10 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       }
       <button type="button" class="pridat" (click)="pridej()">Přidat sloupec</button>
 
-      @if (problemy().length > 0) {
+      @if (viditelneProblemy().length > 0) {
         <ul class="problemy">
-          @for (problem of problemy(); track problem.cesta + problem.kod) {
-            <li>{{ problem.zprava }}</li>
+          @for (problem of viditelneProblemy(); track problem.cesta + problem.kod) {
+            <li>{{ popisProblemu(problem) }}</li>
           }
         </ul>
       }
@@ -178,7 +196,7 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
         Tlačítko se jmenuje podle toho, proč ho uživatel mačká, ne podle toho, co dělá uvnitř.
         Uložení je vedlejší efekt, důvod je zjistit, jestli tiket vyhrál.
       -->
-      <button type="submit" class="ulozit" [disabled]="problemy().length > 0">
+      <button type="submit" class="ulozit">
         Zkontrolovat tiket
       </button>
       <p class="pod-tlacitkem">Tiket se zároveň uloží do seznamu, ať ho můžeš zkontrolovat i po dalších losováních.</p>
@@ -203,7 +221,6 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       background: var(--barva-plocha); color: inherit; font: inherit; cursor: pointer;
     }
     .ulozit { background: var(--barva-duraz); color: #fff; border-color: transparent; }
-    .ulozit:disabled { opacity: 0.45; cursor: not-allowed; }
     .problemy { margin: 0; padding-left: 1.1rem; color: var(--barva-chyba); font-size: 0.85rem; }
     .pod-tlacitkem {
       margin: -0.5rem 0 0; font-size: 0.78rem; color: var(--barva-text-tlumeny);
@@ -257,10 +274,12 @@ export class NovyTiket {
   );
   protected readonly radky = signal<Radek[]>(
     this.rozpoznane === null || this.rozpoznane.sloupce.length === 0
-      ? [{ cisla: '', druheOsudi: '' }]
-      : this.rozpoznane.sloupce.map((s) => ({
+      ? [PRAZDNY_RADEK]
+      : // Čísla ze snímku se mají projít hned, proto jsou jejich chyby vidět od začátku.
+        this.rozpoznane.sloupce.map((s) => ({
           cisla: s.cisla.join(' '),
           druheOsudi: s.druheOsudi.join(' '),
+          dotceno: { cisla: true, druhe: true },
         })),
   );
 
@@ -303,6 +322,24 @@ export class NovyTiket {
 
   protected readonly problemy = computed(() => zkontrolujTiket(this.navrh()));
 
+  /** Stisk „Zkontrolovat tiket“ ukáže všechny chyby, i v polích, kam uživatel nesáhl. */
+  private readonly odeslano = signal(false);
+
+  /**
+   * Chyby sloupce se ukážou až po opuštění pole. Ostatní hned — výchozí hodnoty jsou platné,
+   * takže chyba tam vznikne jen úpravou.
+   */
+  protected readonly viditelneProblemy = computed(() => {
+    if (this.odeslano()) return this.problemy();
+    const radky = this.radky();
+    return this.problemy().filter((problem) => {
+      const misto = mistoVeSloupci(problem.cesta);
+      return misto === null || radky[misto.index]?.dotceno[misto.pole] === true;
+    });
+  });
+
+  protected readonly popisProblemu = popisProblemu;
+
   protected readonly rozpoznanoZeSnimku = this.rozpoznane !== null;
 
   protected zmenHru(hra: Hra): void {
@@ -326,9 +363,16 @@ export class NovyTiket {
     );
   }
 
+  protected dotkni(index: number, pole: PoleSloupce): void {
+    if (this.radky()[index]?.dotceno[pole] !== false) return;
+    this.radky.update((r) =>
+      r.map((radek, i) => (i === index ? { ...radek, dotceno: { ...radek.dotceno, [pole]: true } } : radek)),
+    );
+  }
+
   protected pridej(): void {
     if (this.radky().length >= NEJVIC_SLOUPCU[this.hra()]) return;
-    this.radky.update((r) => [...r, { cisla: '', druheOsudi: '' }]);
+    this.radky.update((r) => [...r, PRAZDNY_RADEK]);
   }
 
   protected odeber(index: number): void {
@@ -337,6 +381,7 @@ export class NovyTiket {
 
   protected async uloz(udalost: Event): Promise<void> {
     udalost.preventDefault();
+    this.odeslano.set(true);
     if (this.problemy().length > 0) return;
     const tiket = this.navrh();
     await this.stav.ulozTiket(tiket);

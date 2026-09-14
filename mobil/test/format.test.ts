@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   formatujDatum,
   formatujDatumCas,
+  mistoVeSloupci,
   nazevDne,
   nazevDoplnkoveHry,
   nazevHry,
   nazevPoradiDoplnkoveHry,
   pocetSloupcu,
   popisDnuSlosovani,
+  popisProblemu,
 } from '../src/app/data/format.js';
 
 describe('formatujDatum', () => {
@@ -93,5 +95,38 @@ describe('popisDnuSlosovani', () => {
 
   it('víc dnů spojí čárkou a poslední spojkou', () => {
     expect(popisDnuSlosovani(['st', 'pa', 'ne'])).toBe('jen ve středu, v pátek a v neděli');
+  });
+});
+
+describe('popisProblemu', () => {
+  const problem = (cesta: string) =>
+    ({ kod: 'spatny-pocet-cisel', zprava: 'Očekávají se 2 čísla, zadáno 0.', cesta }) as const;
+
+  it('řekne, ve kterém sloupci a poli chyba je', () => {
+    expect(popisProblemu(problem('sloupce[0].cisla'))).toBe('1. sloupec, čísla: Očekávají se 2 čísla, zadáno 0.');
+    expect(popisProblemu(problem('sloupce[1].eurocisla'))).toBe(
+      '2. sloupec, euročísla: Očekávají se 2 čísla, zadáno 0.',
+    );
+    expect(popisProblemu(problem('sloupce[2].druheOsudi[0]'))).toBe(
+      '3. sloupec, druhé osudí: Očekávají se 2 čísla, zadáno 0.',
+    );
+  });
+
+  it('problém mimo sloupce nechá beze změny', () => {
+    expect(popisProblemu(problem('kodDoplnkoveHry'))).toBe('Očekávají se 2 čísla, zadáno 0.');
+  });
+});
+
+describe('mistoVeSloupci', () => {
+  it('euročísla i druhé osudí patří do druhého políčka', () => {
+    expect(mistoVeSloupci('sloupce[3].eurocisla[1]')).toEqual({ index: 3, pole: 'druhe', nazev: 'euročísla' });
+    expect(mistoVeSloupci('sloupce[0].druheOsudi')?.pole).toBe('druhe');
+    expect(mistoVeSloupci('sloupce[12].cisla[4]')).toEqual({ index: 12, pole: 'cisla', nazev: 'čísla' });
+  });
+
+  it('jiné cesty nejsou ve sloupci', () => {
+    expect(mistoVeSloupci('sloupce')).toBeNull();
+    expect(mistoVeSloupci('sloupce[0]')).toBeNull();
+    expect(mistoVeSloupci('slosovani.dny')).toBeNull();
   });
 });

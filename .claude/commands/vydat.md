@@ -9,14 +9,18 @@ při rozporu platí ten dokument.
 
 ## Aktuální stav
 
-Verze: !`cat VERSION`
+Kořen repozitáře: !`git rev-parse --show-toplevel`
+Verze: !`cat "$(git rev-parse --show-toplevel)/VERSION"`
 Poslední tagy: !`git tag --list | sort -V | tail -5`
 Větev a čistota stromu: !`git status -sb`
 Commity od posledního tagu: !`git log $(git tag --list | sort -V | tail -1)..HEAD --oneline --no-merges 2>/dev/null || git log --oneline --no-merges`
-Sekce `[Nezveřejněno]` v CHANGELOG.md: !`grep -n "Nezveřejněno" CHANGELOG.md || echo "(žádná)"`
+Sekce `[Nezveřejněno]` v CHANGELOG.md: !`grep -n "Nezveřejněno" "$(git rev-parse --show-toplevel)/CHANGELOG.md" || echo "(žádná)"`
 Dnešní datum: !`date +%Y-%m-%d`
 
 ## Krok 0: Předpoklady
+
+Všechny cesty v dalších krocích jsou relativní ke kořeni repozitáře (výše). Session může stát
+v podadresáři, třeba v `mobil/` — příkazy proto spouštěj s absolutní cestou nebo z kořene.
 
 Větev musí být `main` a `git status --short` prázdný. Tenhle projekt commituje přímo do
 `main`, bez feature větví a bez PR. Když je něco rozdělaného, zastav se a řekni to.

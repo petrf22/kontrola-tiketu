@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [0.3.0] – 2026-09-14
 
 ### Přidáno
 - Rozsah kontroly tiketu: začátek jde posunout do minulosti a konec smazat, takže se tiket se stejnými čísly kontroluje zpětně i s každým dalším losováním; takový tiket nese štítek „virtuální“ (aplikace)

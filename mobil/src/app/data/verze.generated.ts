@@ -13,10 +13,25 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.2.1';
+export const VERZE = '0.3.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.3.0',
+    datum: '2026-09-14',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Rozsah kontroly tiketu: začátek jde posunout do minulosti a konec smazat, takže se tiket se stejnými čísly kontroluje zpětně i s každým dalším losováním; takový tiket nese štítek „virtuální“',
+          'Kontrolu bez konce jde v detailu tiketu ukončit k vybranému datu, znovu pustit nebo rozsah upravit; slosování bez výhry jsou u virtuálního tiketu sbalená',
+          'Když se stejná sázka kontroluje dvěma tikety na stejná slosování, aplikace upozorní, že se výhry i vsazené částky započítají dvakrát',
+          'Obrazovka Přehled s koláčovými grafy vsazeno × vyhráno — celkem a zvlášť pro Eurojackpot, Sportku a Euromiliony',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.2.1',
     datum: '2026-09-14',

@@ -96,7 +96,7 @@ Aplikace není určena dětem. Nesbírá žádné osobní údaje, tedy ani údaj
 ## Změny těchto zásad
 
 Případné změny budou zveřejněné v tomto souboru spolu s datem platnosti a shrnuté
-v [historii změn](../CHANGELOG.md).
+v [historii změn](../../CHANGELOG.md).
 
 ## Kontakt
 

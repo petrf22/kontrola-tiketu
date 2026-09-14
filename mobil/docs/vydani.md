@@ -1,6 +1,6 @@
 # Vydání: verzování, podpis a cesta do Google Play
 
-Stav k **9. 9. 2026**. Runbook i zápis rozhodnutí — když se tu něco tváří jako zbytečná
+Stav k **14. 9. 2026**. Runbook i zápis rozhodnutí — když se tu něco tváří jako zbytečná
 opatrnost, je to nejspíš zapsaná past, na kterou už někdo šlápl.
 
 Předloha postupu je `~/pracovni/kvalita-cena` (`docs/vydani.md` tamtéž). Odchylky jsou
@@ -186,8 +186,13 @@ https://github.com/petrf22/kontrola-tiketu/blob/main/mobil/docs/zasady-ochrany-o
 Repozitář je veřejný a GitHub markdown vykresluje, takže je to použitelná stránka bez
 zakládání webu. Odkaz míří na `main` schválně — zásady mají popisovat, co aplikace dělá teď,
 ne co dělala v době vydání. **Když se repozitář kdykoli přepne na soukromý, přestane odkaz
-fungovat a Play na to sáhne při první další aktualizaci.** Stejně tak přesun souboru —
-13. 9. 2026 se přestěhoval z `docs/` do `mobil/docs/` (aplikace tehdy v Play ještě nebyla).
+fungovat a Play na to sáhne při první další aktualizaci.**
+
+**Adresa je pevná — soubor se nepřesouvá ani nepřejmenovává.** 13. 9. 2026 se přestěhoval
+z `docs/` do `mobil/docs/`, v Play Console zůstala stará adresa s 404 a Play 14. 9. 2026
+aktualizaci zamítl („Neplatné zásady ochrany soukromí“). Když přesun jinak nejde: nejdřív
+změnit adresu v Play Console (*Obsah aplikace → Zásady ochrany soukromí*), až potom soubor
+přesunout. Viz „Past: zamítnutí se tváří jako ‚Položka nenalezena‘“.
 
 ### Data safety
 
@@ -337,6 +342,29 @@ Skutečné tikety uživatele se k tomu nepoužívají.
 Nové vývojářské účty musí projít **uzavřeným testem: 12 testerů, kteří jsou přihlášení
 souvisle 14 dní**, než Play pustí aplikaci do otevřené produkce. Počítej s tím při plánování.
 
+Odkaz, přes který se tester přihlásí, se kopíruje z *Testeři → Připojit se na webu* dané
+stopy, nesestavuje se ručně: uzavřený a otevřený test mají
+`https://play.google.com/apps/testing/cz.petrf22.kontrolatiketu`, interní test vlastní
+`https://play.google.com/apps/internaltest/<číslo>`. Tester musí být v **zaškrtnutém**
+seznamu té stopy (i vlastník účtu) a Obchod Play musí být přepnutý na tentýž účet.
+
+### Past: zamítnutí se tváří jako „Položka nenalezena“
+
+Narazilo se na to 14. 9. 2026 u verze 0.2.0. Příznaky:
+
+- přišel e-mail „Your update … is live in the store“,
+- odkaz do obchodu hlásí „Položka nenalezena“, odkaz pro testery „App not available … isn't
+  available for this account“ — na telefonu i na PC, takže to není telefonem ani účtem,
+- stopa v Play Console píše „Tento kanál je pozastaven. Testeři toto vydání nedostávají.“
+
+Pozastavený kanál je jen důsledek. Příčina je v **Soulad se zásadami** (*Policy status*):
+„Aktualizace zamítnuta — Neplatné zásady ochrany soukromí“, protože adresa zásad vracela 404
+(viz „Zásady ochrany osobních údajů“). Oprava: odstranit důvod zamítnutí, odeslat změny ke
+kontrole v *Přehledu publikování*, po schválení obnovit kanál a zkontrolovat *Země/oblasti*.
+
+**Když aplikace v Play „zmizí“, první pohled patří do *Souladu se zásadami*,** ne do nastavení
+testerů.
+
 ---
 
 ## Postup vydání
@@ -408,6 +436,9 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
       přes `aapt2`, že má právě `CAMERA` a `INTERNET` a žádný `datatransport`, a `sit.test.ts`
 - [ ] `node nastroje/verze/sync.mjs` nezmění žádný soubor
 - [ ] `versionCode` v `output-metadata.json` je vyšší než naposledy nahraný do Play
+- [ ] adresa zásad z Play Console (*Obsah aplikace → Zásady ochrany soukromí*) žije:
+      `curl -s -o /dev/null -w '%{http_code}' -L <adresa>` vrací `200`
+- [ ] *Soulad se zásadami* v Play Console neukazuje žádné zamítnutí
 - [ ] `publishableBundle` doběhl a vypsal „Podpis ověřen“
 - [ ] aplikace nainstalovaná z release APK na telefonu funguje: fotka tiketu, sken kódu,
       stažení výsledků po otevření i tlačítkem, import souboru, vyhodnocení

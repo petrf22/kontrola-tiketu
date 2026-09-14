@@ -32,3 +32,6 @@ keystore.properties
 .vscode/
 *.iml
 .DS_Store
+
+# Fotky skutečných tiketů pro ladění čtení — čárový kód nese číslo klubové karty
+tikety/

@@ -63,6 +63,13 @@ export function dnyZVyberu(hra: Hra, zaskrtnute: readonly Den[]): Den[] | null {
   return vybrane.length === nabidka.length ? null : vybrane;
 }
 
+/** „Očekává se 1 číslo“, „Očekávají se 2 čísla“, „Očekává se 5 čísel“. */
+function ocekavaSeCisel(pocet: number): string {
+  if (pocet === 1) return 'Očekává se 1 číslo';
+  if (pocet >= 2 && pocet <= 4) return `Očekávají se ${pocet} čísla`;
+  return `Očekává se ${pocet} čísel`;
+}
+
 interface Ocekavani {
   readonly pocet: number;
   readonly min: number;
@@ -83,7 +90,7 @@ export function zkontrolujCisla(
   if (cisla.length !== ocekavani.pocet) {
     problemy.push({
       kod: 'spatny-pocet-cisel',
-      zprava: `Očekává se ${ocekavani.pocet} čísel, zadáno ${cisla.length}.`,
+      zprava: `${ocekavaSeCisel(ocekavani.pocet)}, zadáno ${cisla.length}.`,
       cesta,
     });
   }

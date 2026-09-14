@@ -67,6 +67,14 @@ describe('zkontrolujCisla', () => {
     expect(problemy[0]?.cesta).toBe('c[1]');
   });
 
+  it('skloňuje počet v hlášce', () => {
+    const zprava = (cisla: number[], ocekavani: { pocet: number; min: number; max: number }) =>
+      zkontrolujCisla(cisla, ocekavani, 'c')[0]?.zprava;
+    expect(zprava([], ROZSAHY.euromiliony.druheOsudi)).toBe('Očekává se 1 číslo, zadáno 0.');
+    expect(zprava([], ROZSAHY.eurojackpot.eurocisla)).toBe('Očekávají se 2 čísla, zadáno 0.');
+    expect(zprava([1], ROZSAHY.eurojackpot.cisla)).toBe('Očekává se 5 čísel, zadáno 1.');
+  });
+
   it('vrátí všechny problémy najednou, ne jen první', () => {
     // Uživatel opravuje naOCRovaná čísla — potřebuje vidět všechno naráz.
     const problemy = zkontrolujCisla([99, 99], ocekavani, 'c');

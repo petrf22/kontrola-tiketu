@@ -8,7 +8,7 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 458 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm test             # vitest, 508 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -68,10 +68,15 @@ Snímání je sjednocené: **jedna fotka dá čísla, `Extra 6` i sériové čí
 (`readBarcodesFromImage` vrací tentýž typ `Barcode` včetně `bytes`). Obrazovka „Jen kód“
 zůstává pro případ, že fotka kód nezachytí nebo uživatel nechce pořizovat snímek vůbec.
 
-Podoba doplňkové hry na tiketu Eurojackpotu: `Extra 6: 845991`, cena `400 Kč`. Podoba Šance
-u Sportky ověřená není — vzor je proto volnější. **Tiket Euromilionů neviděl nikdo vůbec**:
-rozvržení (7 čísel + 1 z druhého osudí), popisek Eurošance (pět číslic) i čárový kód jsou
-předpoklad, viz `docs/ocr-a-carovy-kod.md`.
+Podoba všech tří tiketů je ověřená na fotkách ze 14. 9. 2026 (`docs/ocr-a-carovy-kod.md`,
+„Jak tikety vypadají“): `Extra 6:`, `Šance:`, `Eurošance:`; Euromiliony tisknou `SLOSOVÁNÍ: 4`
+bez závorky se dny a před číslem z druhého osudí pomlčku. Na telefonu je ale ověřený jen
+Eurojackpot. Přepisy tiketů pro testy jsou v `knihovny/ocr/test/tiketyZFotek.ts`.
+
+**Hru aplikace pozná sama** (`knihovny/ocr/src/hra.ts`): každý signál — bajt hlavičky kódu,
+popisek doplňkové hry, logo, dny v hlavičce, pomlčka ve sloupci — zužuje množinu her a rozhodne
+se, jen když zbude jedna. Rozpor se nedomýšlí, uživatel pak hru zvolí po fotce. Pozor na reklamu
+`EXTRA ŠANCE NA VÝHRU S ALLWYN KLUBEM.` nahoře na **všech** tiketech — nesmí projít jako Šance.
 
 **Pozor u čtení částek:** skládání řádků podle rámečků může cenu spojit s okolím, takže se
 nesmí kotvit na konec řádku. Zároveň částka nesmí začít uprostřed jiného čísla — jinak
@@ -117,7 +122,11 @@ jsou ověřené na rozlišitelnost pro barvoslepé; hnědá a zelená aplikace t
 Čárový kód tiketu je **PDF417** (ne QR). Struktura payloadu je popsaná v zadání. Podstatné:
 
 - **Vsazená čísla v kódu čitelná nejsou** — jsou v šifrovaném bloku. Ověřeno.
-- Kód slouží **pouze** jako zdroj lokálního ID tiketu (sériové číslo → deduplikace).
+- **Šifrovaný blok má proměnnou délku** (24–72 bajtů), sériové číslo se hledá za značkou
+  `02 01 00 16 01 00`, ne na offsetu 89. Na tom offsetu čtení 14. 9. 2026 padalo u tiketů
+  bez klubové karty.
+- Kód slouží jako zdroj lokálního ID tiketu (sériové číslo → deduplikace) a **hry** (první bajt
+  hlavičky: `0x13` EJ, `0x0f` Sportka, `0x0c` EM; Sportka a EM zatím po jednom vzorku).
 - Šifrovaný blok se **neláme**, oficiální aplikace se **nereverzuje**, za přihlášení se nechodí.
 - Číslo klubové karty je v payloadu v plaintextu — **zahazuje se**, neukládá ani nezobrazuje.
 

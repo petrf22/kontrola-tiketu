@@ -21,10 +21,18 @@ offset 89   20 číslic ASCII             sériové číslo tiketu (shodné s ti
 offset 109  0b 01 + 10 číslic ASCII     číslo karty Allwyn Klub, plaintext
 ```
 
+> **Upřesněno 14. 9. 2026** podle kódů ze tří dalších tiketů (Eurojackpot, Sportka, Euromiliony;
+> 61–77 bajtů, bez klubové karty). Offsety výše platí jen pro tiket s 72bajtovým blokem.
+> Šifrovaný blok má **proměnnou délku** (24–72 bajtů), magic je jen `RBF1` (bajty 4–5 se liší)
+> a sériové číslo leží za značkou `02 01 00 16 01 00`, ne na pevném offsetu. Číslo klubové
+> karty je v kódu, jen když ji sázející použil. **První bajt hlavičky odpovídá hře**:
+> `0x13` Eurojackpot, `0x0f` Sportka, `0x0c` Euromiliony. Podrobnosti v
+> `mobil/docs/ocr-a-carovy-kod.md`.
+
 Důsledky:
 
 - **Vsazená čísla v kódu čitelná nejsou.** Ověřeno: žádná z vsazených pětic se v payloadu nevyskytuje jako sekvence bajtů, kód doplňkové hry se tam nevyskytuje jako ASCII. Sázka je uvnitř šifrovaného bloku.
-- Dekódování kódu má smysl **pouze** jako zdroj lokálního identifikátoru tiketu (sériové číslo → deduplikace, párování s naOCRovanými čísly).
+- Dekódování kódu má smysl **pouze** jako zdroj lokálního identifikátoru tiketu (sériové číslo → deduplikace, párování s naOCRovanými čísly) a — od 14. 9. 2026 — k určení hry z nešifrované hlavičky.
 - **Nepokoušej se ten šifrovaný blok lámat.** Není to cíl projektu.
 - Číslo klubové karty je v kódu nešifrované — aplikace ho nesmí nikam ukládat ani zobrazovat.
 

@@ -1,7 +1,7 @@
 # Čtení tiketu: co jde, co nejde a proč
 
 Stav k **14. 9. 2026**. Logika čtení tiketu je v `knihovny/ocr`, zapojená a vyzkoušená na
-reálných tiketech Eurojackpotu. Historická část níž popisuje rozhodnutí, která k zapojení vedla.
+reálných tiketech Eurojackpotu; tikety všech tří her jsou ověřené na fotkách. Historická část níž popisuje rozhodnutí, která k zapojení vedla.
 
 ---
 
@@ -12,6 +12,7 @@ reálných tiketech Eurojackpotu. Historická část níž popisuje rozhodnutí,
 | Skládání řádků, čtení čísel, čtení kódu | **hotové**, otestované bez zařízení |
 | Sken čárového kódu (PDF417) | **ověřený** na reálném tiketu (9. 9. 2026, znovu z Play 14. 9.) |
 | Rozpoznávání čísel z tiketu (OCR) | **zapojené** s vědomou odchylkou od zadání — viz níže; na reálném tiketu funguje, ale ne na první fotku |
+| Rozpoznání hry | **hotové** (14. 9. 2026), otestované na přepisech fotek; na telefonu neověřené |
 
 ---
 
@@ -94,8 +95,31 @@ offset 109     0b 01
 offset 111     10 číslic ASCII  ← číslo klubové karty, zahazuje se
 ```
 
-Používá se tedy `prectiCarovyKod`, který pracuje s bajty a offsety podle zadání. Obcházení
-vzorem bylo odstraněno — dead code postavený na špatném předpokladu je horší než žádný.
+Používá se tedy `prectiCarovyKod`, který pracuje s bajty. Obcházení vzorem bylo odstraněno —
+dead code postavený na špatném předpokladu je horší než žádný.
+
+### Upřesnění 14. 9. 2026: blok má proměnnou délku a hlavička nese hru
+
+**Pevné offsety platily jen pro první tiket.** Kódy tří dalších tiketů, dekódované z fotek
+(zxing-cpp na počítači, vypsaná jen délka, hlavička a oddělovače — nikdy číslo karty):
+
+| | Eurojackpot | Sportka | Euromiliony | Eurojackpot 9. 9. |
+|---|---|---|---|---|
+| délka | 69 | 77 | 61 | 121 |
+| bajty 0–5 | `RBF1 16 25` | `RBF1 16 2d` | `RBF1 16 1d` | `RBF16M` |
+| hlavička 6–10 | **`13`** 00 02 00 01 | **`0f`** 00 01 00 01 | **`0c`** 00 01 00 01 | **`13`** 00 02 00 01 |
+| šifrovaný blok | 32 | 40 | 24 | 72 |
+| sériové číslo od | 49 | 57 | 41 | 89 |
+| klubová karta | ne | ne | ne | ano |
+
+- Na pevném offsetu 89 a s minimem 109 bajtů **čtení na všech třech tiketech padalo**:
+  fotka potichu nedala sériové číslo a obrazovka „Jen kód“ skončila chybou. Sériové číslo
+  se teď hledá za značkou `02 01 00 16 01 00` a magic je jen `RBF1`.
+- **První bajt hlavičky odpovídá hře.** `0x13` sedí na dvou tiketech Eurojackpotu s různým
+  počtem sloupců i slosování; Sportka a Euromiliony mají zatím po jednom vzorku. Neznámý bajt
+  proto není chyba, jen hru neurčí.
+- Bajt 5 je u všech čtyř tiketů konec sériového čísla − 32. Nic se na tom nestaví.
+- Bajty jsou z zxing-cpp, ne z ML Kitu. Že je telefon vrací stejně, zbývá ověřit.
 
 **Pozor na jednu věc:** bajty přicházejí jako **znaménkové** Java hodnoty, takže se musí
 maskovat (`b & 0xff`). Bez toho se šifrovaný blok rozsype a offsety přestanou sedět.
@@ -144,21 +168,49 @@ podle skutečného tiketu místo odhadu.
 
 ---
 
-## Euromiliony: neověřeno na papíře
+## Jak tikety vypadají (fotky 14. 9. 2026)
 
-Podpora Euromilionů (13. 9. 2026) stojí na předpokladech, které nikdo neviděl na skutečném
-tiketu:
+Tikety všech tří her, vyfocené a přepsané. Na telefonu je zatím vyzkoušený jen Eurojackpot.
+Přepisy s vymyšlenými čísly jsou v `knihovny/ocr/test/tiketyZFotek.ts`.
 
-- **Rozvržení sloupců** se čeká stejné jako u Eurojackpotu: vlevo pořadí a sedm čísel, vpravo
-  jedno číslo z druhého osudí. Testy v `knihovny/ocr/test/tiket.test.ts` jsou syntetické.
-- **Popisek Eurošance** hledá `euro šance` s diakritikou i bez, v délce pěti číslic. Předpona
-  „euro“ je povinná, aby se nesebral pětimístný kód Druhé šance, kdyby byl na tiketu vytištěný.
-- **Čárový kód** se čte se stejnou hlavičkou `RBF16M` a sériovým číslem na offsetu 89. Když
-  tiket Euromilionů nese jinou hlavičku, čtení kódu skončí chybou a tiket dostane náhradní
-  identifikátor — vyhodnocení to neovlivní, jen deduplikaci.
+| | Eurojackpot | Sportka | Euromiliony |
+|---|---|---|---|
+| logo | `EUROJACKPOT` (tečkované písmo) | `sportka` (místo o míč) + `allwyn` | `Euromiliony` |
+| hlavička | `SLOSOVÁNÍ: 4 (ÚT,PÁ)  15.09.2026-25.09.2026` | `SLOSOVÁNÍ: 6 (ST,PA,NE) 16.09.2026-27.09.2026` | `SLOSOVÁNÍ: 4   15.09.2026-26.09.2026` |
+| sloupec | `1: 01 06 07 35 49` … `01 12 NT` | `1:  02 08 27 34 43 46  NT` | `1: 01 07 15 22 23 25 29  -  05 NT` |
+| doplňková hra | `Extra 6:  895373  ANO` | `Šance:  229087  ANO` | `Eurošance:  18546  ANO` |
+| pod ní | `14.09.2026  640 Kč  11:20:36` | `14.09.2026  720 Kč  11:21:14` | `14.09.2026  360 Kč  11:20:53` |
 
-Čísla i kód Eurošance uživatel vždy potvrzuje ve formuláři, takže chybné čtení nepropadne
-tiše. Až bude po ruce skutečný tiket, stačí jedna fotka.
+Nad hlavičkou mají **všechny tři** reklamu `EXTRA ŠANCE NA VÝHRU S ALLWYN KLUBEM.` a `NAVÍC
+JOKER NÁSOBÍ VÝHRY NA KOLE ŠTĚSTÍ.` Starý nekotvený vzor Šance na ni seděl.
+
+- **Hlavička** má rozsah dat a v závorce vsazené dny — Sportka `6 (ST,PA,NE)` od 16. do 27. 9.
+  vychází přesně na šest slosování. Euromiliony závorku netisknou, proto se počet slosování
+  čte za popiskem `SLOSOVÁNÍ`, ne před závorkou. Dny se zatím do formuláře nepropisují.
+- **Sloupec Euromilionů** je jeden blok, číslo z druhého osudí odděluje pomlčka.
+- **Eurošance** má pět číslic, Šance a Extra 6 šest.
+
+## Rozpoznání hry
+
+`knihovny/ocr/src/hra.ts`. Hru prozrazuje víc věcí a každá se dá přečíst špatně, takže se
+žádné nevěří slepě. Každý signál **zužuje množinu her**; hra se určí, jen když zbude jedna.
+
+| signál | kandidáti |
+|---|---|
+| první bajt hlavičky čárového kódu | jedna hra |
+| popisek `Extra 6` / `Šance` / `Eurošance` (ne v reklamě, Eurošanci ani Druhé šanci) | jedna hra |
+| název z loga, se znaky navíc (tečkované písmo, míč, stylizované i) | jedna hra |
+| každý den v závorce hlavičky | hry, které ten den losují — `(ÚT,PÁ)` tak dá Eurojackpot, `(PÁ)` nic |
+| pomlčka mezi čísly sloupce | Euromiliony |
+
+**Rozpor ani žádný signál se nedomýšlí.** Špatně určená hra by čísla ve sloupci rozdělila
+jinak (5+2 × 6 × 7+1). Obrazovka se pak po fotce zeptá „Je to…“ a tentýž snímek přečte znovu
+z textu v paměti — soubor je v tu chvíli smazaný. Formulář ukáže, podle čeho se hra poznala.
+Po samotném skenu kódu formulář předvybere hru z hlavičky.
+
+Na syntetických přepisech bez úhlů řádků se sklon při skládání zadává napevno. Odhad hlasováním
+je na pravidelné mřížce s mnoha jednodílnými řádky nejednoznačný (posun pravých útržků o celý
+řádek dá stejné skóre). Na zařízení úhel dodává ML Kit z rohů řádku.
 
 ---
 

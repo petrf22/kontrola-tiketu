@@ -4,7 +4,7 @@
  * potřeba ukázat všechny chyby najednou, ne jen tu první.
  */
 
-import type { Den, Hra, Sloupec, Tiket } from './model.js';
+import type { Den, Hra, RozsahKontroly, Sloupec, Tiket } from './model.js';
 
 export interface Problem {
   readonly kod: ProblemKod;
@@ -21,7 +21,10 @@ export type ProblemKod =
   | 'zadny-sloupec'
   | 'nesouhlasi-hra'
   | 'spatny-pocet-slosovani'
-  | 'prazdny-seznam-dnu';
+  | 'prazdny-seznam-dnu'
+  | 'spatne-datum'
+  | 'konec-pred-zacatkem'
+  | 'spatna-cena';
 
 /** Rozsahy podle herního plánu. */
 export const ROZSAHY = {
@@ -192,6 +195,10 @@ export function zkontrolujTiket(tiket: Tiket): Problem[] {
     });
   }
 
+  if (tiket.kontrola !== undefined) {
+    problemy.push(...zkontrolujKontrolu(tiket.kontrola));
+  }
+
   if (tiket.kodDoplnkoveHry !== null) {
     problemy.push(
       ...zkontrolujKodDoplnkoveHry(
@@ -200,6 +207,55 @@ export function zkontrolujTiket(tiket: Tiket): Problem[] {
         'kodDoplnkoveHry',
       ),
     );
+  }
+
+  return problemy;
+}
+
+/** Je `datum` skutečné datum ve tvaru `RRRR-MM-DD`? Odmítne i 31. února. */
+export function jePlatneDatum(datum: string): boolean {
+  const shoda = /^(\d{4})-(\d{2})-(\d{2})$/.exec(datum);
+  if (shoda === null) return false;
+  const [rok, mesic, den] = [Number(shoda[1]), Number(shoda[2]), Number(shoda[3])];
+  const d = new Date(Date.UTC(rok, mesic - 1, den));
+  return d.getUTCFullYear() === rok && d.getUTCMonth() === mesic - 1 && d.getUTCDate() === den;
+}
+
+/** Rozsah kontroly virtuálního tiketu: platná data, konec ne před začátkem, rozumná cena. */
+function zkontrolujKontrolu(kontrola: RozsahKontroly): Problem[] {
+  const problemy: Problem[] = [];
+
+  if (!jePlatneDatum(kontrola.od)) {
+    problemy.push({
+      kod: 'spatne-datum',
+      zprava: 'Vyplň, od kdy se má tiket kontrolovat.',
+      cesta: 'kontrola.od',
+    });
+  }
+
+  if (kontrola.do !== null) {
+    if (!jePlatneDatum(kontrola.do)) {
+      problemy.push({
+        kod: 'spatne-datum',
+        zprava: 'Datum konce kontroly není platné. Když má kontrola pokračovat, nech ho prázdné.',
+        cesta: 'kontrola.do',
+      });
+    } else if (jePlatneDatum(kontrola.od) && kontrola.do < kontrola.od) {
+      problemy.push({
+        kod: 'konec-pred-zacatkem',
+        zprava: 'Kontrola nemůže skončit dřív, než začne.',
+        cesta: 'kontrola.do',
+      });
+    }
+  }
+
+  const cena = kontrola.cenaZaSlosovaniKc;
+  if (cena !== null && (!Number.isFinite(cena) || cena < 0)) {
+    problemy.push({
+      kod: 'spatna-cena',
+      zprava: `Cena za slosování musí být kladné číslo, zadáno ${cena}.`,
+      cesta: 'kontrola.cenaZaSlosovaniKc',
+    });
   }
 
   return problemy;

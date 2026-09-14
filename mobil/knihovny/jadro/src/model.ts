@@ -176,6 +176,24 @@ export interface RozsahSlosovani {
 }
 
 /**
+ * Na která slosování se tiket kontroluje, když to není přesně podle papíru.
+ *
+ * Kdo sází pořád stejná čísla, nemusí fotit každý tiket — jeden tiket se dá kontrolovat
+ * zpětně i dopředu. Dny slosování se berou z {@link RozsahSlosovani.dny} tiketu.
+ */
+export interface RozsahKontroly {
+  readonly od: Datum;
+  /** Poslední den kontroly včetně. `null` = každé další slosování, bez konce. */
+  readonly do: Datum | null;
+  /**
+   * Kolik stojí jedno slosování. `null` = neznámé, do vsazeného se nezapočte.
+   *
+   * Allwyn ceny sázek občas mění, u slosování daleko v minulosti je to proto jen odhad.
+   */
+  readonly cenaZaSlosovaniKc: number | null;
+}
+
+/**
  * Tiket tak, jak ho drží uživatel.
  *
  * Číslo klubové karty se v modelu nevyskytuje záměrně — čte se z čárového kódu, ale nikdy se
@@ -200,6 +218,14 @@ export interface Tiket {
    */
   readonly cenaKc: number | null;
   readonly vlozeno: string;
+  /**
+   * Rozsah kontroly odlišný od papíru. Když chybí, tiket se kontroluje podle `slosovani`;
+   * když je vyplněný, tiket je virtuální. Údaje z papíru (`slosovani`, `cenaKc`) zůstávají
+   * beze změny.
+   *
+   * Pole je nepovinné, aby tikety uložené dřív zůstaly platné bez migrace.
+   */
+  readonly kontrola?: RozsahKontroly;
 }
 
 // ---------------------------------------------------------------------------

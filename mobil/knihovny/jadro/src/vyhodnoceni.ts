@@ -68,33 +68,58 @@ export interface VysledekTiketu {
   readonly slosovani: readonly VysledekSlosovani[];
   readonly celkemKc: number;
   /**
-   * Výhra minus cena tiketu. `null`, když cena není známá.
+   * Kolik tiket stál za zkontrolovaná slosování. `null`, když cena není známá.
+   *
+   * U papírového tiketu je to jeho cena, u virtuálního cena za slosování krát počet
+   * slosování, která rozsah kontroly zatím pokryl.
+   */
+  readonly vsazenoKc: number | null;
+  /**
+   * Výhra minus vsazená částka. `null`, když cena není známá.
    *
    * Záporná hodnota znamená ztrátu. Je to jen informace pro uživatele — na vyhodnocení
    * výher nemá vliv.
    */
   readonly bilanceKc: number | null;
-  /** Kolik slosování z rozsahu tiketu nebylo mezi dodanými tahy. */
+  /**
+   * Kolik slosování z rozsahu tiketu nebylo mezi dodanými tahy. U virtuálního tiketu se
+   * nepočítá (vždy 0) — jeho konec se řídí datem, ne počtem, viz `pokracuje`.
+   */
   readonly chybejicichSlosovani: number;
   /**
-   * `true`, jen když jsou k dispozici všechna slosování tiketu a u žádné výhry není výhrada.
+   * Virtuální tiket, jehož rozsah kontroly sahá za poslední známý tah hry — bez konce, nebo
+   * s koncem v budoucnu. S dalšími výsledky se k němu přidají další slosování.
+   */
+  readonly pokracuje: boolean;
+  /**
+   * `true`, jen když jsou k dispozici všechna slosování tiketu, tiket nepokračuje a u žádné
+   * výhry není výhrada.
    * Jinak je `celkemKc` dolní odhad a UI to musí říct — „nevyhrál jsi“ a „zatím nevím“
    * nejsou totéž.
    */
   readonly soucetJisty: boolean;
 }
 
-/** Vybere tahy, na které tiket platí: podle hry, data, vybraných dnů a počtu slosování. */
+/**
+ * Vybere tahy, na které tiket platí: podle hry, data, vybraných dnů a počtu slosování.
+ *
+ * Virtuální tiket (s `kontrola`) se neřídí počtem, ale rozsahem dat od–do včetně.
+ */
 export function vyberSlosovani(
   tiket: Tiket,
   tahy: readonly Tah[],
 ): { readonly pouzite: readonly Tah[]; readonly chybi: number } {
   const dny = tiket.slosovani.dny;
+  const kontrola = tiket.kontrola;
+  const od = kontrola?.od ?? tiket.slosovani.prvni;
   const vhodne = tahy
     .filter((t) => t.hra === tiket.hra)
-    .filter((t) => t.datum >= tiket.slosovani.prvni)
+    .filter((t) => t.datum >= od)
+    .filter((t) => kontrola?.do == null || t.datum <= kontrola.do)
     .filter((t) => dny === null || dny.includes(t.den))
     .sort((a, b) => a.datum.localeCompare(b.datum));
+
+  if (kontrola !== undefined) return { pouzite: vhodne, chybi: 0 };
 
   const pouzite = vhodne.slice(0, tiket.slosovani.pocet);
   return { pouzite, chybi: Math.max(0, tiket.slosovani.pocet - pouzite.length) };
@@ -270,6 +295,23 @@ function sestav(
   };
 }
 
+function vsazeno(tiket: Tiket, pocetSlosovani: number): number | null {
+  if (tiket.kontrola === undefined) return tiket.cenaKc;
+  const cena = tiket.kontrola.cenaZaSlosovaniKc;
+  return cena === null ? null : cena * pocetSlosovani;
+}
+
+/** Sahá rozsah virtuálního tiketu za poslední známý tah jeho hry? */
+function pokracuje(tiket: Tiket, tahy: readonly Tah[]): boolean {
+  if (tiket.kontrola === undefined) return false;
+  if (tiket.kontrola.do === null) return true;
+  const posledni = tahy.reduce<string | null>(
+    (max, t) => (t.hra === tiket.hra && (max === null || t.datum > max) ? t.datum : max),
+    null,
+  );
+  return posledni === null || tiket.kontrola.do > posledni;
+}
+
 /**
  * @param sazby Sazby Extra 6 (Eurojackpot).
  * @param sazbyEurosance Sazby Eurošance (Euromiliony).
@@ -296,13 +338,17 @@ export function vyhodnotTiket(
   const nejistych = slosovani.reduce((s, v) => s + v.nejistychVyher, 0);
 
   const celkemKc = slosovani.reduce((s, v) => s + v.celkemKc, 0);
+  const vsazenoKc = vsazeno(tiket, pouzite.length);
+  const dalsi = pokracuje(tiket, tahy);
 
   return {
     tiketId: tiket.id,
     slosovani,
     celkemKc,
-    bilanceKc: tiket.cenaKc === null ? null : celkemKc - tiket.cenaKc,
+    vsazenoKc,
+    bilanceKc: vsazenoKc === null ? null : celkemKc - vsazenoKc,
     chybejicichSlosovani: chybi,
-    soucetJisty: chybi === 0 && nejistych === 0,
+    pokracuje: dalsi,
+    soucetJisty: chybi === 0 && nejistych === 0 && !dalsi,
   };
 }

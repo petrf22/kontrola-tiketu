@@ -337,3 +337,72 @@ describe('bilance tiketu', () => {
     expect(s.slosovani).toEqual(bez.slosovani);
   });
 });
+
+describe('virtuální tiket', () => {
+  // 4+1 v tahu 8. 9. 2026 dává 5 780 Kč (listina), 1. a 4. 9. tentýž sloupec nevyhrál nic.
+  const sloupce: readonly Sloupec[] = [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 1], eurocisla: [4, 1] }];
+
+  it('bere všechna slosování v rozsahu od–do, bez ohledu na počet z papíru', () => {
+    const t = tiketEJ({ sloupce, kontrola: { od: '2026-09-01', do: '2026-09-04', cenaZaSlosovaniKc: null } });
+    const { pouzite, chybi } = vyberSlosovani(t, TAHY_EJ);
+    expect(pouzite.map((x) => x.datum)).toEqual(['2026-09-01', '2026-09-04']);
+    expect(chybi).toBe(0);
+  });
+
+  it('bez konce vezme i slosování po datu z papíru', () => {
+    const t = tiketEJ({ sloupce, kontrola: { od: '2026-09-01', do: null, cenaZaSlosovaniKc: null } });
+    expect(vyberSlosovani(t, TAHY_EJ).pouzite).toHaveLength(3);
+  });
+
+  it('respektuje dny zadané u tiketu', () => {
+    const t = tiketEJ({
+      sloupce,
+      slosovani: { prvni: '2026-09-08', pocet: 1, dny: ['ut'] },
+      kontrola: { od: '2026-09-01', do: null, cenaZaSlosovaniKc: null },
+    });
+    expect(vyberSlosovani(t, TAHY_EJ).pouzite.map((x) => x.datum)).toEqual(['2026-09-01', '2026-09-08']);
+  });
+
+  it('nemíchá hry', () => {
+    const t = tiketEJ({ sloupce, kontrola: { od: '2000-01-01', do: null, cenaZaSlosovaniKc: null } });
+    expect(vyberSlosovani(t, [...TAHY_EJ, ...TAHY_SP, ...TAHY_EM]).pouzite).toHaveLength(3);
+  });
+
+  it('vsazeno je cena za slosování krát počet zkontrolovaných slosování', () => {
+    const t = tiketEJ({ sloupce, cenaKc: 400, kontrola: { od: '2026-09-01', do: null, cenaZaSlosovaniKc: 400 } });
+    const v = vyhodnotTiket(t, TAHY_EJ, SAZBY);
+    expect(v.celkemKc).toBe(5780);
+    expect(v.vsazenoKc).toBe(1200);
+    expect(v.bilanceKc).toBe(4580);
+  });
+
+  it('bez ceny za slosování je vsazeno i bilance null, i když papír cenu má', () => {
+    const t = tiketEJ({ sloupce, cenaKc: 400, kontrola: { od: '2026-09-01', do: null, cenaZaSlosovaniKc: null } });
+    const v = vyhodnotTiket(t, TAHY_EJ, SAZBY);
+    expect(v.vsazenoKc).toBeNull();
+    expect(v.bilanceKc).toBeNull();
+  });
+
+  it('bez konce pokračuje a součet není jistý', () => {
+    const t = tiketEJ({ sloupce, kontrola: { od: '2026-09-01', do: null, cenaZaSlosovaniKc: null } });
+    const v = vyhodnotTiket(t, TAHY_EJ, SAZBY);
+    expect(v.pokracuje).toBe(true);
+    expect(v.soucetJisty).toBe(false);
+    expect(v.chybejicichSlosovani).toBe(0);
+  });
+
+  it('s koncem do posledního známého tahu nepokračuje, s koncem v budoucnu ano', () => {
+    const ukonceny = tiketEJ({ sloupce, kontrola: { od: '2026-09-01', do: '2026-09-08', cenaZaSlosovaniKc: null } });
+    expect(vyhodnotTiket(ukonceny, TAHY_EJ, SAZBY).pokracuje).toBe(false);
+    expect(vyhodnotTiket(ukonceny, TAHY_EJ, SAZBY).soucetJisty).toBe(true);
+
+    const doBudoucna = tiketEJ({ sloupce, kontrola: { od: '2026-09-01', do: '2026-12-31', cenaZaSlosovaniKc: null } });
+    expect(vyhodnotTiket(doBudoucna, TAHY_EJ, SAZBY).pokracuje).toBe(true);
+  });
+
+  it('papírový tiket nepokračuje a vsazeno je jeho cena', () => {
+    const v = vyhodnotTiket(tiketEJ({ cenaKc: 400 }), TAHY_EJ, SAZBY);
+    expect(v.pokracuje).toBe(false);
+    expect(v.vsazenoKc).toBe(400);
+  });
+});

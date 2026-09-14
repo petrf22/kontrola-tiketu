@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   dnyZVyberu,
+  jePlatneDatum,
   jePlatny,
   ROZSAHY,
   zkontrolujCisla,
@@ -221,6 +222,27 @@ describe('zkontrolujTiket', () => {
     expect(zkontrolujTiket(vsechny)).toEqual([]);
   });
 
+  it('projde virtuální tiket s rozsahem bez konce i s koncem', () => {
+    const kontrola = { od: '2023-09-12', do: null, cenaZaSlosovaniKc: 400 };
+    expect(zkontrolujTiket({ ...zaklad, kontrola })).toEqual([]);
+    expect(zkontrolujTiket({ ...zaklad, kontrola: { ...kontrola, do: '2026-09-08' } })).toEqual([]);
+    expect(zkontrolujTiket({ ...zaklad, kontrola: { ...kontrola, cenaZaSlosovaniKc: null } })).toEqual([]);
+  });
+
+  it('hlásí rozsah kontroly bez začátku a s koncem před začátkem', () => {
+    const kontrola = { od: '', do: null, cenaZaSlosovaniKc: null };
+    expect(kody(zkontrolujTiket({ ...zaklad, kontrola }))).toEqual(['spatne-datum']);
+    const obracene = { od: '2026-09-08', do: '2026-09-01', cenaZaSlosovaniKc: null };
+    const problemy = zkontrolujTiket({ ...zaklad, kontrola: obracene });
+    expect(kody(problemy)).toEqual(['konec-pred-zacatkem']);
+    expect(problemy[0]?.cesta).toBe('kontrola.do');
+  });
+
+  it('hlásí zápornou cenu za slosování', () => {
+    const kontrola = { od: '2026-09-01', do: null, cenaZaSlosovaniKc: -1 };
+    expect(kody(zkontrolujTiket({ ...zaklad, kontrola }))).toEqual(['spatna-cena']);
+  });
+
   it('kontroluje kód doplňkové hry, jen když je vsazený', () => {
     expect(zkontrolujTiket({ ...zaklad, kodDoplnkoveHry: null })).toEqual([]);
     expect(zkontrolujTiket({ ...zaklad, kodDoplnkoveHry: '236412' })).toEqual([]);
@@ -240,5 +262,15 @@ describe('zkontrolujTiket', () => {
     const problemy = zkontrolujTiket(spatny);
     expect(kody(problemy)).toEqual(['cislo-mimo-rozsah', 'duplicitni-cislo']);
     expect(problemy.map((p) => p.cesta)).toEqual(['sloupce[0].cisla[5]', 'sloupce[1].cisla[1]']);
+  });
+});
+
+describe('jePlatneDatum', () => {
+  it('přijme skutečné datum a odmítne nesmysl', () => {
+    expect(jePlatneDatum('2024-02-29')).toBe(true);
+    expect(jePlatneDatum('2026-02-29')).toBe(false);
+    expect(jePlatneDatum('2026-13-01')).toBe(false);
+    expect(jePlatneDatum('8. 9. 2026')).toBe(false);
+    expect(jePlatneDatum('')).toBe(false);
   });
 });

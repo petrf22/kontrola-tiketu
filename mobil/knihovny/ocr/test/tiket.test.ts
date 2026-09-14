@@ -112,6 +112,66 @@ describe('prectiTiket — vadné čtení', () => {
   });
 });
 
+describe('prectiTiket — slepená čísla', () => {
+  it('euročísla přilepená k NT se neztratí', () => {
+    const vysledek = prectiTiket(tiketEJ([['1: 23 30 33 37 47', '02 03NT']]), 'eurojackpot');
+    expect(vysledek.sloupce[0]?.druheOsudi).toEqual([2, 3]);
+    expect(vysledek.sloupce[0]?.problemy).toEqual([]);
+  });
+
+  it('slepená euročísla rozdělí a útržek jednou označí', () => {
+    const vysledek = prectiTiket(tiketEJ([['1: 23 30 33 37 47', '0203 NT']]), 'eurojackpot');
+    expect(vysledek.sloupce[0]?.druheOsudi).toEqual([2, 3]);
+    expect(vysledek.sloupce[0]?.opravene).toEqual(['0203']);
+    expect(jeBezProblemu(vysledek)).toBe(false);
+  });
+
+  it('pořadí přilepené k prvnímu číslu nesebere číslo', () => {
+    const vysledek = prectiTiket(tiketEJ([['1:23 30 33 37 47', '02 03 NT']]), 'eurojackpot');
+    expect(vysledek.sloupce[0]?.poradi).toBe(1);
+    expect(vysledek.sloupce[0]?.cisla).toEqual([23, 30, 33, 37, 47]);
+  });
+
+  it('jednociferné číslo projde označené k ověření', () => {
+    const vysledek = prectiTiket(tiketEJ([['1: 23 30 3 37 47', '02 03 NT']]), 'eurojackpot');
+    expect(vysledek.sloupce[0]?.cisla).toEqual([23, 30, 3, 37, 47]);
+    expect(vysledek.sloupce[0]?.opravene).toEqual(['3']);
+  });
+});
+
+describe('prectiTiket — datum v hlavičce', () => {
+  const hlavicka = (radky: readonly string[][]) =>
+    prectiTiket(tiketEJ([...radky, ...CELY_TIKET.slice(1)]), 'eurojackpot').hlavicka;
+
+  for (const datum of ['O8.09.2O26', '08. 09. 2026', '08,09.2026', '08 .09. 2026']) {
+    it(`přečte datum i v podobě „${datum}“`, () => {
+      expect(hlavicka([['SLOSOVÁNÍ: 1 (ÚT)', datum]]).datum).toBe('2026-09-08');
+    });
+  }
+
+  it('nesmyslné datum nedomýšlí', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 1 (ÚT)', '38.19.2026']]).datum).toBeNull();
+  });
+
+  it('datum složené hlavně z písmen nebere', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 1 (ÚT)', 'OO.OO.2O26']]).datum).toBeNull();
+  });
+
+  it('jiné datum nad řádkem SLOSOVÁNÍ nevyhraje', () => {
+    const vysledek = hlavicka([['PODÁNO', '05.09.2026'], ['SLOSOVÁNÍ: 1 (ÚT)', '08.09.2026']]);
+    expect(vysledek).toEqual({ pocetSlosovani: 1, den: 'ut', datum: '2026-09-08' });
+  });
+
+  it('datum odtržené od SLOSOVÁNÍ do vedlejšího řádku vezme to nejbližší', () => {
+    const vysledek = hlavicka([['PODÁNO 05.09.2026'], ['-----'], ['SLOSOVÁNÍ: 1 (ÚT)'], ['08.09.2026']]);
+    expect(vysledek).toEqual({ pocetSlosovani: 1, den: 'ut', datum: '2026-09-08' });
+  });
+
+  it('nepřečtené datum je null, ne dnešek', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 1 (ÚT)']]).datum).toBeNull();
+  });
+});
+
 describe('prectiTiket — Sportka', () => {
   it('čte šest čísel a žádná euročísla', () => {
     const vysledek = prectiTiket(

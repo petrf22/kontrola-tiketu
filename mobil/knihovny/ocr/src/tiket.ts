@@ -9,7 +9,7 @@
 
 import type { Den, Hra, Sloupec, Tiket } from '@kontrola-tiketu/jadro';
 import { zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
-import { prectiCisla, type NactenaHodnota } from './cisla.js';
+import { prectiCislaSloupce, prectiCislo, ZAMENY, type NactenaHodnota } from './cisla.js';
 import { prectiCenu } from './cena.js';
 import { prectiKodDoplnkoveHry } from './doplnkovaHra.js';
 import { slozRadky, type NastaveniSkladani } from './radky.js';
@@ -40,8 +40,21 @@ const DNY: Readonly<Record<string, Den>> = {
 
 /** Řádek sloupce začíná pořadím a dvojtečkou. Písmena se připouštějí kvůli záměnám. */
 const ZACATEK_SLOUPCE = /^([\dIlOo|]{1,2})\s*[:;.]/;
-const DATUM = /(\d{2})\.\s?(\d{2})\.\s?(\d{4})/;
 const DEN_V_ZAVORCE = /\(\s*([A-ZÁ-Ž]{2})\s*\)/u;
+const POCET_SLOSOVANI = /([\dIlOo|]{1,2})\s*\(/;
+/** Řádek hlavičky. Nula místo písmene O se připouští — rozpoznávač to plete oběma směry. */
+const SLOSOVANI = /SL[O0]S[O0]V/i;
+
+/** Znak, který je buď číslice, nebo písmeno, za které ji rozpoznávač umí zaměnit. */
+const CISLICE = `[\\d${Object.keys(ZAMENY).join('')}]`;
+/**
+ * Datum `08.09.2026` i v podobách, jaké z termotisku vrací rozpoznávač: `O8.09.2O26`,
+ * `08. 09. 2026`, `08,09.2026`. Ohraničení brání tomu, aby se datum vykouslo z delšího textu.
+ */
+const DATUM = new RegExp(
+  `(?<![\\p{L}\\p{N}])(${CISLICE}{2})\\s*[.,]\\s*(${CISLICE}{2})\\s*[.,]\\s*(${CISLICE}{4})(?![\\p{L}\\p{N}])`,
+  'u',
+);
 
 export interface Hlavicka {
   /** Na kolik slosování tiket platí. Údaj je jen návrh — uživatel ho potvrzuje. */
@@ -79,21 +92,59 @@ export interface VysledekCteni {
   readonly nepouziteRadky: readonly string[];
 }
 
+/**
+ * Najde v řádku datum a vrátí ho v ISO tvaru, nebo `null`.
+ *
+ * Záměny se opravují, ale výsledek musí být skutečné datum — `38.19.2026` není překlep, který
+ * by šlo domyslet, a vymyšlené datum by tiket tiše vyhodnotilo proti jinému tahu.
+ */
+function najdiDatum(radek: string): string | null {
+  const nalez = DATUM.exec(radek);
+  if (nalez === null) return null;
+  // Aspoň polovina číslic musí být skutečná, jinak by se datum dalo „opravit“ z písmen.
+  if ((nalez[0].match(/\d/g) ?? []).length < 4) return null;
+
+  const [den, mesic, rok] = [nalez[1]!, nalez[2]!, nalez[3]!].map((cast) =>
+    Number([...cast].map((z) => ZAMENY[z] ?? z).join('')),
+  ) as [number, number, number];
+
+  const datum = new Date(Date.UTC(rok, mesic - 1, den));
+  const platne =
+    rok >= 2000 && rok <= 2099 && datum.getUTCMonth() === mesic - 1 && datum.getUTCDate() === den;
+  if (!platne) return null;
+
+  return `${rok}-${String(mesic).padStart(2, '0')}-${String(den).padStart(2, '0')}`;
+}
+
+/**
+ * Přečte hlavičku `SLOSOVÁNÍ: 1 (ÚT)   08.09.2026`.
+ *
+ * Na tiketu může být i jiné datum (podání sázky), takže se nebere první nalezené. Rozhoduje
+ * řádek se `SLOSOVÁNÍ`; když rozpoznávač odtrhl datum do vedlejšího řádku, vezme se datum
+ * nejbližší k němu. Teprve bez řádku `SLOSOVÁNÍ` rozhoduje první datum shora.
+ */
 function prectiHlavicku(radky: readonly string[]): Hlavicka {
-  for (const radek of radky) {
-    const datum = DATUM.exec(radek);
-    if (datum === null) continue;
+  const indexSlosovani = radky.findIndex((r) => SLOSOVANI.test(r));
+  const sDatem = radky
+    .map((radek, index) => ({ radek, index, datum: najdiDatum(radek) }))
+    .filter((r) => r.datum !== null);
 
-    const den = DEN_V_ZAVORCE.exec(radek);
-    const pocet = /(\d{1,2})\s*\(/.exec(radek);
+  const kotva = indexSlosovani === -1 ? 0 : indexSlosovani;
+  const nejblizsi = [...sDatem].sort(
+    (a, b) => Math.abs(a.index - kotva) - Math.abs(b.index - kotva) || a.index - b.index,
+  )[0];
 
-    return {
-      pocetSlosovani: pocet === null ? null : Number(pocet[1]),
-      den: den === null ? null : (DNY[den[1]!] ?? null),
-      datum: `${datum[3]}-${datum[2]}-${datum[1]}`,
-    };
-  }
-  return { pocetSlosovani: null, den: null, datum: null };
+  const hlavicka = indexSlosovani === -1 ? nejblizsi?.radek : radky[indexSlosovani];
+  if (hlavicka === undefined) return { pocetSlosovani: null, den: null, datum: null };
+
+  const den = DEN_V_ZAVORCE.exec(hlavicka);
+  const pocet = POCET_SLOSOVANI.exec(hlavicka);
+
+  return {
+    pocetSlosovani: pocet === null ? null : (prectiCislo(pocet[1]!)?.hodnota ?? null),
+    den: den === null ? null : (DNY[den[1]!] ?? null),
+    datum: nejblizsi?.datum ?? null,
+  };
 }
 
 function rozdelCisla(
@@ -130,18 +181,22 @@ function jakoSloupec(text: string, hra: Hra): NactenySloupec | null {
   const zacatek = ZACATEK_SLOUPCE.exec(text);
   if (zacatek === null) return null;
 
-  const hodnoty = prectiCisla(text);
-  if (hodnoty.length < 2) return null; // samotné pořadí bez čísel není sloupec
+  // Pořadí smí mít jednu číslici, čísla sloupce jsou vytištěná vždy jako dvojice — proto se
+  // čtou každé zvlášť a pořadí se neplete do pravidla dvou cifer.
+  const poradi = prectiCislo(zacatek[1]!);
+  const hodnoty = prectiCislaSloupce(text.slice(zacatek[0].length));
+  if (hodnoty.length === 0) return null; // samotné pořadí bez čísel není sloupec
 
-  const poradi = hodnoty[0]!;
-  const { cisla, druheOsudi } = rozdelCisla(hodnoty.slice(1), hra);
+  const { cisla, druheOsudi } = rozdelCisla(hodnoty, hra);
   const sloupec = jakoSloupecTiketu(hra, cisla, druheOsudi);
+  // Slepený útržek dá víc čísel se stejným původem; uživateli stačí ho vidět jednou.
+  const opravene = [poradi, ...hodnoty].filter((h) => h?.opraveno).map((h) => h!.puvodni);
 
   return {
-    poradi: poradi.hodnota,
+    poradi: poradi?.hodnota ?? null,
     cisla,
     druheOsudi,
-    opravene: hodnoty.filter((h) => h.opraveno).map((h) => h.puvodni),
+    opravene: [...new Set(opravene)],
     text,
     problemy: zkontrolujSloupec(sloupec),
   };

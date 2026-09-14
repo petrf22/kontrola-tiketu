@@ -10,6 +10,7 @@
  */
 
 import { DELKA_KODU_DOPLNKOVE_HRY, type Hra } from '@kontrola-tiketu/jadro';
+import { ZAMENY } from './cisla.js';
 
 /**
  * Popisek, za kterým se kód hledá.
@@ -23,12 +24,6 @@ const POPISKY: Readonly<Record<Hra, RegExp>> = {
   euromiliony: /euro\s*[šs]ance\s*[:.]?/i,
 };
 
-/** Záměny termotisku. Vedoucí nula přečtená jako písmeno O by změnila celý kód. */
-const ZAMENY: Readonly<Record<string, string>> = {
-  O: '0', o: '0', Q: '0', D: '0',
-  I: '1', l: '1', '|': '1', i: '1',
-  S: '5', s: '5', B: '8', Z: '2', z: '2', G: '6',
-};
 
 /**
  * Právě `delka` číslic, které nesousedí s další číslicí.

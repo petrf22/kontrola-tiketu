@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { vyhodnotTiket, zkontrolujTiket, type Tah } from '@kontrola-tiketu/jadro';
 import { jeBezProblemu, naTiket, prectiTiket, type RozpoznanyText } from '../src/index.js';
 import { tiketEJ } from './pomocnici.js';
+import { EUROJACKPOT_14_9, EUROMILIONY_14_9, ROVNE, SPORTKA_14_9 } from './tiketyZFotek.js';
 
 /** Tiket Eurojackpotu přesně podle rozvržení ze zadání, včetně hlavičky a oddělovačů. */
 const CELY_TIKET: readonly string[][] = [
@@ -41,7 +42,7 @@ describe('prectiTiket — Eurojackpot', () => {
   });
 
   it('přečte z hlavičky datum, den i počet slosování', () => {
-    expect(vysledek.hlavicka).toEqual({ pocetSlosovani: 1, den: 'ut', datum: '2026-09-08' });
+    expect(vysledek.hlavicka).toEqual({ pocetSlosovani: 1, dny: ['ut'], datum: '2026-09-08' });
   });
 
   it('čistý tiket nemá co potvrzovat navíc', () => {
@@ -159,16 +160,97 @@ describe('prectiTiket — datum v hlavičce', () => {
 
   it('jiné datum nad řádkem SLOSOVÁNÍ nevyhraje', () => {
     const vysledek = hlavicka([['PODÁNO', '05.09.2026'], ['SLOSOVÁNÍ: 1 (ÚT)', '08.09.2026']]);
-    expect(vysledek).toEqual({ pocetSlosovani: 1, den: 'ut', datum: '2026-09-08' });
+    expect(vysledek).toEqual({ pocetSlosovani: 1, dny: ['ut'], datum: '2026-09-08' });
   });
 
   it('datum odtržené od SLOSOVÁNÍ do vedlejšího řádku vezme to nejbližší', () => {
     const vysledek = hlavicka([['PODÁNO 05.09.2026'], ['-----'], ['SLOSOVÁNÍ: 1 (ÚT)'], ['08.09.2026']]);
-    expect(vysledek).toEqual({ pocetSlosovani: 1, den: 'ut', datum: '2026-09-08' });
+    expect(vysledek).toEqual({ pocetSlosovani: 1, dny: ['ut'], datum: '2026-09-08' });
   });
 
   it('nepřečtené datum je null, ne dnešek', () => {
     expect(hlavicka([['SLOSOVÁNÍ: 1 (ÚT)']]).datum).toBeNull();
+  });
+});
+
+describe('prectiTiket — hlavička s rozsahem a víc dny', () => {
+  const hlavicka = (radky: readonly string[][]) =>
+    prectiTiket(tiketEJ([...radky, ...CELY_TIKET.slice(1)]), 'eurojackpot').hlavicka;
+
+  it('z rozsahu dat vezme první slosování', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 4 (ÚT,PÁ)', '15.09.2026-25.09.2026']])).toEqual({
+      pocetSlosovani: 4,
+      dny: ['ut', 'pa'],
+      datum: '2026-09-15',
+    });
+  });
+
+  it('přečte tři dny i s mezerami za čárkou', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 6 (ST, PA, NE) 16.09.2026-27.09.2026']]).dny).toEqual([
+      'st',
+      'pa',
+      'ne',
+    ]);
+  });
+
+  it('počet slosování přečte i bez závorky se dny', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 4', '15.09.2026-26.09.2026']])).toEqual({
+      pocetSlosovani: 4,
+      dny: null,
+      datum: '2026-09-15',
+    });
+  });
+
+  it('když se počet nepřečetl, nevezme místo něj začátek data', () => {
+    expect(hlavicka([['SLOSOVÁNÍ:', '15.09.2026-26.09.2026']]).pocetSlosovani).toBeNull();
+    expect(hlavicka([['SLOSOVÁNÍ: 15.09.2026-26.09.2026']]).pocetSlosovani).toBeNull();
+  });
+
+  it('bez čitelného popisku vezme číslo před závorkou', () => {
+    expect(hlavicka([['SL0SDVANl: 2 (PÁ)', '18.09.2026']]).pocetSlosovani).toBe(2);
+  });
+});
+
+describe('prectiTiket — přepisy tiketů ze 14. 9. 2026', () => {
+  it('Eurojackpot', () => {
+    const vysledek = prectiTiket(tiketEJ(EUROJACKPOT_14_9), 'eurojackpot', ROVNE);
+    expect(vysledek.hlavicka).toEqual({ pocetSlosovani: 4, dny: ['ut', 'pa'], datum: '2026-09-15' });
+    expect(vysledek.sloupce.map((s) => [s.cisla, s.druheOsudi])).toEqual([
+      [[3, 11, 24, 36, 48], [2, 9]],
+      [[5, 17, 29, 33, 41], [4, 10]],
+    ]);
+    expect(vysledek.kodDoplnkoveHry).toBe('123456');
+    expect(vysledek.cenaKc).toBe(640);
+    expect(jeBezProblemu(vysledek)).toBe(true);
+  });
+
+  it('Sportka', () => {
+    const vysledek = prectiTiket(tiketEJ(SPORTKA_14_9), 'sportka', ROVNE);
+    expect(vysledek.hlavicka).toEqual({
+      pocetSlosovani: 6,
+      dny: ['st', 'pa', 'ne'],
+      datum: '2026-09-16',
+    });
+    expect(vysledek.sloupce.map((s) => s.cisla)).toEqual([
+      [1, 9, 18, 26, 38, 44],
+      [6, 12, 21, 30, 39, 45],
+      [7, 14, 20, 28, 35, 49],
+    ]);
+    expect(vysledek.kodDoplnkoveHry).toBe('654321');
+    expect(vysledek.cenaKc).toBe(720);
+    expect(jeBezProblemu(vysledek)).toBe(true);
+  });
+
+  it('Euromiliony — pomlčka před číslem z druhého osudí se nepočítá', () => {
+    const vysledek = prectiTiket(tiketEJ(EUROMILIONY_14_9), 'euromiliony', ROVNE);
+    expect(vysledek.hlavicka).toEqual({ pocetSlosovani: 4, dny: null, datum: '2026-09-15' });
+    expect(vysledek.sloupce.map((s) => [s.cisla, s.druheOsudi])).toEqual([
+      [[2, 6, 13, 19, 24, 30, 34], [4]],
+      [[3, 8, 10, 17, 21, 26, 31], [2]],
+    ]);
+    expect(vysledek.kodDoplnkoveHry).toBe('24680');
+    expect(vysledek.cenaKc).toBe(360);
+    expect(jeBezProblemu(vysledek)).toBe(true);
   });
 });
 

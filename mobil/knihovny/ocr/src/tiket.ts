@@ -40,8 +40,16 @@ const DNY: Readonly<Record<string, Den>> = {
 
 /** Řádek sloupce začíná pořadím a dvojtečkou. Písmena se připouštějí kvůli záměnám. */
 const ZACATEK_SLOUPCE = /^([\dIlOo|]{1,2})\s*[:;.]/;
-const DEN_V_ZAVORCE = /\(\s*([A-ZÁ-Ž]{2})\s*\)/u;
-const POCET_SLOSOVANI = /([\dIlOo|]{1,2})\s*\(/;
+/** Dny v závorce za počtem slosování: `(ÚT)`, `(ÚT,PÁ)`, `(ST, PA, NE)`. */
+const DNY_V_ZAVORCE = /\(\s*([A-ZÁ-Ž]{2}(?:\s*[,.]\s*[A-ZÁ-Ž]{2})*)\s*\)/u;
+/**
+ * Počet slosování hned za popiskem: `SLOSOVÁNÍ: 4`. Tiket Euromilionů závorku se dny nemá,
+ * takže počet se nesmí hledat jen před ní. Za číslem nesmí pokračovat další číslice ani tečka,
+ * aby se při ztraceném počtu nevzal začátek data.
+ */
+const POCET_ZA_POPISKEM = /SL[O0]S[O0]V\S*\s*[:;.]?\s*([\dIlOo|]{1,2})(?![\p{L}\p{N}.,])/iu;
+/** Záloha, když se popisek nepřečetl: číslo před závorkou se dny. */
+const POCET_PRED_ZAVORKOU = /([\dIlOo|]{1,2})\s*\(/;
 /** Řádek hlavičky. Nula místo písmene O se připouští — rozpoznávač to plete oběma směry. */
 const SLOSOVANI = /SL[O0]S[O0]V/i;
 
@@ -59,7 +67,12 @@ const DATUM = new RegExp(
 export interface Hlavicka {
   /** Na kolik slosování tiket platí. Údaj je jen návrh — uživatel ho potvrzuje. */
   readonly pocetSlosovani: number | null;
-  readonly den: Den | null;
+  /**
+   * Dny ze závorky v hlavičce, nebo `null`, když tam závorka není (Euromiliony ji netisknou).
+   * Na tiketech ze 14. 9. 2026 to jsou vsazené dny: Sportka `6 (ST,PA,NE)` od středy do neděle
+   * za dva týdny vychází přesně na šest slosování.
+   */
+  readonly dny: readonly Den[] | null;
   /** První slosování v ISO tvaru. */
   readonly datum: string | null;
 }
@@ -116,6 +129,17 @@ function najdiDatum(radek: string): string | null {
   return `${rok}-${String(mesic).padStart(2, '0')}-${String(den).padStart(2, '0')}`;
 }
 
+/** Dny ze závorky. Nepřečtené dny se vynechají; když nezbude žádný, vrátí `null`. */
+function prectiDny(hlavicka: string): readonly Den[] | null {
+  const zavorka = DNY_V_ZAVORCE.exec(hlavicka);
+  if (zavorka === null) return null;
+  const dny = zavorka[1]!
+    .split(/\s*[,.]\s*/)
+    .map((zkratka) => DNY[zkratka])
+    .filter((den): den is Den => den !== undefined);
+  return dny.length === 0 ? null : [...new Set(dny)];
+}
+
 /**
  * Přečte hlavičku `SLOSOVÁNÍ: 1 (ÚT)   08.09.2026`.
  *
@@ -135,14 +159,13 @@ function prectiHlavicku(radky: readonly string[]): Hlavicka {
   )[0];
 
   const hlavicka = indexSlosovani === -1 ? nejblizsi?.radek : radky[indexSlosovani];
-  if (hlavicka === undefined) return { pocetSlosovani: null, den: null, datum: null };
+  if (hlavicka === undefined) return { pocetSlosovani: null, dny: null, datum: null };
 
-  const den = DEN_V_ZAVORCE.exec(hlavicka);
-  const pocet = POCET_SLOSOVANI.exec(hlavicka);
+  const pocet = POCET_ZA_POPISKEM.exec(hlavicka) ?? POCET_PRED_ZAVORKOU.exec(hlavicka);
 
   return {
     pocetSlosovani: pocet === null ? null : (prectiCislo(pocet[1]!)?.hodnota ?? null),
-    den: den === null ? null : (DNY[den[1]!] ?? null),
+    dny: prectiDny(hlavicka),
     datum: nejblizsi?.datum ?? null,
   };
 }

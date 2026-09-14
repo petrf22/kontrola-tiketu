@@ -47,6 +47,16 @@ function smlouvaUloziste(jmeno: string, vyrob: () => Uloziste): void {
       expect(await u.nactiTikety()).toEqual([t]);
     });
 
+    it('virtuální tiket se přečte i s rozsahem kontroly', async () => {
+      const u = vyrob();
+      const t: Tiket = {
+        ...tiket('v', '2026-09-01T10:00:00Z'),
+        kontrola: { od: '2023-09-12', do: null, cenaZaSlosovaniKc: 400 },
+      };
+      await u.ulozTiket(t);
+      expect(await u.nactiTikety()).toEqual([t]);
+    });
+
     it('tikety se řadí od nejnovějšího', async () => {
       const u = vyrob();
       await u.ulozTiket(tiket('stary', '2026-09-01T10:00:00Z'));

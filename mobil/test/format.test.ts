@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   formatujDatum,
   formatujDatumCas,
+  formatujKc,
   mistoVeSloupci,
   nazevDne,
   nazevDoplnkoveHry,
@@ -10,6 +11,7 @@ import {
   pocetSloupcu,
   popisDnuSlosovani,
   popisProblemu,
+  popisRozsahuKontroly,
 } from '../src/app/data/format.js';
 
 describe('formatujDatum', () => {
@@ -128,5 +130,21 @@ describe('mistoVeSloupci', () => {
     expect(mistoVeSloupci('sloupce')).toBeNull();
     expect(mistoVeSloupci('sloupce[0]')).toBeNull();
     expect(mistoVeSloupci('slosovani.dny')).toBeNull();
+  });
+});
+
+describe('formatujKc', () => {
+  it('odděluje tisíce a nechá znaménko', () => {
+    // Intl odděluje tisíce nezlomitelnou mezerou, aby se částka nerozdělila na dva řádky.
+    expect(formatujKc(61160).replace(/\s/g, ' ')).toBe('61 160 Kč');
+    expect(formatujKc(-400)).toBe('-400 Kč');
+    expect(formatujKc(133.33)).toBe('133,33 Kč');
+  });
+});
+
+describe('popisRozsahuKontroly', () => {
+  it('rozliší rozsah bez konce a s koncem', () => {
+    expect(popisRozsahuKontroly({ od: '2023-09-12', do: null })).toBe('od 12. 9. 2023, bez konce');
+    expect(popisRozsahuKontroly({ od: '2026-09-01', do: '2026-09-08' })).toBe('od 1. 9. 2026 do 8. 9. 2026');
   });
 });

@@ -4,7 +4,10 @@ import {
   DELKA_KODU_DOPLNKOVE_HRY,
   DNY_LOSOVANI,
   dnyZVyberu,
+  prekryvy,
   ROZSAHY,
+  stejnaSazka,
+  vyberSlosovani,
   zkontrolujTiket,
   type Den,
   type Hra,
@@ -13,12 +16,23 @@ import {
 } from '@kontrola-tiketu/jadro';
 import { prectiCisla } from '@kontrola-tiketu/ocr';
 import {
+  cenaZaSlosovaniZPapiru,
+  konecPodlePapiru,
+  prectiCastku,
+  sestavKontrolu,
+  type Papir,
+} from '../data/kontrola.js';
+import {
+  formatujDatum,
+  formatujKc,
   HRY,
   mistoVeSloupci,
   nazevDne,
   nazevDoplnkoveHry,
   nazevHry,
+  pocetSlosovani,
   popisProblemu,
+  popisRozsahuKontroly,
   type PoleSloupce,
 } from '../data/format.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
@@ -220,6 +234,65 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       }
 
       <!--
+        Rozsah kontroly je až dole: týká se toho, co s tiketem aplikace dělá, ne toho, co je
+        na papíře. Předvyplní se podle tiketu; kdo sází pořád stejná čísla, rozšíří ho
+        do minulosti nebo nechá konec prázdný a tiket se kontroluje s každým losováním.
+      -->
+      <fieldset class="rozsah">
+        <legend>Rozsah kontroly</legend>
+        <div class="dvojice">
+          <label>Od
+            <input type="date" [value]="odKontroly()"
+              (input)="kontrolaOd.set($any($event.target).value)" />
+          </label>
+          <label>Do
+            <input type="date" [value]="doKontroly() ?? ''"
+              (input)="zmenDoKontroly($any($event.target).value)" />
+          </label>
+        </div>
+        <div class="tlacitka-rozsahu">
+          @if (doKontroly() !== null) {
+            <button type="button" (click)="bezKonce.set(true)">Kontrolovat bez konce</button>
+          }
+          @if (virtualni()) {
+            <button type="button" (click)="podleTiketu()">Podle tiketu</button>
+          }
+        </div>
+
+        @if (virtualni()) {
+          <label>Cena za jedno slosování v Kč
+            <input type="number" min="0" step="any" inputmode="decimal"
+              [placeholder]="cenaZaSlosovaniVychozi() === null ? 'např. 400' : ''"
+              [value]="cenaZaSlosovaniPole()" (input)="cenaZaSlosovani.set($any($event.target).value)" />
+          </label>
+          <p class="napoveda">
+            Tiket bude <strong>virtuální</strong> — kontroluje se {{ popisRozsahuKontroly({ od: odKontroly(), do: doKontroly() }) }}
+            podle vybraných dnů slosování, ne podle toho, na kolik slosování platí papír.
+            @if (doKontroly() === null) {
+              S každým dalším staženým losováním se zkontroluje znovu.
+            }
+            Stažené výsledky zatím pokrývají {{ pocetSlosovani(pokryto()) }}.
+            @if (cenaZaSlosovaniKc() === null) {
+              Bez ceny se tiket do vsazených částek v přehledu nezapočte.
+            }
+          </p>
+        } @else {
+          <p class="napoveda">
+            Předvyplněno podle tiketu. Změň začátek, nebo smaž konec, a tiket se bude kontrolovat
+            i na další slosování — hodí se, když sázíš pořád stejná čísla.
+          </p>
+        }
+      </fieldset>
+
+      @if (prekryv().length > 0) {
+        <p class="upozorneni">
+          Stejnou sázku už má uložený tiket na {{ pocetSlosovani(prekryv().length) }}
+          ({{ prekryv().map(formatujDatum).join(', ') }}). Výhry i vsazené částky těch slosování
+          se v přehledu započítají dvakrát.
+        </p>
+      }
+
+      <!--
         Tlačítko se jmenuje podle toho, proč ho uživatel mačká, ne podle toho, co dělá uvnitř.
         Uložení je vedlejší efekt, důvod je zjistit, jestli tiket vyhrál.
       -->
@@ -239,6 +312,14 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       background: var(--barva-plocha); color: inherit; font: inherit;
     }
     .dvojice { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .rozsah { display: grid; gap: 0.6rem; }
+    .tlacitka-rozsahu { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .tlacitka-rozsahu:empty { display: none; }
+    .tlacitka-rozsahu button {
+      padding: 0.35rem 0.7rem; border: 1px solid var(--barva-ram); border-radius: 4px;
+      background: var(--barva-plocha); color: inherit; font: inherit; font-size: 0.85rem; cursor: pointer;
+    }
+    .napoveda { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--barva-text-tlumeny); }
     h2 { margin: 0.5rem 0 0; font-size: 1rem; }
     .sloupec { display: flex; gap: 0.4rem; align-items: center; }
     .poradi { width: 1.5rem; color: var(--barva-text-tlumeny); font-variant-numeric: tabular-nums; }
@@ -337,6 +418,48 @@ export class NovyTiket {
   /** Útržky, které bylo potřeba opravit. Uživateli se zvýrazní, ať je zkontroluje. */
   protected readonly opravene = (this.rozpoznane?.sloupce ?? []).flatMap((s) => s.opravene);
 
+  // Rozsah kontroly. Dokud ho uživatel nezmění, řídí se papírem: `null` znamená „podle tiketu“.
+  protected readonly kontrolaOd = signal<string | null>(null);
+  private readonly kontrolaDo = signal<string | null>(null);
+  protected readonly bezKonce = signal(false);
+  protected readonly cenaZaSlosovani = signal<string | null>(null);
+
+  private readonly papir = computed<Papir>(() => ({
+    hra: this.hra(),
+    slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: dnyZVyberu(this.hra(), this.zaskrtnuteDny()) },
+    cenaKc: prectiCastku(this.cena()),
+  }));
+
+  private readonly konecPodleTiketu = computed(() => konecPodlePapiru(this.papir(), this.stav.tahy()));
+  protected readonly odKontroly = computed(() => this.kontrolaOd() ?? this.prvni());
+  protected readonly doKontroly = computed(() =>
+    this.bezKonce() ? null : (this.kontrolaDo() ?? this.konecPodleTiketu() ?? ''),
+  );
+  protected readonly cenaZaSlosovaniVychozi = computed(() => cenaZaSlosovaniZPapiru(this.papir()));
+  protected readonly cenaZaSlosovaniPole = computed(
+    () => this.cenaZaSlosovani() ?? String(this.cenaZaSlosovaniVychozi() ?? ''),
+  );
+  protected readonly cenaZaSlosovaniKc = computed(() => prectiCastku(this.cenaZaSlosovaniPole()));
+
+  private readonly kontrola = computed(() =>
+    this.prvni() === ''
+      ? null
+      : sestavKontrolu(this.papir(), this.odKontroly(), this.doKontroly(), this.cenaZaSlosovaniKc(), this.stav.tahy()),
+  );
+  protected readonly virtualni = computed(() => this.kontrola() !== null);
+
+  /** Kolik slosování z rozsahu už mají stažené výsledky. */
+  protected readonly pokryto = computed(() => vyberSlosovani(this.navrh(), this.stav.tahy()).pouzite.length);
+
+  /** Slosování, na která už stejnou sázku kontroluje jiný uložený tiket. */
+  protected readonly prekryv = computed(() => {
+    const navrh = this.navrh();
+    const stejne = this.stav.tikety().filter((t) => t.id !== navrh.id && stejnaSazka(t, navrh));
+    if (stejne.length === 0) return [];
+    const data = (prekryvy([navrh, ...stejne], this.stav.tahy()).get(navrh.id) ?? []).flatMap((p) => p.data);
+    return [...new Set(data)].sort();
+  });
+
   protected readonly navrh = computed<Tiket>(() => {
     const hra = this.hra();
     const sloupce: Sloupec[] = this.radky().map((radek): Sloupec => {
@@ -352,7 +475,9 @@ export class NovyTiket {
       }
     });
 
+    const kontrola = this.kontrola();
     return {
+      ...(kontrola === null ? {} : { kontrola }),
       // Sériové číslo z kódu je nejlepší identifikátor — díky němu druhý sken téhož tiketu
       // nevytvoří duplicitu. Ručně zadaný tiket ho nemá, tak si vyrobí vlastní.
       id:
@@ -366,7 +491,7 @@ export class NovyTiket {
         dny: dnyZVyberu(hra, this.zaskrtnuteDny()),
       },
       kodDoplnkoveHry: this.doplnkova().trim() === '' ? null : this.doplnkova().trim(),
-      cenaKc: this.cena().trim() === '' ? null : Number(this.cena()),
+      cenaKc: this.papir().cenaKc,
       vlozeno: new Date().toISOString(),
     };
   });
@@ -392,6 +517,24 @@ export class NovyTiket {
   protected readonly popisProblemu = popisProblemu;
 
   protected readonly rozpoznanoZeSnimku = this.rozpoznane !== null;
+
+  protected readonly formatujDatum = formatujDatum;
+  protected readonly formatujKc = formatujKc;
+  protected readonly pocetSlosovani = pocetSlosovani;
+  protected readonly popisRozsahuKontroly = popisRozsahuKontroly;
+
+  /** Smazané datum konce znamená kontrolu bez konce. */
+  protected zmenDoKontroly(hodnota: string): void {
+    this.bezKonce.set(hodnota === '');
+    this.kontrolaDo.set(hodnota === '' ? null : hodnota);
+  }
+
+  protected podleTiketu(): void {
+    this.kontrolaOd.set(null);
+    this.kontrolaDo.set(null);
+    this.bezKonce.set(false);
+    this.cenaZaSlosovani.set(null);
+  }
 
   protected zmenHru(hra: Hra): void {
     this.hra.set(hra);

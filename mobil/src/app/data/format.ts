@@ -38,6 +38,25 @@ export function formatujDatumCas(iso: string): string {
   return Number.isNaN(datum.getTime()) ? iso : DATUM_CAS.format(datum);
 }
 
+const KORUNY = new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 2 });
+
+/** `61160` → `61 160 Kč`, `-400` → `-400 Kč`. U víc slosování jdou částky do tisíců. */
+export function formatujKc(castka: number): string {
+  return `${KORUNY.format(castka)} Kč`;
+}
+
+/** Rozsah kontroly virtuálního tiketu: `od 12. 9. 2023, bez konce`, `od 1. 9. do 8. 9. 2026`. */
+export function popisRozsahuKontroly(kontrola: { readonly od: string; readonly do: string | null }): string {
+  return kontrola.do === null
+    ? `od ${formatujDatum(kontrola.od)}, bez konce`
+    : `od ${formatujDatum(kontrola.od)} do ${formatujDatum(kontrola.do)}`;
+}
+
+/** `1 slosování`, `3 slosování` — slovo se nemění, ale číslo se hodí formátovat. */
+export function pocetSlosovani(pocet: number): string {
+  return `${KORUNY.format(pocet)} slosování`;
+}
+
 export function nazevDne(zkratka: string): string {
   return DNY[zkratka] ?? zkratka;
 }

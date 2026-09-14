@@ -7,8 +7,10 @@
 
 import { Injectable, computed, inject, signal } from '@angular/core';
 import {
+  prekryvy,
   sloucTahy,
   vyhodnotTiket,
+  type Prekryv,
   type SazbyEurosance,
   type SazbyExtra6,
   type Tah,
@@ -44,6 +46,19 @@ export class Stav {
 
   /** Do kdy má aplikace výsledky. Uživatel tak ví, jestli má smysl něco doimportovat. */
   readonly vysledkyDo = computed(() => this.tahy().at(-1)?.datum ?? null);
+
+  /**
+   * Vyhodnocení všech tiketů podle id. Seznam, detail i přehled ho sdílejí, takže se tiket
+   * kontrolovaný přes stovky slosování nepřepočítává pro každou obrazovku znovu.
+   */
+  readonly vysledky = computed<ReadonlyMap<string, VysledekTiketu>>(
+    () => new Map(this.tikety().map((tiket) => [tiket.id, this.vyhodnot(tiket)])),
+  );
+
+  /** Tikety se stejnou sázkou na stejná slosování — započítaly by se dvakrát. */
+  readonly prekryvy = computed<ReadonlyMap<string, readonly Prekryv[]>>(() =>
+    prekryvy(this.tikety(), this.tahy()),
+  );
 
   /** Právě se stahují výsledky ze serveru. */
   readonly stahuje = signal(false);

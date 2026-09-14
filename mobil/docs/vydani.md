@@ -452,11 +452,11 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 
 - ~~Doména backendu~~ — `kontrolatiketu.petrf22.cz` (12. 9. 2026), v aplikaci
   i v `network_security_config.xml`. Backend na ní běží od 13. 9. 2026.
-- **Síťový allowlist a ML Kit bez `datatransport` na telefonu.** Prázdné `<trust-anchors />`
-  v `base-config` je podle schématu platné, ale na zařízení se ještě neověřovalo. Ověřit, že
-  stažení z backendu projde, spojení jinam selže a sken i rozpoznání textu fungují.
-  Kdyby prázdné trust-anchors Android odmítl, náhradou je pinning na certifikát domény
-  (`<certificates src="@raw/…" />`).
+- **Spojení jinam než na server výsledků musí selhat** — na telefonu neověřené. Zbytek bodu
+  je ověřený 14. 9. 2026 na verzi 0.2.0 z Play: s prázdnými `<trust-anchors />` v `base-config`
+  stažení z backendu prošlo (2020 tahů, přesně podle manifestu) a fotka tiketu i čárový kód
+  fungují bez `datatransport`. Kdyby prázdné trust-anchors Android někdy odmítl, náhradou je
+  pinning na certifikát domény (`<certificates src="@raw/…" />`).
 
 - ~~Podpisový klíč~~ — vytvořen 10. 9. 2026, otisk výše. **Zálohovat mimo tenhle počítač;
   bez něj se aplikace se stejným `applicationId` už nikdy nevydá.**

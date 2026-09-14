@@ -37,7 +37,7 @@ Ověřené příkazy:
 
 ```bash
 cd backend && composer test && composer phpstan      # PHPUnit 93 testů, PHPStan level max
-cd mobil && npm test && npm run typecheck            # vitest 395 testů, tsc strict
+cd mobil && npm test && npm run typecheck            # vitest 421 testů, tsc strict
 node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 25 testů
 node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí projít bez změny souborů
 ```
@@ -51,10 +51,11 @@ a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
 Euromilionů nikdo neviděl na papíře. Přinesly `verzeFormatu` 2 — aplikace do 0.1.1 ho odmítne,
 takže ze serveru stahuje jen 0.2.0 a novější (`backend/docs/backend.md`, API).
 
-**Stahování výsledků zatím není na telefonu ověřené.** Backend je nasazený na
-`kontrolatiketu.petrf22.cz` (13. 9. 2026; Gigaserver, jen FTP — viz `backend/docs/backend.md`). Síťový allowlist s prázdnými `<trust-anchors />` a chod ML Kitu bez
-odstraněného `datatransport` se musí vyzkoušet na zařízení — viz `mobil/docs/vydani.md`, „Co
-vydání ještě blokuje“.
+**Verze 0.2.0 je v Google Play a běží na telefonu** (14. 9. 2026). Backend je nasazený na
+`kontrolatiketu.petrf22.cz` (13. 9. 2026; Gigaserver, jen FTP — viz `backend/docs/backend.md`).
+Na zařízení je ověřené stažení všech výsledků přes allowlist s prázdnými `<trust-anchors />`
+i fotka a čárový kód bez odstraněného `datatransport`. Neověřené zůstává, že spojení na jinou
+doménu selže — viz `mobil/docs/vydani.md`, „Co vydání ještě blokuje“.
 
 ## Účel a hlavní omezení
 

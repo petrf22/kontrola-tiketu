@@ -8,7 +8,7 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 395 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm test             # vitest, 421 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -55,6 +55,10 @@ Xiaomi 14T Pro, Android 16, 9. 9. 2026:
 - sériové číslo sedí na to vytištěné na tiketu,
 - import výsledků a vyhodnocení proti reálným tahům,
 - dočasný snímek žije půl sekundy a maže se i při chybě.
+
+Verze 0.2.0 z Google Play, 14. 9. 2026: stažení výsledků přes allowlist, fotka a čárový kód bez
+`datatransport`, dva tikety Eurojackpotu. Rozpoznávání potřebovalo víc fotek a nepřečetlo datum
+ani slepená euročísla — viz `docs/ocr-a-carovy-kod.md`, „Ostré použití z Play“.
 
 Na telefonu běží **release build s R8** — ladicí přeposílá konzoli do logcatu a plugin čtečky
 tam loguje celý obsah kódu včetně čísla klubové karty. Na ostrý provoz používej release.

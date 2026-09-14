@@ -21,6 +21,16 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ### Opraveno
 - Ruční zadání tiketu už po otevření nehlásí chyby prázdného sloupce; chyba pole se ukáže až po jeho opuštění nebo po stisku „Zkontrolovat tiket“ a řekne, ve kterém sloupci je (aplikace)
 
+## [Nezveřejněno]
+
+### Opraveno
+- Čísla, která rozpoznávač z fotky slepí dohromady (třeba euročísla „0203“ nebo „03NT“), se rozdělí po dvojicích místo toho, aby se ztratila; jednociferné číslo se označí k ověření, protože na tiketu je vždy dvojice číslic (aplikace)
+- Datum losování se z fotky přečte i s běžnými záměnami písmen za číslice a bere se z řádku SLOSOVÁNÍ, ne z jiného data na tiketu (aplikace)
+- Když se datum z fotky nepřečte, formulář už nepředvyplní dnešek, ale upozorní na to — tiket by se jinak vyhodnotil proti jinému tahu (aplikace)
+
+### Přidáno
+- Ve formuláři po focení jde rozbalit, co rozpoznávač z fotky přečetl mimo sloupce; zůstává jen na obrazovce a nikam se neukládá (aplikace)
+
 ## [0.2.0] – 2026-09-13
 
 ### Přidáno

@@ -1,7 +1,7 @@
 # Čtení tiketu: co jde, co nejde a proč
 
-Stav k **9. 9. 2026**. Logika čtení tiketu je hotová a otestovaná v `knihovny/ocr`, ale její
-napojení na zařízení naráží na dvě věci, které se nedají obejít bez rozhodnutí.
+Stav k **14. 9. 2026**. Logika čtení tiketu je v `knihovny/ocr`, zapojená a vyzkoušená na
+reálných tiketech Eurojackpotu. Historická část níž popisuje rozhodnutí, která k zapojení vedla.
 
 ---
 
@@ -10,8 +10,8 @@ napojení na zařízení naráží na dvě věci, které se nedají obejít bez 
 | | stav |
 |---|---|
 | Skládání řádků, čtení čísel, čtení kódu | **hotové**, otestované bez zařízení |
-| Sken čárového kódu (PDF417) | **zapojený**, ale neověřený na reálném tiketu |
-| Rozpoznávání čísel z tiketu (OCR) | **zapojené** s vědomou odchylkou od zadání — viz níže |
+| Sken čárového kódu (PDF417) | **ověřený** na reálném tiketu (9. 9. 2026, znovu z Play 14. 9.) |
+| Rozpoznávání čísel z tiketu (OCR) | **zapojené** s vědomou odchylkou od zadání — viz níže; na reálném tiketu funguje, ale ne na první fotku |
 
 ---
 
@@ -109,6 +109,38 @@ maskovat (`b & 0xff`). Bez toho se šifrovaný blok rozsype a offsety přestanou
   offline hned po instalaci.
 - Sken nepřidal do aplikace žádné oprávnění navíc. Ověřeno na sestaveném APK: jediné
   oprávnění je `CAMERA`.
+
+---
+
+## Ostré použití z Play (14. 9. 2026)
+
+Dva tikety Eurojackpotu, verze 0.2.0 z Google Play. Čárový kód i fotka fungují, ale:
+
+- na „skoro všechno“ byly potřeba **zhruba tři fotky**,
+- při prvním pokusu chyběla **poslední dvě čísla sloupce**, tedy euročísla,
+- **datum losování se nepřečetlo** — hlavička přitom vypadá přesně jako v zadání
+  (`SLOSOVÁNÍ: 1 (ÚT)   08.09.2026`) a formulář tehdy potichu předvyplnil dnešek.
+
+Syrový výstup rozpoznávače k dispozici nebyl (release build nic neloguje a tak to má zůstat),
+takže opravy míří na záměny, které se z kódu daly vyčíst:
+
+- **Čísla sloupce jsou na tiketu vždy dvojice číslic** (`02`, nikdy `2`). `prectiCislaSloupce`
+  proto slepený útržek se sudým počtem číslic rozdělí po dvou, jednu číslici označí k ověření
+  a lichý počet od tří nehádá. Dřív se útržek jako `0203` nebo `03NT` tiše zahodil. Pravidlo
+  platí jen pro text z fotky; ruční zadání dál bere i `2 3`.
+- **`NT` za sloupcem znamená náhodný tip** — čísla vybral terminál, ne sázející. Pro
+  vyhodnocení nic neznamená; když ho rozpoznávač přilepí k číslu, odřízne se.
+- **Datum** se čte se záměnami písmen za číslice, s čárkou i mezerami kolem teček, musí to být
+  skutečné datum a rozhoduje řádek `SLOSOVÁNÍ` (nebo datum nejblíž k němu), ne první datum
+  na tiketu. Nepřečtené datum formulář nechá prázdné s upozorněním.
+
+### Z diagnostiky test
+
+Formulář po focení má sbalený blok „Co rozpoznávač z fotky přečetl“: řádky mimo sloupce
+a sloupce k ověření, tak jak je vrátil rozpoznávač. Zobrazuje se jen na obrazovce
+(`FLAG_SECURE`), neukládá se ani neloguje. Když čtení selže, opiš odtud řádky — čísla sázek
+můžeš nahradit jinými dvojicemi — a z nich vznikne test v `knihovny/ocr/test/tiket.test.ts`
+podle skutečného tiketu místo odhadu.
 
 ---
 

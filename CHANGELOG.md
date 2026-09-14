@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [0.3.1] – 2026-09-14
+
+### Změněno
+- Smazání tiketu se potvrzuje v okně uprostřed obrazovky místo rámečku na konci stránky; výchozí volba je „Ponechat“, takže tiket omylem nesmažeš (aplikace)
+
 ## [0.3.0] – 2026-09-14
 
 ### Přidáno

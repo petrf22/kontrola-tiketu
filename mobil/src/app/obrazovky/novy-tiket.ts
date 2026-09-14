@@ -94,6 +94,13 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
         }
       </fieldset>
 
+      @if (chybiDatum()) {
+        <p class="upozorneni">
+          Datum prvního slosování se z fotky nepřečetlo — opiš ho prosím z tiketu, z řádku
+          SLOSOVÁNÍ. Bez něj by se tiket vyhodnotil proti jinému tahu.
+        </p>
+      }
+
       <div class="dvojice">
         <label>První slosování
           <input type="date" [value]="prvni()" (input)="prvni.set($any($event.target).value)" required />
@@ -160,6 +167,26 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
             Rozpoznávač musel opravit: {{ opravene.join(', ') }}.
           }
         </p>
+      }
+
+      <!--
+        Diagnostika pro případ, že fotka něco nepřečetla. Text je jen tady na obrazovce
+        (FLAG_SECURE), nikam se neukládá ani neloguje a s odchodem z formuláře zmizí.
+        Díky ní jde selhání popsat přesně a udělat z něj test podle skutečného tiketu.
+      -->
+      @if (diagnostika.length > 0) {
+        <details class="diagnostika">
+          <summary>Co rozpoznávač z fotky přečetl</summary>
+          <p class="tlumene">
+            Řádky mimo sloupce a sloupce k ověření, tak jak je vrátil rozpoznávač. Zůstávají jen na téhle obrazovce a nikam se
+            neukládají.
+          </p>
+          <ul>
+            @for (radek of diagnostika; track $index) {
+              <li class="cislo">{{ radek }}</li>
+            }
+          </ul>
+        </details>
       }
 
       <h2>Sloupce</h2>
@@ -234,6 +261,14 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       letter-spacing: 0.06em; word-break: break-all;
     }
     .tlumene { color: var(--barva-text-tlumeny); }
+    .upozorneni {
+      margin: 0; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
+      border-left: 3px solid var(--barva-chyba); font-size: 0.85rem; line-height: 1.5;
+    }
+    .diagnostika { font-size: 0.85rem; }
+    .diagnostika summary { cursor: pointer; color: var(--barva-text-tlumeny); }
+    .diagnostika ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
+    .diagnostika .cislo { font-size: 0.8rem; }
   `,
 })
 export class NovyTiket {
@@ -252,9 +287,14 @@ export class NovyTiket {
   private readonly rozpoznane = inject(NactenaCisla).vyzvedni();
 
   protected readonly hra = signal<Hra>(this.rozpoznane?.hra ?? 'eurojackpot');
+  // Ruční zadání předvyplní dnešek. Tiket z fotky ne: nepřečtené datum musí zůstat prázdné,
+  // jinak by se tiket potichu vyhodnotil proti dnešnímu tahu místo toho na papíře.
   protected readonly prvni = signal(
-    this.rozpoznane?.hlavicka.datum ?? new Date().toISOString().slice(0, 10),
+    this.rozpoznane === null
+      ? new Date().toISOString().slice(0, 10)
+      : (this.rozpoznane.hlavicka.datum ?? ''),
   );
+  protected readonly chybiDatum = computed(() => this.rozpoznane !== null && this.prvni() === '');
   protected readonly pocet = signal(this.rozpoznane?.hlavicka.pocetSlosovani ?? 1);
   // Den v závorce hlavičky se sem zatím nepropisuje: bez tiketu vsazeného na vybrané dny
   // nevíme, jestli znamená den prvního slosování, nebo výběr dnů.
@@ -282,6 +322,17 @@ export class NovyTiket {
           dotceno: { cisla: true, druhe: true },
         })),
   );
+
+  /** Řádky z fotky, které se nepoužily, a sloupce s problémem nebo opravou. */
+  protected readonly diagnostika: readonly string[] =
+    this.rozpoznane === null
+      ? []
+      : [
+          ...this.rozpoznane.nepouziteRadky,
+          ...this.rozpoznane.sloupce
+            .filter((s) => s.problemy.length > 0 || s.opravene.length > 0)
+            .map((s) => s.text),
+        ];
 
   /** Útržky, které bylo potřeba opravit. Uživateli se zvýrazní, ať je zkontroluje. */
   protected readonly opravene = (this.rozpoznane?.sloupce ?? []).flatMap((s) => s.opravene);
@@ -382,7 +433,7 @@ export class NovyTiket {
   protected async uloz(udalost: Event): Promise<void> {
     udalost.preventDefault();
     this.odeslano.set(true);
-    if (this.problemy().length > 0) return;
+    if (this.problemy().length > 0 || this.prvni() === '') return;
     const tiket = this.navrh();
     await this.stav.ulozTiket(tiket);
     // Průchozí údaje ze skenu už splnily účel.

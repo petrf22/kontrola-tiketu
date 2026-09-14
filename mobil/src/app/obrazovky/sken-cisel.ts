@@ -25,6 +25,9 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
         přečte všechno najednou. Snímek se po rozpoznání smaže a do galerie se neuloží;
         rozpoznané údaje pak potvrdíš ve formuláři.
       </p>
+      <p class="poznamka">
+        Nejlépe se čte tiket položený rovně na tmavé podložce, bez odlesku a přes celou fotku.
+      </p>
 
       <!--
         Volba hry a spuštění focení jsou jedno gesto. Uživatel drží konkrétní tiket, takže

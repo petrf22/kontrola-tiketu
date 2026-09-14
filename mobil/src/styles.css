@@ -12,6 +12,9 @@
   --barva-duraz: #8a5a2b;
   --barva-ok: #3f7a4a;
   --barva-chyba: #a33a2c;
+  /* Grafy přehledu. Ověřené na rozlišitelnost i pro barvoslepé, ve světlém i tmavém režimu. */
+  --barva-vsazeno: #eb6834;
+  --barva-vyhrano: #2a78d6;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -24,6 +27,8 @@
     --barva-duraz: #c98f4f;
     --barva-ok: #7fb389;
     --barva-chyba: #e0796a;
+    --barva-vsazeno: #d95926;
+    --barva-vyhrano: #3987e5;
   }
 }
 

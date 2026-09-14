@@ -7,6 +7,11 @@ export const routes: Routes = [
     title: 'Tikety',
   },
   {
+    path: 'prehled',
+    loadComponent: () => import('./obrazovky/prehled.js').then((m) => m.Prehled),
+    title: 'Přehled',
+  },
+  {
     path: 'tiket/novy',
     loadComponent: () => import('./obrazovky/novy-tiket.js').then((m) => m.NovyTiket),
     title: 'Zadat tiket ručně',

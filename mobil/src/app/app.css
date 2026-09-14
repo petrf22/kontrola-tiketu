@@ -21,7 +21,7 @@ header h1 {
 
 nav {
   display: flex;
-  /* Pět položek se na úzký telefon do jedné řádky nevejde; zalomit je čitelnější než
+  /* Šest položek se na úzký telefon do jedné řádky nevejde; zalomit je čitelnější než
      vodorovné posouvání, u kterého není poznat, že vpravo něco zbylo. */
   flex-wrap: wrap;
   gap: 0.25rem;

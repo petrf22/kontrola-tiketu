@@ -266,7 +266,7 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
               [value]="cenaZaSlosovaniPole()" (input)="cenaZaSlosovani.set($any($event.target).value)" />
           </label>
           <p class="napoveda">
-            Tiket bude <strong>virtuální</strong> — kontroluje se {{ popisRozsahuKontroly({ od: odKontroly(), do: doKontroly() }) }}
+            Tiket bude <strong>virtuální</strong> — kontroluje se {{ popisRozsahuKontroly({ od: odKontroly(), do: doKontroly() }) }},
             podle vybraných dnů slosování, ne podle toho, na kolik slosování platí papír.
             @if (doKontroly() === null) {
               S každým dalším staženým losováním se zkontroluje znovu.
@@ -480,9 +480,11 @@ export class NovyTiket {
       ...(kontrola === null ? {} : { kontrola }),
       // Sériové číslo z kódu je nejlepší identifikátor — díky němu druhý sken téhož tiketu
       // nevytvoří duplicitu. Ručně zadaný tiket ho nemá, tak si vyrobí vlastní.
+      // Virtuální tiket má vlastní předponu, jinak by ho ručně zadaný papírový tiket se stejnými
+      // čísly a datem přepsal.
       id:
         this.serioveCislo ??
-        `rucni-${this.prvni()}-${sloupce.map((s) => s.cisla.join('.')).join('_')}`,
+        `${kontrola === null ? 'rucni' : 'virtualni'}-${this.prvni()}-${sloupce.map((s) => s.cisla.join('.')).join('_')}`,
       hra,
       sloupce,
       slosovani: {

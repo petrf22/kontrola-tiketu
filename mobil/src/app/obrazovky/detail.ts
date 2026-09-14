@@ -244,10 +244,14 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
                   <input type="date" [value]="upravaDo()" (input)="upravaDo.set($any($event.target).value)" />
                 </label>
               </div>
-              <label>Cena za jedno slosování v Kč
-                <input type="number" min="0" step="any" inputmode="decimal"
-                  [value]="upravaCena()" (input)="upravaCena.set($any($event.target).value)" />
-              </label>
+              @if (upravenyTiket()?.kontrola) {
+                <label>Cena za jedno slosování v Kč
+                  <input type="number" min="0" step="any" inputmode="decimal"
+                    [value]="upravaCena()" (input)="upravaCena.set($any($event.target).value)" />
+                </label>
+              } @else {
+                <p class="tazene">Rozsah odpovídá tiketu — tiket se kontroluje podle papíru.</p>
+              }
               @for (problem of problemyUpravy(); track problem.cesta + problem.kod) {
                 <p class="chyba">{{ problem.zprava }}</p>
               }
@@ -477,7 +481,7 @@ export class Detail {
   private readonly overitUpravu = signal(false);
 
   /** Tiket, jak by vypadal po uložení rozdělané úpravy. */
-  private readonly upravenyTiket = computed(() => {
+  protected readonly upravenyTiket = computed(() => {
     const tiket = this.tiket();
     if (tiket === undefined) return undefined;
     const doData = this.upravaDo() === '' ? null : this.upravaDo();
@@ -509,7 +513,9 @@ export class Detail {
     if (tiket?.kontrola === undefined) return;
     this.upravaOd.set(tiket.kontrola.od);
     this.upravaCena.set(String(tiket.kontrola.cenaZaSlosovaniKc ?? ''));
-    this.upravaDo.set(this.posledniZnameSlosovani(tiket.hra) ?? new Date().toISOString().slice(0, 10));
+    // Poslední slosování, které tiket opravdu zkontroloval — u tiketu jen na úterý to nemá být pátek.
+    const posledni = this.vysledek()?.slosovani.at(-1)?.datum ?? this.posledniZnameSlosovani(tiket.hra);
+    this.upravaDo.set(posledni ?? new Date().toISOString().slice(0, 10));
     this.overitUpravu.set(false);
     this.uprava.set('ukonceni');
   }

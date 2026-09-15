@@ -21,6 +21,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ### Přidáno
 - Hra se z fotky tiketu pozná sama — z čárového kódu, popisku doplňkové hry, loga a hlavičky; když si aplikace není jistá, zeptá se po fotce a tentýž snímek přečte znovu (aplikace)
 - Sken samotného čárového kódu předvybere ve formuláři správnou hru (aplikace)
+- Tiket vsazený jen na některé dny slosování má dny ve formuláři předvyplněné podle řádku SLOSOVÁNÍ na tiketu (aplikace)
 
 ### Opraveno
 - Sériové číslo se přečte i z čárového kódu tiketu bez karty Allwyn Klub; dřív se u takového tiketu nepřečetlo vůbec (aplikace)

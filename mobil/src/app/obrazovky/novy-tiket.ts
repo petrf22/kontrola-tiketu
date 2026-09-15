@@ -14,7 +14,7 @@ import {
   type Sloupec,
   type Tiket,
 } from '@kontrola-tiketu/jadro';
-import { prectiCisla } from '@kontrola-tiketu/ocr';
+import { prectiCisla, vsazeneDny } from '@kontrola-tiketu/ocr';
 import {
   cenaZaSlosovaniZPapiru,
   konecPodlePapiru,
@@ -131,6 +131,9 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
       -->
       <fieldset>
         <legend>Dny slosování</legend>
+        @if (dnyZHlavicky()) {
+          <p class="tlumene">Předvyplněno podle dnů v řádku SLOSOVÁNÍ na tiketu.</p>
+        }
         @for (den of nabidkaDnu(); track den) {
           <label><input type="checkbox" name="dny" [value]="den"
             [checked]="zaskrtnuteDny().includes(den)"
@@ -387,9 +390,12 @@ export class NovyTiket {
   );
   protected readonly chybiDatum = computed(() => this.rozpoznane !== null && this.prvni() === '');
   protected readonly pocet = signal(this.rozpoznane?.hlavicka.pocetSlosovani ?? 1);
-  // Den v závorce hlavičky se sem zatím nepropisuje: bez tiketu vsazeného na vybrané dny
-  // nevíme, jestli znamená den prvního slosování, nebo výběr dnů.
-  protected readonly zaskrtnuteDny = signal<readonly Den[]>(DNY_LOSOVANI[this.hra()]);
+  // Dny ze závorky v hlavičce se předvyplní, jen když výběr dokazují (`vsazeneDny`). Jinak
+  // zůstanou všechny, jak se sází nejčastěji.
+  protected readonly zaskrtnuteDny = signal<readonly Den[]>(this.dnyProHru(this.hra()));
+  protected readonly dnyZHlavicky = computed(
+    () => this.rozpoznane !== null && vsazeneDny(this.rozpoznane.hlavicka, this.hra()) !== null,
+  );
   protected readonly nabidkaDnu = computed(() => DNY_LOSOVANI[this.hra()]);
   protected readonly nazevDne = nazevDne;
   protected readonly nazevHry = nazevHry;
@@ -550,7 +556,12 @@ export class NovyTiket {
 
   protected zmenHru(hra: Hra): void {
     this.hra.set(hra);
-    this.zaskrtnuteDny.set(DNY_LOSOVANI[hra]);
+    this.zaskrtnuteDny.set(this.dnyProHru(hra));
+  }
+
+  /** Výchozí dny pro hru: vsazené podle hlavičky tiketu z fotky, jinak všechny. */
+  private dnyProHru(hra: Hra): readonly Den[] {
+    return (this.rozpoznane === null ? null : vsazeneDny(this.rozpoznane.hlavicka, hra)) ?? DNY_LOSOVANI[hra];
   }
 
   protected prepniDen(den: Den, zaskrtnuto: boolean): void {

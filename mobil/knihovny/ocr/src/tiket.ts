@@ -8,7 +8,7 @@
  */
 
 import type { Den, Hra, Sloupec, Tiket } from '@kontrola-tiketu/jadro';
-import { zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
+import { DNY_LOSOVANI, zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
 import { prectiCislaSloupce, prectiCislo, ZAMENY, type NactenaHodnota } from './cisla.js';
 import { prectiCenu } from './cena.js';
 import { prectiKodDoplnkoveHry } from './doplnkovaHra.js';
@@ -69,8 +69,9 @@ export interface Hlavicka {
   readonly pocetSlosovani: number | null;
   /**
    * Dny ze závorky v hlavičce, nebo `null`, když tam závorka není (Euromiliony ji netisknou).
-   * Na tiketech ze 14. 9. 2026 to jsou vsazené dny: Sportka `6 (ST,PA,NE)` od středy do neděle
-   * za dva týdny vychází přesně na šest slosování.
+   * Jsou to dny slosování, na které tiket platí — Sportka `6 (ST,PA,NE)` od středy do neděle
+   * za dva týdny vychází přesně na šest slosování. Jestli to jsou i vsazené dny, říká
+   * {@link vsazeneDny}.
    */
   readonly dny: readonly Den[] | null;
   /** První slosování v ISO tvaru. */
@@ -168,6 +169,33 @@ export function prectiHlavicku(radky: readonly string[]): Hlavicka {
     dny: prectiDny(hlavicka),
     datum: nejblizsi?.datum ?? null,
   };
+}
+
+/**
+ * Vsazené dny podle závorky v hlavičce, nebo `null` pro „všechny dny hry“.
+ *
+ * Závorka vypisuje dny, na které tiket platí. U tiketu na málo slosování to ale nemusí být
+ * výběr sázejícího: Eurojackpot `1 (ÚT)` platí na jediné úterý, ať byly vsazené všechny dny,
+ * nebo jen úterý. Pro slosování z papíru je to jedno, jenže virtuální tiket s rozsahem kontroly
+ * za papír by s úterkem navíc vynechal všechny pátky.
+ *
+ * Proto se výběr bere jen tehdy, když ho závorka **dokazuje**: při sázce na všechny dny by
+ * `pocet` slosování za sebou pokrylo `min(pocet, dnů hry)` různých dnů. Když jich závorka
+ * vypisuje méně, sázející vybíral. Jinak — všechny dny hry, nečitelný počet, cizí den
+ * v závorce — zůstane `null` a formulář nabídne všechny dny jako dřív.
+ *
+ * Doložené jsou jen tikety na všechny dny (14. 9. 2026). Pravidlo ale platí, ať závorka
+ * znamená výběr, nebo pokryté dny: při výběru menším než pokrytí se obojí shoduje.
+ */
+export function vsazeneDny(hlavicka: Hlavicka, hra: Hra): readonly Den[] | null {
+  const { dny, pocetSlosovani } = hlavicka;
+  if (dny === null || pocetSlosovani === null) return null;
+
+  const nabidka = DNY_LOSOVANI[hra];
+  if (!dny.every((den) => nabidka.includes(den))) return null;
+
+  const pokrytiPriVsech = Math.min(pocetSlosovani, nabidka.length);
+  return dny.length < pokrytiPriVsech ? nabidka.filter((den) => dny.includes(den)) : null;
 }
 
 function rozdelCisla(
@@ -285,7 +313,8 @@ export function naTiket(
     slosovani: {
       prvni: vysledek.hlavicka.datum ?? '',
       pocet: vysledek.hlavicka.pocetSlosovani ?? 1,
-      dny: doplnky.dny ?? null,
+      // Nezadané dny se vezmou z hlavičky; `null` od volajícího znamená „všechny“ a platí.
+      dny: doplnky.dny === undefined ? vsazeneDny(vysledek.hlavicka, vysledek.hra) : doplnky.dny,
     },
     // Předaný kód má přednost před přečteným — volající může vědět víc.
     kodDoplnkoveHry: doplnky.kodDoplnkoveHry ?? vysledek.kodDoplnkoveHry,

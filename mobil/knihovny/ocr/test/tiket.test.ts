@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { vyhodnotTiket, zkontrolujTiket, type Tah } from '@kontrola-tiketu/jadro';
-import { jeBezProblemu, naTiket, prectiTiket, type RozpoznanyText } from '../src/index.js';
+import {
+  jeBezProblemu,
+  naTiket,
+  prectiTiket,
+  vsazeneDny,
+  type Hlavicka,
+  type RozpoznanyText,
+} from '../src/index.js';
 import { tiketEJ } from './pomocnici.js';
 import { EUROJACKPOT_14_9, EUROMILIONY_14_9, ROVNE, SPORTKA_14_9 } from './tiketyZFotek.js';
 
@@ -211,6 +218,38 @@ describe('prectiTiket — hlavička s rozsahem a víc dny', () => {
   });
 });
 
+describe('vsazeneDny', () => {
+  const h = (pocetSlosovani: number | null, dny: Hlavicka['dny']): Hlavicka => ({
+    pocetSlosovani,
+    dny,
+    datum: '2026-09-15',
+  });
+
+  it('závorka se všemi dny hry neznamená výběr', () => {
+    expect(vsazeneDny(h(4, ['ut', 'pa']), 'eurojackpot')).toBeNull();
+    expect(vsazeneDny(h(6, ['st', 'pa', 'ne']), 'sportka')).toBeNull();
+  });
+
+  it('méně dnů, než by pokryla sázka na všechny, je výběr', () => {
+    expect(vsazeneDny(h(4, ['ut']), 'eurojackpot')).toEqual(['ut']);
+    expect(vsazeneDny(h(6, ['ne', 'st']), 'sportka')).toEqual(['st', 'ne']);
+    expect(vsazeneDny(h(2, ['ne']), 'sportka')).toEqual(['ne']);
+  });
+
+  it('krátký tiket s tolika dny, kolik slosování, výběr nedokazuje', () => {
+    // Eurojackpot na jedno úterý: mohly být vsazené všechny dny, nebo jen úterý.
+    expect(vsazeneDny(h(1, ['ut']), 'eurojackpot')).toBeNull();
+    // Sportka na dvě slosování od středy pokryje středu a pátek i při sázce na všechny dny.
+    expect(vsazeneDny(h(2, ['st', 'pa']), 'sportka')).toBeNull();
+  });
+
+  it('bez závorky, bez počtu nebo s cizím dnem nic nedomýšlí', () => {
+    expect(vsazeneDny(h(4, null), 'euromiliony')).toBeNull();
+    expect(vsazeneDny(h(null, ['ut']), 'eurojackpot')).toBeNull();
+    expect(vsazeneDny(h(4, ['ne']), 'eurojackpot')).toBeNull();
+  });
+});
+
 describe('prectiTiket — přepisy tiketů ze 14. 9. 2026', () => {
   it('Eurojackpot', () => {
     const vysledek = prectiTiket(tiketEJ(EUROJACKPOT_14_9), 'eurojackpot', ROVNE);
@@ -285,6 +324,17 @@ describe('naTiket', () => {
     expect(tiket.slosovani.pocet).toBe(1);
   });
 
+  it('dny vezme z hlavičky, jen když dokazuje výběr', () => {
+    // `1 (ÚT)` výběr nedokazuje.
+    expect(naTiket(vysledek, { id: 'a' }).slosovani.dny).toBeNull();
+    const jenUtery = prectiTiket(
+      tiketEJ([['SLOSOVÁNÍ: 4 (ÚT)', '15.09.2026-06.10.2026'], ...CELY_TIKET.slice(1)]),
+      'eurojackpot',
+    );
+    expect(naTiket(jenUtery, { id: 'a' }).slosovani.dny).toEqual(['ut']);
+    expect(naTiket(jenUtery, { id: 'a', dny: null }).slosovani.dny).toBeNull();
+  });
+
   it('kód doplňkové hry bere zvenčí, ne z OCR — je v čárovém kódu', () => {
     expect(naTiket(vysledek, { id: 'a' }).kodDoplnkoveHry).toBeNull();
     expect(naTiket(vysledek, { id: 'a', kodDoplnkoveHry: '912799' }).kodDoplnkoveHry).toBe('912799');
@@ -342,7 +392,8 @@ describe('kód doplňkové hry ze snímku', () => {
  */
 describe('prectiTiket — Euromiliony', () => {
   // Tři sloupce a oddělovače jako u Eurojackpotu. Útržky pomocníka nenesou úhel, takže se
-  // sklon odhaduje z rozložení — a to potřebuje víc než dva řádky čísel.
+  // sklon odhaduje z rozložení — a to potřebuje víc než dva řádky čísel. Skutečný tiket
+  // Euromilionů závorku se dny netiskne (`tiketyZFotek.ts`); tahle syntetická ji má.
   const TIKET_EM: readonly string[][] = [
     ['SLOSOVÁNÍ: 2 (ÚT)', '08.09.2026'],
     ['------------------------------------------------'],
@@ -373,7 +424,8 @@ describe('prectiTiket — Euromiliony', () => {
     const tiket = naTiket(vysledek, { id: 'em' });
     expect(zkontrolujTiket(tiket)).toEqual([]);
     expect(tiket.sloupce[0]).toEqual({ hra: 'euromiliony', cisla: [2, 3, 12, 17, 18, 22, 28], druheOsudi: [5] });
-    expect(tiket.slosovani).toEqual({ prvni: '2026-09-08', pocet: 2, dny: null });
+    // Dvě slosování jen s úterkem v závorce — sázka na všechny dny by pokryla i sobotu.
+    expect(tiket.slosovani).toEqual({ prvni: '2026-09-08', pocet: 2, dny: ['ut'] });
   });
 
   it('číslo 6 v druhém osudí je mimo rozsah', () => {

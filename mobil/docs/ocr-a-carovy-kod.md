@@ -184,9 +184,15 @@ Přepisy s vymyšlenými čísly jsou v `knihovny/ocr/test/tiketyZFotek.ts`.
 Nad hlavičkou mají **všechny tři** reklamu `EXTRA ŠANCE NA VÝHRU S ALLWYN KLUBEM.` a `NAVÍC
 JOKER NÁSOBÍ VÝHRY NA KOLE ŠTĚSTÍ.` Starý nekotvený vzor Šance na ni seděl.
 
-- **Hlavička** má rozsah dat a v závorce vsazené dny — Sportka `6 (ST,PA,NE)` od 16. do 27. 9.
-  vychází přesně na šest slosování. Euromiliony závorku netisknou, proto se počet slosování
-  čte za popiskem `SLOSOVÁNÍ`, ne před závorkou. Dny se zatím do formuláře nepropisují.
+- **Hlavička** má rozsah dat a v závorce dny, na které tiket platí — Sportka `6 (ST,PA,NE)`
+  od 16. do 27. 9. vychází přesně na šest slosování. Euromiliony závorku netisknou, proto se
+  počet slosování čte za popiskem `SLOSOVÁNÍ`, ne před závorkou.
+- **Dny ze závorky se předvyplní do formuláře, jen když dokazují výběr** (`vsazeneDny`,
+  15. 9. 2026). Tiket na málo slosování vypíše jen pokryté dny: Eurojackpot `1 (ÚT)` mohl být
+  vsazený na všechny dny i jen na úterý. Pro slosování z papíru je to jedno, virtuální tiket
+  by ale s úterkem vynechal pátky. Výběr se proto bere, jen když je v závorce méně dnů, než by
+  `pocet` slosování pokrylo při sázce na všechny (`min(pocet, dnů hry)`). Tiket se skutečným
+  výběrem dnů zatím nikdo nevyfotil; pravidlo platí, ať závorka znamená výběr, nebo pokryté dny.
 - **Sloupec Euromilionů** je jeden blok, číslo z druhého osudí odděluje pomlčka.
 - **Eurošance** má pět číslic, Šance a Extra 6 šest.
 

@@ -2,7 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { Hra } from '@kontrola-tiketu/jadro';
 import { prectiKodDoplnkoveHry, rozpoznejHru, slozRadky } from '../src/index.js';
 import { tiketEJ } from './pomocnici.js';
-import { EUROJACKPOT_14_9, EUROMILIONY_14_9, ROVNE, SPORTKA_14_9 } from './tiketyZFotek.js';
+import {
+  EUROJACKPOT_14_9,
+  EUROJACKPOT_SAZKA_2021,
+  EUROMILIONY_14_9,
+  ROVNE,
+  SPORTKA_14_9,
+} from './tiketyZFotek.js';
 
 const radky = (tiket: readonly string[][]) => slozRadky(tiketEJ(tiket), ROVNE).map((r) => r.text);
 
@@ -33,6 +39,13 @@ describe('rozpoznejHru — celé tikety ze 14. 9. 2026', () => {
       expect(rozpoznejHru(radky(tiket), jina).hra).toBeNull();
     });
   }
+
+  it('starší tiket Sazky — logo Sazky se s Sportkou neplete', () => {
+    expect(rozpoznejHru(radky(EUROJACKPOT_SAZKA_2021), null)).toEqual({
+      hra: 'eurojackpot',
+      podle: ['popisek Extra 6', 'název v logu'],
+    });
+  });
 
   it('řekne, podle čeho hru poznal', () => {
     expect(rozpoznejHru(radky(EUROMILIONY_14_9), 'euromiliony').podle).toEqual([

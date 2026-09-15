@@ -22,10 +22,12 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 - Hra se z fotky tiketu pozná sama — z čárového kódu, popisku doplňkové hry, loga a hlavičky; když si aplikace není jistá, zeptá se po fotce a tentýž snímek přečte znovu (aplikace)
 - Sken samotného čárového kódu předvybere ve formuláři správnou hru (aplikace)
 - Tiket vsazený jen na některé dny slosování má dny ve formuláři předvyplněné podle řádku SLOSOVÁNÍ na tiketu (aplikace)
+- Tiket na jedno slosování má ve formuláři předvyplněný den podle data, i při ručním zadání (aplikace)
 
 ### Opraveno
 - Sériové číslo se přečte i z čárového kódu tiketu bez karty Allwyn Klub; dřív se u takového tiketu nepřečetlo vůbec (aplikace)
 - Z fotky tiketu Euromilionů se přečte počet slosování (aplikace)
+- Z fotky staršího tiketu Sazky se přečte datum slosování s rokem na dvě číslice (aplikace)
 
 ## [0.3.1] – 2026-09-14
 

@@ -1,4 +1,4 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   DELKA_KODU_DOPLNKOVE_HRY,
@@ -95,6 +95,10 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
  * to samostatná obrazovka dostupná z hlavní nabídky, ne až záchrana po nepovedeném skenu.
  * Stejný formulář poslouží i pro potvrzení naOCRovaných čísel.
  */
+function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean {
+  return a === b || (a !== null && b !== null && a.length === b.length && a.every((d, i) => d === b[i]));
+}
+
 @Component({
   selector: 'app-novy-tiket',
   imports: [RouterLink],
@@ -127,12 +131,17 @@ function napoveda(hra: Hra): { cisla: string; druheOsudi: string | null; druheOs
 
       <!--
         Tiket může platit jen na některé dny losování. Výchozí jsou všechny — tak se sází
-        nejčastěji a tak se tiket choval, než výběr přibyl.
+        nejčastěji. Jedno slosování má den podle data, tiket z fotky dny podle hlavičky.
       -->
       <fieldset>
         <legend>Dny slosování</legend>
-        @if (dnyZHlavicky()) {
-          <p class="tlumene">Předvyplněno podle dnů v řádku SLOSOVÁNÍ na tiketu.</p>
+        @switch (puvodDnu()) {
+          @case ('datum') {
+            <p class="tlumene">Jedno slosování — den předvyplněný podle data.</p>
+          }
+          @case ('zavorka') {
+            <p class="tlumene">Předvyplněno podle dnů v řádku SLOSOVÁNÍ na tiketu.</p>
+          }
         }
         @for (den of nabidkaDnu(); track den) {
           <label><input type="checkbox" name="dny" [value]="den"
@@ -390,11 +399,33 @@ export class NovyTiket {
   );
   protected readonly chybiDatum = computed(() => this.rozpoznane !== null && this.prvni() === '');
   protected readonly pocet = signal(this.rozpoznane?.hlavicka.pocetSlosovani ?? 1);
-  // Dny ze závorky v hlavičce se předvyplní, jen když výběr dokazují (`vsazeneDny`). Jinak
-  // zůstanou všechny, jak se sází nejčastěji.
-  protected readonly zaskrtnuteDny = signal<readonly Den[]>(this.dnyProHru(this.hra()));
-  protected readonly dnyZHlavicky = computed(
-    () => this.rozpoznane !== null && vsazeneDny(this.rozpoznane.hlavicka, this.hra()) !== null,
+  /**
+   * Vsazené dny odvozené z formuláře, nebo `null` pro všechny (`vsazeneDny`): jedno slosování
+   * podle data, víc slosování podle závorky z fotky, když výběr dokazuje. Počítá se z toho, co
+   * ve formuláři právě je, takže den sleduje i ručně zadané nebo opravené datum.
+   */
+  private readonly odvozeneDny = computed(
+    () =>
+      vsazeneDny(
+        {
+          pocetSlosovani: this.pocet(),
+          dny: this.rozpoznane?.hlavicka.dny ?? null,
+          datum: this.prvni() === '' ? null : this.prvni(),
+        },
+        this.hra(),
+      ),
+    { equal: stejneDny },
+  );
+  /**
+   * Zaškrtnuté dny. Předvyplní se z `odvozeneDny` (jinak všechny dny hry) a vrátí se k nim,
+   * jen když se odvozené dny opravdu změní — ruční výběr přežije třeba přepsání ceny i počtu
+   * slosování, který na odvozených dnech nic nemění.
+   */
+  protected readonly zaskrtnuteDny = linkedSignal<readonly Den[]>(
+    () => this.odvozeneDny() ?? DNY_LOSOVANI[this.hra()],
+  );
+  protected readonly puvodDnu = computed(() =>
+    this.odvozeneDny() === null ? null : this.pocet() === 1 ? 'datum' : 'zavorka',
   );
   protected readonly nabidkaDnu = computed(() => DNY_LOSOVANI[this.hra()]);
   protected readonly nazevDne = nazevDne;
@@ -556,12 +587,9 @@ export class NovyTiket {
 
   protected zmenHru(hra: Hra): void {
     this.hra.set(hra);
-    this.zaskrtnuteDny.set(this.dnyProHru(hra));
-  }
-
-  /** Výchozí dny pro hru: vsazené podle hlavičky tiketu z fotky, jinak všechny. */
-  private dnyProHru(hra: Hra): readonly Den[] {
-    return (this.rozpoznane === null ? null : vsazeneDny(this.rozpoznane.hlavicka, hra)) ?? DNY_LOSOVANI[hra];
+    // Jiná hra má jiné dny losování; výběr se vrátí k výchozímu i tehdy, když se odvozené dny
+    // náhodou nezměnily (u obou her `null`).
+    this.zaskrtnuteDny.set(this.odvozeneDny() ?? DNY_LOSOVANI[hra]);
   }
 
   protected prepniDen(den: Den, zaskrtnuto: boolean): void {

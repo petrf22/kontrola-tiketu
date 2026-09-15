@@ -62,6 +62,34 @@ export const EUROMILIONY_14_9: readonly string[][] = [
 ];
 
 /**
+ * Starší tiket Sazky na jedno slosování, vyfocený 15. 9. 2026. Jiná hlavička (`POČET
+ * SLOSOVÁNÍ: 1` bez závorky), rok dvěma číslicemi, sloupce bez `NT`, cena na vlastním řádku
+ * a maskované číslo klubové karty. 28. 5. 2021 byl pátek.
+ */
+export const EUROJACKPOT_SAZKA_2021: readonly string[][] = [
+  ['sazka'],
+  ['POUŽÍVEJTE PŘI SÁZENÍ SAZKA KARTU A'],
+  ['MŮŽETE VYHRÁT ŠKODU FABIA V KOLE ŠTĚSTÍ.'],
+  ['EUROJACKPOT'],
+  ['OBNOVENÍ SÁZKY'],
+  ['POČET SLOSOVÁNÍ: 1', '28.05.21'],
+  CARA,
+  ['1: 03 09 17 26 44', '01 08'],
+  ['2: 06 13 21 38 45', '03 10'],
+  ['3: 02 11 27 32 48', '02 05'],
+  ['4: 07 15 23 30 41', '04 09'],
+  ['5: 10 19 25 36 47', '06 11'],
+  CARA,
+  ['EXTRA 6:  112233', 'ANO'],
+  ['340 Kč'],
+  ['ČÍSLO KARTY KLUBU SAZKA:', '1*****000'],
+  ['25.05.21', '12:06:40'],
+  CARA,
+  ['ČÍSLO OBSTARAVATELSKÉ LICENCE:', '11111111'],
+  ['000000', '123-0000000000-00004'],
+];
+
+/**
  * Přepis nemá úhly řádků, takže se sklon při skládání zadává. Odhad hlasováním je na pravidelné
  * mřížce s mnoha jednodílnými řádky nejednoznačný; na zařízení úhel dodává ML Kit.
  */

@@ -187,12 +187,29 @@ JOKER NÁSOBÍ VÝHRY NA KOLE ŠTĚSTÍ.` Starý nekotvený vzor Šance na ni se
 - **Hlavička** má rozsah dat a v závorce dny, na které tiket platí — Sportka `6 (ST,PA,NE)`
   od 16. do 27. 9. vychází přesně na šest slosování. Euromiliony závorku netisknou, proto se
   počet slosování čte za popiskem `SLOSOVÁNÍ`, ne před závorkou.
-- **Dny ze závorky se předvyplní do formuláře, jen když dokazují výběr** (`vsazeneDny`,
-  15. 9. 2026). Tiket na málo slosování vypíše jen pokryté dny: Eurojackpot `1 (ÚT)` mohl být
-  vsazený na všechny dny i jen na úterý. Pro slosování z papíru je to jedno, virtuální tiket
-  by ale s úterkem vynechal pátky. Výběr se proto bere, jen když je v závorce méně dnů, než by
-  `pocet` slosování pokrylo při sázce na všechny (`min(pocet, dnů hry)`). Tiket se skutečným
-  výběrem dnů zatím nikdo nevyfotil; pravidlo platí, ať závorka znamená výběr, nebo pokryté dny.
+- **Dny se do formuláře předvyplní** (`vsazeneDny`, 15. 9. 2026):
+  - **Jedno slosování má den podle data** — i při ručním zadání a po opravě data. Závorka se
+    jen ověří; když datu odporuje nebo hra v ten den nelosuje, zůstanou všechny dny. Virtuální
+    tiket se tak drží dne, na který se sázelo.
+  - **Víc slosování:** dny ze závorky, jen když dokazují výběr. Sportka `2 (ST,PA)` od středy
+    pokryje středu a pátek i při sázce na všechny dny. Výběr se bere, jen když je v závorce
+    méně dnů, než by `pocet` slosování pokrylo při sázce na všechny (`min(pocet, dnů hry)`).
+    Tiket se skutečným výběrem dnů zatím nikdo nevyfotil; pravidlo platí, ať závorka znamená
+    výběr, nebo pokryté dny.
+  - Ve formuláři jsou zaškrtnuté dny `linkedSignal` nad odvozenými dny. Ruční výběr se přepíše,
+    jen když se odvozené dny opravdu změní (datum, počet 1 ↔ víc, hra).
+
+### Starší tiket Sazky (fotka 15. 9. 2026)
+
+Eurojackpot z května 2021, přepis v `tiketyZFotek.ts`. Jiný než tikety Allwynu:
+
+- logo `sazka`, pod reklamou název `EUROJACKPOT` obyčejným písmem a řádek `OBNOVENÍ SÁZKY`,
+- hlavička `POČET SLOSOVÁNÍ: 1   28.05.21` — bez závorky a **s rokem dvěma číslicemi**, který
+  dřív čtení data nepřečetlo; níž je datum sázky `25.05.21`,
+- sloupce bez `NT`, cena `340 Kč` na vlastním řádku, `ČÍSLO KARTY KLUBU SAZKA` maskované,
+- pod PDF417 ještě čárový kód ITF s 16 číslicemi. PDF417 se z fotky na počítači nepřečetl,
+  takže jeho struktura ověřená není. Tištěné sériové číslo má 18 číslic, ne 20 — čtení kódu
+  na tomhle tiketu nejspíš selže a tiket dostane náhradní identifikátor.
 - **Sloupec Euromilionů** je jeden blok, číslo z druhého osudí odděluje pomlčka.
 - **Eurošance** má pět číslic, Šance a Extra 6 šest.
 

@@ -9,7 +9,13 @@ import {
   type RozpoznanyText,
 } from '../src/index.js';
 import { tiketEJ } from './pomocnici.js';
-import { EUROJACKPOT_14_9, EUROMILIONY_14_9, ROVNE, SPORTKA_14_9 } from './tiketyZFotek.js';
+import {
+  EUROJACKPOT_14_9,
+  EUROJACKPOT_SAZKA_2021,
+  EUROMILIONY_14_9,
+  ROVNE,
+  SPORTKA_14_9,
+} from './tiketyZFotek.js';
 
 /** Tiket Eurojackpotu přesně podle rozvržení ze zadání, včetně hlavičky a oddělovačů. */
 const CELY_TIKET: readonly string[][] = [
@@ -157,6 +163,20 @@ describe('prectiTiket — datum v hlavičce', () => {
     });
   }
 
+  for (const datum of ['28.05.21', '28. 05. 21', '2B.O5.21']) {
+    it(`přečte rok dvěma číslicemi v podobě „${datum}“`, () => {
+      expect(hlavicka([['POČET SLOSOVÁNÍ: 1', datum]]).datum).toBe('2021-05-28');
+    });
+  }
+
+  it('dvouciferný rok nevykousne z delšího data', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 1 (ÚT)', '08.09.2026']]).datum).toBe('2026-09-08');
+  });
+
+  it('krátké datum složené hlavně z písmen nebere', () => {
+    expect(hlavicka([['SLOSOVÁNÍ: 1', 'OB.O5.2l']]).datum).toBeNull();
+  });
+
   it('nesmyslné datum nedomýšlí', () => {
     expect(hlavicka([['SLOSOVÁNÍ: 1 (ÚT)', '38.19.2026']]).datum).toBeNull();
   });
@@ -237,10 +257,24 @@ describe('vsazeneDny', () => {
   });
 
   it('krátký tiket s tolika dny, kolik slosování, výběr nedokazuje', () => {
-    // Eurojackpot na jedno úterý: mohly být vsazené všechny dny, nebo jen úterý.
-    expect(vsazeneDny(h(1, ['ut']), 'eurojackpot')).toBeNull();
     // Sportka na dvě slosování od středy pokryje středu a pátek i při sázce na všechny dny.
     expect(vsazeneDny(h(2, ['st', 'pa']), 'sportka')).toBeNull();
+  });
+
+  it('jedno slosování má den podle data', () => {
+    // 15. 9. 2026 je úterý, 28. 5. 2021 pátek.
+    expect(vsazeneDny(h(1, null), 'eurojackpot')).toEqual(['ut']);
+    expect(vsazeneDny(h(1, ['ut']), 'eurojackpot')).toEqual(['ut']);
+    expect(vsazeneDny({ pocetSlosovani: 1, dny: null, datum: '2021-05-28' }, 'eurojackpot')).toEqual(['pa']);
+  });
+
+  it('u jednoho slosování nic nedomýšlí, když datum nesedí', () => {
+    // Závorka odporuje datu.
+    expect(vsazeneDny(h(1, ['pa']), 'eurojackpot')).toBeNull();
+    // V úterý Sportka nelosuje — datum je přečtené špatně.
+    expect(vsazeneDny(h(1, null), 'sportka')).toBeNull();
+    // Bez data den poznat nejde.
+    expect(vsazeneDny({ pocetSlosovani: 1, dny: ['ut'], datum: null }, 'eurojackpot')).toBeNull();
   });
 
   it('bez závorky, bez počtu nebo s cizím dnem nic nedomýšlí', () => {
@@ -277,6 +311,23 @@ describe('prectiTiket — přepisy tiketů ze 14. 9. 2026', () => {
     ]);
     expect(vysledek.kodDoplnkoveHry).toBe('654321');
     expect(vysledek.cenaKc).toBe(720);
+    expect(jeBezProblemu(vysledek)).toBe(true);
+  });
+
+  it('Eurojackpot, starší tiket Sazky na jedno slosování', () => {
+    const vysledek = prectiTiket(tiketEJ(EUROJACKPOT_SAZKA_2021), 'eurojackpot', ROVNE);
+    // Datum sázky 25.05.21 níž na tiketu nesmí přebít datum slosování.
+    expect(vysledek.hlavicka).toEqual({ pocetSlosovani: 1, dny: null, datum: '2021-05-28' });
+    expect(vsazeneDny(vysledek.hlavicka, 'eurojackpot')).toEqual(['pa']);
+    expect(vysledek.sloupce.map((s) => [s.cisla, s.druheOsudi])).toEqual([
+      [[3, 9, 17, 26, 44], [1, 8]],
+      [[6, 13, 21, 38, 45], [3, 10]],
+      [[2, 11, 27, 32, 48], [2, 5]],
+      [[7, 15, 23, 30, 41], [4, 9]],
+      [[10, 19, 25, 36, 47], [6, 11]],
+    ]);
+    expect(vysledek.kodDoplnkoveHry).toBe('112233');
+    expect(vysledek.cenaKc).toBe(340);
     expect(jeBezProblemu(vysledek)).toBe(true);
   });
 
@@ -325,8 +376,8 @@ describe('naTiket', () => {
   });
 
   it('dny vezme z hlavičky, jen když dokazuje výběr', () => {
-    // `1 (ÚT)` výběr nedokazuje.
-    expect(naTiket(vysledek, { id: 'a' }).slosovani.dny).toBeNull();
+    // Jedno slosování 8. 9. 2026 — úterý.
+    expect(naTiket(vysledek, { id: 'a' }).slosovani.dny).toEqual(['ut']);
     const jenUtery = prectiTiket(
       tiketEJ([['SLOSOVÁNÍ: 4 (ÚT)', '15.09.2026-06.10.2026'], ...CELY_TIKET.slice(1)]),
       'eurojackpot',

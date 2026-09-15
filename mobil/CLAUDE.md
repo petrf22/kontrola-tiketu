@@ -8,7 +8,7 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 513 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm test             # vitest, 522 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/

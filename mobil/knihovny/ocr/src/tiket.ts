@@ -8,7 +8,7 @@
  */
 
 import type { Den, Hra, Sloupec, Tiket } from '@kontrola-tiketu/jadro';
-import { DNY_LOSOVANI, zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
+import { denVTydnu, DNY_LOSOVANI, zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
 import { prectiCislaSloupce, prectiCislo, ZAMENY, type NactenaHodnota } from './cisla.js';
 import { prectiCenu } from './cena.js';
 import { prectiKodDoplnkoveHry } from './doplnkovaHra.js';
@@ -57,10 +57,11 @@ const SLOSOVANI = /SL[O0]S[O0]V/i;
 const CISLICE = `[\\d${Object.keys(ZAMENY).join('')}]`;
 /**
  * Datum `08.09.2026` i v podobách, jaké z termotisku vrací rozpoznávač: `O8.09.2O26`,
- * `08. 09. 2026`, `08,09.2026`. Ohraničení brání tomu, aby se datum vykouslo z delšího textu.
+ * `08. 09. 2026`, `08,09.2026`. Starší tikety Sazky tisknou rok dvěma číslicemi (`28.05.21`,
+ * fotka 15. 9. 2026). Ohraničení brání tomu, aby se datum vykouslo z delšího textu.
  */
 const DATUM = new RegExp(
-  `(?<![\\p{L}\\p{N}])(${CISLICE}{2})\\s*[.,]\\s*(${CISLICE}{2})\\s*[.,]\\s*(${CISLICE}{4})(?![\\p{L}\\p{N}])`,
+  `(?<![\\p{L}\\p{N}])(${CISLICE}{2})\\s*[.,]\\s*(${CISLICE}{2})\\s*[.,]\\s*(${CISLICE}{4}|${CISLICE}{2})(?![\\p{L}\\p{N}])`,
   'u',
 );
 
@@ -115,12 +116,15 @@ export interface VysledekCteni {
 function najdiDatum(radek: string): string | null {
   const nalez = DATUM.exec(radek);
   if (nalez === null) return null;
+  const casti = [nalez[1]!, nalez[2]!, nalez[3]!];
   // Aspoň polovina číslic musí být skutečná, jinak by se datum dalo „opravit“ z písmen.
-  if ((nalez[0].match(/\d/g) ?? []).length < 4) return null;
+  const znaku = casti.join('').length;
+  if ((nalez[0].match(/\d/g) ?? []).length < znaku / 2) return null;
 
-  const [den, mesic, rok] = [nalez[1]!, nalez[2]!, nalez[3]!].map((cast) =>
+  const [den, mesic, rokNaTiketu] = casti.map((cast) =>
     Number([...cast].map((z) => ZAMENY[z] ?? z).join('')),
   ) as [number, number, number];
+  const rok = nalez[3]!.length === 2 ? 2000 + rokNaTiketu : rokNaTiketu;
 
   const datum = new Date(Date.UTC(rok, mesic - 1, den));
   const platne =
@@ -172,26 +176,34 @@ export function prectiHlavicku(radky: readonly string[]): Hlavicka {
 }
 
 /**
- * Vsazené dny podle závorky v hlavičce, nebo `null` pro „všechny dny hry“.
+ * Vsazené dny podle hlavičky, nebo `null` pro „všechny dny hry“.
  *
- * Závorka vypisuje dny, na které tiket platí. U tiketu na málo slosování to ale nemusí být
- * výběr sázejícího: Eurojackpot `1 (ÚT)` platí na jediné úterý, ať byly vsazené všechny dny,
- * nebo jen úterý. Pro slosování z papíru je to jedno, jenže virtuální tiket s rozsahem kontroly
- * za papír by s úterkem navíc vynechal všechny pátky.
+ * **Jedno slosování** má den podle data: tiket na 28. 5. platí jen na ten pátek. Závorka se
+ * pak jen ověří — když datu odporuje, nehádá se. Starší tikety Sazky závorku netisknou vůbec.
+ * Virtuální tiket s rozsahem kontroly za papír se tím drží dne, na který se sázelo.
  *
- * Proto se výběr bere jen tehdy, když ho závorka **dokazuje**: při sázce na všechny dny by
- * `pocet` slosování za sebou pokrylo `min(pocet, dnů hry)` různých dnů. Když jich závorka
- * vypisuje méně, sázející vybíral. Jinak — všechny dny hry, nečitelný počet, cizí den
- * v závorce — zůstane `null` a formulář nabídne všechny dny jako dřív.
+ * **Víc slosování:** závorka vypisuje dny, na které tiket platí, a to nemusí být výběr
+ * sázejícího. Sportka `2 (ST,PA)` od středy pokryje středu a pátek, ať byly vsazené všechny
+ * dny, nebo jen tyhle dva. Výběr se proto bere jen tehdy, když ho závorka **dokazuje**: při
+ * sázce na všechny dny by `pocet` slosování za sebou pokrylo `min(pocet, dnů hry)` různých dnů,
+ * a závorka jich vypisuje méně. Jinak — všechny dny hry, nečitelný počet, cizí den v závorce —
+ * zůstane `null` a formulář nabídne všechny dny.
  *
  * Doložené jsou jen tikety na všechny dny (14. 9. 2026). Pravidlo ale platí, ať závorka
  * znamená výběr, nebo pokryté dny: při výběru menším než pokrytí se obojí shoduje.
  */
 export function vsazeneDny(hlavicka: Hlavicka, hra: Hra): readonly Den[] | null {
-  const { dny, pocetSlosovani } = hlavicka;
-  if (dny === null || pocetSlosovani === null) return null;
-
+  const { dny, pocetSlosovani, datum } = hlavicka;
   const nabidka = DNY_LOSOVANI[hra];
+
+  if (pocetSlosovani === 1 && datum !== null) {
+    const den = denVTydnu(datum);
+    if (!nabidka.includes(den)) return null; // v ten den hra nelosuje, datum je špatně
+    if (dny !== null && (dny.length !== 1 || dny[0] !== den)) return null;
+    return [den];
+  }
+
+  if (dny === null || pocetSlosovani === null) return null;
   if (!dny.every((den) => nabidka.includes(den))) return null;
 
   const pokrytiPriVsech = Math.min(pocetSlosovani, nabidka.length);

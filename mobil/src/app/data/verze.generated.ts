@@ -13,10 +13,33 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.3.1';
+export const VERZE = '0.4.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.4.0',
+    datum: '2026-09-15',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Hra se z fotky tiketu pozná sama — z čárového kódu, popisku doplňkové hry, loga a hlavičky; když si aplikace není jistá, zeptá se po fotce a tentýž snímek přečte znovu',
+          'Sken samotného čárového kódu předvybere ve formuláři správnou hru',
+          'Tiket vsazený jen na některé dny slosování má dny ve formuláři předvyplněné podle řádku SLOSOVÁNÍ na tiketu',
+          'Tiket na jedno slosování má ve formuláři předvyplněný den podle data, i při ručním zadání',
+        ],
+      },
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Sériové číslo se přečte i z čárového kódu tiketu bez karty Allwyn Klub; dřív se u takového tiketu nepřečetlo vůbec',
+          'Z fotky tiketu Euromilionů se přečte počet slosování',
+          'Z fotky staršího tiketu Sazky se přečte datum slosování s rokem na dvě číslice',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.3.1',
     datum: '2026-09-14',

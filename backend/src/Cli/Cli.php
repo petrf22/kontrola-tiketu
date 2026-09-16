@@ -43,7 +43,7 @@ final class Cli
           vyherka stahni --od 2026-01 --do 2026-37 [--hra sportka] [--archiv CESTA]
           vyherka preparsuj --out vysledky.json [--od RRRR-TT] [--do RRRR-TT]
                             [--hra sportka] [--archiv CESTA] [--sazby CESTA]
-                            [--sazby-eurosance CESTA]
+                            [--sazby-eurosance CESTA] [--ceny CESTA]
           vyherka stav [--archiv CESTA]
 
         Týden se zadává jako RRRR-TT. Bez --hra se pracuje se všemi hrami
@@ -81,7 +81,7 @@ final class Cli
     public function hlavni(array $argv): int
     {
         try {
-            $a = Argumenty::rozeber($argv, ['od', 'do', 'hra', 'archiv', 'out', 'sazby', 'sazby-eurosance', 'ted']);
+            $a = Argumenty::rozeber($argv, ['od', 'do', 'hra', 'archiv', 'out', 'sazby', 'sazby-eurosance', 'ceny', 'ted']);
             return match ($a->prikaz) {
                 'tik' => $this->tik(),
                 'plan' => $this->plan($a),
@@ -281,6 +281,7 @@ final class Cli
             $vysledek['tahy'],
             Vystup::nactiSazby($a->volba('sazby') ?? $this->konfigurace->sazby),
             Vystup::nactiSazby($a->volba('sazby-eurosance') ?? $this->konfigurace->sazbyEurosance),
+            Vystup::nactiCeny($a->volba('ceny') ?? $this->konfigurace->ceny),
             $obdobi,
             new \DateTimeImmutable(),
         );

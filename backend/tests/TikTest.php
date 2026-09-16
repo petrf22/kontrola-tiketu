@@ -241,6 +241,7 @@ final class TikTest extends TestCase
         self::assertSame(Json::zapis($ukazkovy['tahy']), Json::zapis($balik['tahy']));
         self::assertSame($ukazkovy['sazbyExtra6'], $balik['sazbyExtra6']);
         self::assertSame($ukazkovy['sazbyEurosance'], $balik['sazbyEurosance']);
+        self::assertSame($ukazkovy['ceny'], $balik['ceny']);
         self::assertSame(2, $balik['verzeFormatu']);
     }
 }

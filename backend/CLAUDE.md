@@ -12,7 +12,7 @@ Zdroj dat a jeho pasti: `docs/data-source.md`.
 
 ```bash
 composer install
-composer test        # PHPUnit, 93 testů
+composer test        # PHPUnit, 96 testů
 composer phpstan     # statická analýza, level max
 
 php bin/vyherka stav
@@ -34,7 +34,7 @@ src/Zdroj/             AllwynVyherka.php (parser listiny), Html.php
 src/                   Rozvrh.php, Tik.php, Archiv.php, Publikace.php, Vystup.php, Json.php, Model.php
 src/Cli/               Cli.php (bin/vyherka), Cron.php (spouštěč cronu voláním URL)
 config/                konfigurace.php, sazby-extra6.json a sazby-eurosance.json (pevné výhry
-                       doplňkových her — listina je nepublikuje)
+                       doplňkových her — listina je nepublikuje), ceny.json (ceník sázek, ručně)
 public/                document root: .htaccess, robots.txt, v1/ (generované, mimo git)
 var/                   archiv/ (surové listiny), stav.sqlite — mimo git, patří do zálohy
 tests/fixtures/        skutečné listiny v .html.gz + ukázkový balík — regresní korpus parseru

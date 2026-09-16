@@ -121,6 +121,8 @@ Kořen `https://kontrolatiketu.petrf22.cz/v1/`. Jen `GET`, bez parametrů, bez c
   jen verzi 1 a balík ve verzi 2 odmítne s výzvou k aktualizaci — backend a aplikaci s formátem 2
   je proto potřeba nasadit společně. Novější aplikace tah hry, kterou nezná, přeskočí, takže
   další hra už verzi formátu zvedat nemusí.
+- Klíč `ceny` (ceník sázek, 16. 9. 2026) verzi formátu nezvedl: aplikace neznámé klíče balíku
+  ignoruje (ověřeno až do 0.2.0) a novější aplikace si s balíkem bez `ceny` poradí.
 - `kontrola` odpovídá na otázku „proběhla už kontrola?“ — `uplny: false` znamená, že čísla
   jsou známá, ale Allwyn ještě nezveřejnil tabulku výher.
 - Balík jde v aplikaci i ručně naimportovat jako soubor (záloha, když server není dostupný).
@@ -368,6 +370,46 @@ Listina pevné výhry doplňkových her nepublikuje. Částky z herního plánu 
 násobky v plánu jsou zaokrouhlené) — jediný zdroj pravdy o sazbách. Backend je přibaluje ke
 každému balíku jako `sazbyExtra6` a `sazbyEurosance`, aplikace je odtud dostává. Po změně sazeb:
 upravit, nasadit, `php bin/vyherka publikuj`.
+
+### Ceník sázek
+
+`config/ceny.json` drží cenu sloupce a doplňkové hry (Šance, Extra 6, Eurošance) s datem
+prvního slosování za tu cenu. Backend ho přibaluje ke každému balíku jako `ceny` a nevykládá ho.
+Aplikace z něj počítá cenu tiketu: kontroluje jí přečtenou cenu, předvyplňuje ruční zadání
+a u virtuálního tiketu bez ruční ceny počítá každé slosování za cenu platnou v jeho den.
+
+Vklad na slosování = cena sloupce × počet sloupců + cena doplňkové hry, když je vsazená.
+Předplatné je tento vklad krát počet slosování (herní plán, Sportka bod 14, EUROJACKPOT
+bod 14, Euromiliony bod 10).
+
+**Ceník se udržuje ručně.** Automaticky to nejde, viz `docs/data-source.md`, „Ceny sázek“.
+Allwyn ceny mění zřídka (Sportka 2014 a 2024). Postup, když na `allwyn.cz/herni-plany`
+přibude nový herní plán loterií:
+
+```bash
+curl -sO https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/<plán>.pdf
+pdftotext -layout <plán>.pdf - | grep -E 'Sázky za jeden sloupec|jedné Sázky na jedno Slosování|Extra 6 činí|Sázky Eurošance činí'
+```
+
+Když se cena liší, přidat do `ceny.json` záznam s `platnostOd` = první slosování za novou cenu
+(plán ho u změny pravidel uvádí v závěrečném bodu dané hry) a se zdrojem. Pak spustit
+`composer test` (`CenyTest` hlídá i shodu se `sazkaKc` v sazbách), nasadit a spustit
+`php bin/vyherka publikuj`.
+
+Stav 16. 9. 2026 (dohledáno v plánech 2012–2015 a 2019 přes Wayback Machine a 2024–2026
+z archivu Allwynu):
+
+| Hra | Od slosování | Sloupec | Doplňková hra |
+|---|---|---|---|
+| Sportka | 2012-05-23 (nejstarší plán) | 16 Kč | Šance 10 Kč |
+| Sportka | 2014-05-21 | 20 Kč | Šance 20 Kč |
+| Sportka | 2024-10-02 | 30 Kč | Šance 30 Kč |
+| Eurojackpot | 2014-10-10 (start v ČR) | 60 Kč | Extra 6 40 Kč |
+| Euromiliony | 2012-05-23 (nejstarší plán) | 30 Kč | — |
+| Euromiliony | 2013-06-16 | 30 Kč | Eurošance 30 Kč |
+
+Starší ceny (podle zpráv Sportka 10 Kč v roce 1995, 12 Kč v roce 1999, 14 Kč v roce 2003) nejsou
+doložené herním plánem ani přesným datem, a proto v ceníku nejsou. Aplikace je bere jako neznámé.
 
 ---
 

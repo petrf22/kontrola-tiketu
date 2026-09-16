@@ -1,0 +1,47 @@
+{
+  "poznamka": "Ceny sázek podle herních plánů. Vklad na jedno slosování je sloupecKc × počet sloupců plus doplnkovaHraKc, když je doplňková hra vsazená. Předplatné stojí tolik krát víc, kolik má slosování (herní plán, Sportka bod 14, EUROJACKPOT bod 14, Euromiliony bod 10). platnostOd je první den slosování za tuto cenu. Záznam platí až do dalšího záznamu téže hry. U nejstaršího záznamu je to jen nejstarší doložený herní plán, cena před ním není známá a aplikace ji nedomýšlí. doplnkovaHraKc null znamená, že doplňková hra tehdy neexistovala. Allwyn ceny nepublikuje strojově a seznam herních plánů je za ochranou proti botům, proto se ceník udržuje ručně (backend/docs/backend.md, Ceník sázek).",
+  "ceny": [
+    {
+      "hra": "sportka",
+      "platnostOd": "2012-05-23",
+      "sloupecKc": 16,
+      "doplnkovaHraKc": 10,
+      "zdroj": "Herní plán číselných loterií a sázkových her SAZKA, účinný od 23. 5. 2012: Sportka bod 11, Šance bod 7 (https://web.archive.org/web/20120602021322/http://www.sazka.cz/userdata/files/herni-plany/hp-ciselnych-loterii-a-sazkovych-her.pdf). Nejstarší dohledaný plán, cena platila už dřív."
+    },
+    {
+      "hra": "sportka",
+      "platnostOd": "2014-05-21",
+      "sloupecKc": 20,
+      "doplnkovaHraKc": 20,
+      "zdroj": "Herní plán číselných loterií, účinný od 19. 5. 2014: Sportka bod 11, Šance bod 7 (https://web.archive.org/web/20140630105116/http://www.sazka.cz/userdata/files/herni-plany/herni-plan-ciselnych-loterii-uprava-sportka-2014.pdf). První slosování za novou cenu byla středa 21. 5. 2014."
+    },
+    {
+      "hra": "sportka",
+      "platnostOd": "2024-10-02",
+      "sloupecKc": 30,
+      "doplnkovaHraKc": 30,
+      "zdroj": "Herní plán loterií SAZKA ze 17. 7. 2024: Sportka ve verzi 2, bod 14; bod 21 verze 1 říká, že poslední slosování za starých pravidel je 29. 9. 2024 a první podle nových 2. 10. 2024 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-loterie-17-07-24b-sazka.pdf)."
+    },
+    {
+      "hra": "eurojackpot",
+      "platnostOd": "2014-10-10",
+      "sloupecKc": 60,
+      "doplnkovaHraKc": 40,
+      "zdroj": "Herní plán číselné loterie EUROJACKPOT, účinný od 3. 10. 2014: bod 9, Extra 6 bod 7 (https://web.archive.org/web/20141013225010/http://www.sazka.cz/userdata/files/herni-plany/hp-eurojackpot-ok.pdf). 10. 10. 2014 bylo první slosování v ČR. Stejné ceny uvádějí plány z 30. 4. 2015, 9. 9. 2019 i všechny od 16. 2. 2024 do 24. 8. 2026."
+    },
+    {
+      "hra": "euromiliony",
+      "platnostOd": "2012-05-23",
+      "sloupecKc": 30,
+      "doplnkovaHraKc": null,
+      "zdroj": "Herní plán číselných loterií a sázkových her SAZKA, účinný od 23. 5. 2012: Euromiliony bod 7 (https://web.archive.org/web/20120602021322/http://www.sazka.cz/userdata/files/herni-plany/hp-ciselnych-loterii-a-sazkovych-her.pdf). Nejstarší dohledaný plán, cena platila už dřív. Eurošanci tento plán ani plán z 1. 4. 2013 neznají."
+    },
+    {
+      "hra": "euromiliony",
+      "platnostOd": "2013-06-16",
+      "sloupecKc": 30,
+      "doplnkovaHraKc": 30,
+      "zdroj": "Herní plán číselných loterií a sázkových her, účinný od 16. 6. 2013: Euromiliony bod 8, Eurošance bod 7 (https://web.archive.org/web/20130626222528/http://www.sazka.cz/userdata/files/herni-plany/113559-herni-plan-cis.-lot.-a-sazk.-her-2013-01.pdf). Stejné ceny uvádějí plány z 13. 5. 2015, 9. 9. 2019 i všechny od 16. 2. 2024 do 24. 8. 2026."
+    }
+  ]
+}

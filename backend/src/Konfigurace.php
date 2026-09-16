@@ -21,6 +21,7 @@ final class Konfigurace
      * @param string $verejne Adresář, ze kterého web servíruje `/v1/`.
      * @param string $sazby Soubor se sazbami Extra 6.
      * @param string $sazbyEurosance Soubor se sazbami Eurošance.
+     * @param string $ceny Soubor s ceníkem sázek.
      * @param int $odRoku Od kterého roku se výsledky publikují.
      * @param array<string, array{dny: list<string>, prvniDotaz: string, oknoHodin: int}> $rozvrh Dny losování, čas prvního dotazu a délka hodinového okna podle hry.
      * @param string $denniDohaneni Kdy se jednou denně projdou otevřené týdny.
@@ -32,6 +33,7 @@ final class Konfigurace
         public readonly string $verejne,
         public readonly string $sazby,
         public readonly string $sazbyEurosance,
+        public readonly string $ceny,
         public readonly int $odRoku,
         public readonly array $rozvrh,
         public readonly string $denniDohaneni,
@@ -73,6 +75,7 @@ final class Konfigurace
             verejne: self::retezec($d['verejne'] ?? null),
             sazby: self::retezec($d['sazby'] ?? null),
             sazbyEurosance: self::retezec($d['sazbyEurosance'] ?? null),
+            ceny: self::retezec($d['ceny'] ?? null),
             odRoku: self::cislo($d['odRoku'] ?? null),
             rozvrh: $vycisteny,
             denniDohaneni: self::retezec($d['denniDohaneni'] ?? null),

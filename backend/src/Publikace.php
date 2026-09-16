@@ -40,6 +40,7 @@ final class Publikace
     {
         $sazby = Vystup::nactiSazby($k->sazby);
         $sazbyEurosance = Vystup::nactiSazby($k->sazbyEurosance);
+        $ceny = Vystup::nactiCeny($k->ceny);
 
         /** @var array<string, array{tahy: list<Tah>, zmeneno: string}> $roky */
         $roky = [];
@@ -57,6 +58,7 @@ final class Publikace
                 $tahy,
                 $sazby,
                 $sazbyEurosance,
+                $ceny,
                 ['od' => $prvni['sazkovyTyden'], 'do' => $posledni['sazkovyTyden']],
                 new \DateTimeImmutable($zmeneno),
             ));

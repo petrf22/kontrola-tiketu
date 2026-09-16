@@ -36,7 +36,7 @@ sám. Ve starší historii gitu a v `CHANGELOG.md` se s ním ještě setkáš.
 Ověřené příkazy:
 
 ```bash
-cd backend && composer test && composer phpstan      # PHPUnit 93 testů, PHPStan level max
+cd backend && composer test && composer phpstan      # PHPUnit 96 testů, PHPStan level max
 cd mobil && npm test && npm run typecheck            # vitest 522 testů, tsc strict
 node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 25 testů
 node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí projít bez změny souborů

@@ -23,6 +23,8 @@ return (static function (): array {
         'sazby' => "{$koren}/config/sazby-extra6.json",
         // Pevné částky Eurošance (Euromiliony) z herního plánu — listina je taky nepublikuje.
         'sazbyEurosance' => "{$koren}/config/sazby-eurosance.json",
+        // Ceny sloupce a doplňkové hry v čase — aplikace z nich počítá cenu tiketu.
+        'ceny' => "{$koren}/config/ceny.json",
         // Aplikace dostává výsledky od roku 2021; starší tahy zůstávají jen v databázi a archivu.
         'odRoku' => 2021,
 

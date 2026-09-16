@@ -41,6 +41,7 @@ final class VystupZFixturTest extends TestCase
             $vysledek['tahy'],
             Vystup::nactiSazby(Fixtury::KOREN . '/config/sazby-extra6.json'),
             Vystup::nactiSazby(Fixtury::KOREN . '/config/sazby-eurosance.json'),
+            Vystup::nactiCeny(Fixtury::KOREN . '/config/ceny.json'),
             ['od' => $od, 'do' => $doTydne],
             new \DateTimeImmutable($puvodni['vygenerovano']),
         )));

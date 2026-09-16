@@ -24,7 +24,7 @@ final class KonfiguraceTest extends TestCase
     {
         $k = Konfigurace::nacti();
         $public = realpath(Konfigurace::KOREN) . '/public';
-        foreach ([$k->archiv, $k->databaze, $k->sazby, $k->sazbyEurosance] as $cesta) {
+        foreach ([$k->archiv, $k->databaze, $k->sazby, $k->sazbyEurosance, $k->ceny] as $cesta) {
             self::assertStringStartsNotWith($public, $cesta);
         }
         self::assertStringStartsWith(realpath(Konfigurace::KOREN) . '/public/', (string) realpath(dirname($k->verejne)) . '/');

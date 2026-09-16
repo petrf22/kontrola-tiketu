@@ -13,6 +13,7 @@ use KontrolaTiketu\Zdroj\AllwynVyherka;
  * @phpstan-import-type Tyden from Obdobi
  * @phpstan-type SazbyExtra6 array<string, mixed>
  * @phpstan-type SazbyEurosance array<string, mixed>
+ * @phpstan-type CenikHry array<string, mixed>
  * @phpstan-type VystupniSoubor array{
  *     verzeFormatu: int,
  *     vygenerovano: string,
@@ -20,6 +21,7 @@ use KontrolaTiketu\Zdroj\AllwynVyherka;
  *     obdobi: array{od: string, do: string}|null,
  *     sazbyExtra6: list<SazbyExtra6>,
  *     sazbyEurosance: list<SazbyEurosance>,
+ *     ceny: list<CenikHry>,
  *     tahy: list<Tah>
  * }
  */
@@ -33,6 +35,7 @@ final class Vystup
      * @param list<Tah> $tahy
      * @param list<SazbyExtra6> $sazbyExtra6
      * @param list<SazbyEurosance> $sazbyEurosance
+     * @param list<CenikHry> $ceny
      * @param array{od: Tyden, do: Tyden}|null $obdobi
      * @return VystupniSoubor
      */
@@ -40,6 +43,7 @@ final class Vystup
         array $tahy,
         array $sazbyExtra6,
         array $sazbyEurosance,
+        array $ceny,
         ?array $obdobi,
         \DateTimeImmutable $vygenerovano,
     ): array {
@@ -52,6 +56,7 @@ final class Vystup
                 : ['od' => Obdobi::formatujTyden($obdobi['od']), 'do' => Obdobi::formatujTyden($obdobi['do'])],
             'sazbyExtra6' => $sazbyExtra6,
             'sazbyEurosance' => $sazbyEurosance,
+            'ceny' => $ceny,
             'tahy' => self::serad($tahy),
         ];
     }
@@ -93,22 +98,39 @@ final class Vystup
      */
     public static function nactiSazby(string $cesta): array
     {
+        return self::nactiSeznam($cesta, 'sazby');
+    }
+
+    /**
+     * Načte ceník sázek z `config/ceny.json`. Stejně jako sazby ho backend nevykládá,
+     * jen ho předá aplikaci.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public static function nactiCeny(string $cesta): array
+    {
+        return self::nactiSeznam($cesta, 'ceny');
+    }
+
+    /** @return list<array<string, mixed>> */
+    private static function nactiSeznam(string $cesta, string $klic): array
+    {
         $text = file_get_contents($cesta);
         if ($text === false) {
-            throw new \RuntimeException("Sazby v {$cesta} nejdou přečíst.");
+            throw new \RuntimeException("Soubor {$cesta} nejde přečíst.");
         }
         $obsah = Json::cti($text);
-        if (!is_array($obsah) || !isset($obsah['sazby']) || !is_array($obsah['sazby']) || !array_is_list($obsah['sazby'])) {
-            throw new \RuntimeException("Soubor {$cesta} nemá pole „sazby“.");
+        if (!is_array($obsah) || !isset($obsah[$klic]) || !is_array($obsah[$klic]) || !array_is_list($obsah[$klic])) {
+            throw new \RuntimeException("Soubor {$cesta} nemá pole „{$klic}“.");
         }
-        $sazby = [];
-        foreach ($obsah['sazby'] as $sazba) {
-            if (!is_array($sazba)) {
-                throw new \RuntimeException("Soubor {$cesta} obsahuje sazbu, která není objekt.");
+        $polozky = [];
+        foreach ($obsah[$klic] as $polozka) {
+            if (!is_array($polozka)) {
+                throw new \RuntimeException("Soubor {$cesta} obsahuje v poli „{$klic}“ něco, co není objekt.");
             }
-            /** @var array<string, mixed> $sazba */
-            $sazby[] = $sazba;
+            /** @var array<string, mixed> $polozka */
+            $polozky[] = $polozka;
         }
-        return $sazby;
+        return $polozky;
     }
 }

@@ -393,6 +393,26 @@ ne rozeseté po kódu.
 
 ---
 
+## Ceny sázek
+
+Výherní listina ceny sázek neuvádí. Uvádí je jen herní plán (PDF), zjištěno 16. 9. 2026:
+
+- PDF plánů leží na `static.sazka.cz` a jdou stáhnout i s poctivým User-Agentem.
+- **Seznam plánů** (`www.allwyn.cz/herni-plany` a `/herni-plany/archiv`) je za Akamai:
+  poctivý User-Agent dostane 403, a to **i na `robots.txt`**. Pravidlo o respektování
+  robots.txt tak nejde splnit a novou adresu plánu nejde zjistit jinak než prohlížečem.
+- Jména PDF nemají pevný tvar (`hp-sazka-5-9-25-sazka.pdf`, `2026/hp-a-24-8-26-komplet.pdf`)
+  a sdílený hosting nemá `pdftotext`.
+- Archiv Allwynu sahá jen k 16. 2. 2024. Starší plány (2012–2015, 2019) jsou ve Wayback Machine
+  pod `sazka.cz/userdata/files/herni-plany/` a `sazka.cz/SazkaWeb/media/content/Herni plany/`.
+  Část záznamů z let 2019–2021 je uříznutá na 1 MB a nejde přečíst.
+
+Proto se ceník udržuje ručně v `config/ceny.json`, postup je v `docs/backend.md`, „Ceník sázek“.
+Pozor na mýtus ze zpráv, že Extra 6 začala 29. 3. 2024: za 40 Kč ji uvádí už plán Eurojackpotu
+z 3. 10. 2014. V roce 2024 k ní jen přibylo sousední číslo.
+
+---
+
 ## Otevřené body
 
 1. **Pevné částky Extra 6.** Listina Eurojackpotu publikuje tažené číslice Extra 6, ale

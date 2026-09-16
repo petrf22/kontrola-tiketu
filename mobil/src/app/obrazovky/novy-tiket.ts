@@ -5,6 +5,7 @@ import {
   DNY_LOSOVANI,
   dnyZVyberu,
   prekryvy,
+  rozpisCenyTiketu,
   ROZSAHY,
   stejnaSazka,
   vyberSlosovani,
@@ -32,6 +33,7 @@ import {
   nazevHry,
   pocetSlosovani,
   popisProblemu,
+  popisRozpisuCeny,
   popisRozsahuKontroly,
   type PoleSloupce,
 } from '../data/format.js';
@@ -152,8 +154,17 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
       <label>Cena tiketu v Kč (nepovinné)
         <input type="number" min="0" step="1" inputmode="numeric" placeholder="např. 400"
-          [value]="cena()" (input)="cena.set($any($event.target).value)" />
+          [value]="cenaPole()" (input)="cena.set($any($event.target).value)" />
       </label>
+      @if (nesouhlasCeny(); as rozpis) {
+        <p class="upozorneni">
+          {{ rozpoznanoZeSnimku && cena() === cenaZeSnimku ? 'Cena přečtená z tiketu' : 'Zadaná cena' }}
+          nesedí s ceníkem: {{ popisRozpisuCeny(hra(), rozpis) }}. Zkontroluj počet sloupců,
+          {{ nazevDoplnkoveHry(hra()) }} a počet slosování.
+        </p>
+      } @else if (cena() === null && rozpisCeny(); as rozpis) {
+        <p class="napoveda">Spočítáno podle ceníku: {{ popisRozpisuCeny(hra(), rozpis) }}.</p>
+      }
 
       <label>{{ nazevDoplnkoveHry(hra()) }} — {{ delkaKodu() === 5 ? 'pět' : 'šest' }} číslic (nepovinné)
         <input type="text" inputmode="numeric" [attr.maxlength]="delkaKodu()"
@@ -277,7 +288,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         @if (virtualni()) {
           <label>Cena za jedno slosování v Kč
             <input type="number" min="0" step="any" inputmode="decimal"
-              [placeholder]="cenaZaSlosovaniVychozi() === null ? 'např. 400' : ''"
+              [placeholder]="cenaZaSlosovaniZCeniku() === null ? 'např. 400' : 'podle ceníku'"
               [value]="cenaZaSlosovaniPole()" (input)="cenaZaSlosovani.set($any($event.target).value)" />
           </label>
           <p class="napoveda">
@@ -287,7 +298,12 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
               S každým dalším staženým losováním se zkontroluje znovu.
             }
             Stažené výsledky zatím pokrývají {{ pocetSlosovani(pokryto()) }}.
-            @if (cenaZaSlosovaniKc() === null) {
+            @if (cenaZaSlosovaniKc() !== null) {
+              Každé slosování se započte za zadanou cenu.
+            } @else if (cenaZaSlosovaniZCeniku() !== null) {
+              Bez zadané ceny se každé slosování započte za cenu podle ceníku platnou v jeho den
+              (k {{ formatujDatum(prvni()) }} {{ formatujKc(cenaZaSlosovaniZCeniku()!) }}).
+            } @else {
               Bez ceny se tiket do vsazených částek v přehledu nezapočte.
             }
           </p>
@@ -435,11 +451,13 @@ export class NovyTiket {
   protected readonly napoveda = computed(() => napoveda(this.hra()));
   protected readonly delkaKodu = computed(() => DELKA_KODU_DOPLNKOVE_HRY[this.hra()]);
   protected readonly doplnkova = signal(this.rozpoznane?.kodDoplnkoveHry ?? '');
-  protected readonly cena = signal(
+  /** Cena přečtená z fotky, jak ji formulář předvyplnil. */
+  protected readonly cenaZeSnimku =
     this.rozpoznane?.cenaKc === null || this.rozpoznane?.cenaKc === undefined
-      ? ''
-      : String(this.rozpoznane.cenaKc),
-  );
+      ? null
+      : String(this.rozpoznane.cenaKc);
+  /** Co je v poli ceny napsané. `null` = uživatel nic nezadal, pole se plní z ceníku. */
+  protected readonly cena = signal<string | null>(this.cenaZeSnimku);
   protected readonly radky = signal<Radek[]>(
     this.rozpoznane === null || this.rozpoznane.sloupce.length === 0
       ? [PRAZDNY_RADEK]
@@ -465,6 +483,33 @@ export class NovyTiket {
   /** Útržky, které bylo potřeba opravit. Uživateli se zvýrazní, ať je zkontroluje. */
   protected readonly opravene = (this.rozpoznane?.sloupce ?? []).flatMap((s) => s.opravene);
 
+  private readonly kodDoplnkoveHry = computed(() =>
+    this.doplnkova().trim() === '' ? null : this.doplnkova().trim(),
+  );
+
+  /**
+   * Cena tiketu podle ceníku. Počítá se z formuláře, ne z návrhu tiketu — návrh cenu
+   * obsahuje, takže by na sobě závisely dokola.
+   */
+  protected readonly rozpisCeny = computed(() =>
+    rozpisCenyTiketu(
+      {
+        hra: this.hra(),
+        sloupce: this.sloupce(),
+        slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: null },
+        kodDoplnkoveHry: this.kodDoplnkoveHry(),
+      },
+      this.stav.ceny(),
+    ),
+  );
+  protected readonly cenaPole = computed(() => this.cena() ?? String(this.rozpisCeny()?.celkemKc ?? ''));
+  /** Rozpis ceny, když zadaná nebo přečtená cena nesedí s ceníkem. */
+  protected readonly nesouhlasCeny = computed(() => {
+    const rozpis = this.rozpisCeny();
+    const zadana = this.cena() === null ? null : prectiCastku(this.cena()!);
+    return rozpis !== null && zadana !== null && zadana !== rozpis.celkemKc ? rozpis : null;
+  });
+
   // Rozsah kontroly. Dokud ho uživatel nezmění, řídí se papírem: `null` znamená „podle tiketu“.
   protected readonly kontrolaOd = signal<string | null>(null);
   private readonly kontrolaDo = signal<string | null>(null);
@@ -474,7 +519,7 @@ export class NovyTiket {
   private readonly papir = computed<Papir>(() => ({
     hra: this.hra(),
     slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: dnyZVyberu(this.hra(), this.zaskrtnuteDny()) },
-    cenaKc: prectiCastku(this.cena()),
+    cenaKc: prectiCastku(this.cenaPole()),
   }));
 
   private readonly konecPodleTiketu = computed(() => konecPodlePapiru(this.papir(), this.stav.tahy()));
@@ -482,7 +527,18 @@ export class NovyTiket {
   protected readonly doKontroly = computed(() =>
     this.bezKonce() ? null : (this.kontrolaDo() ?? this.konecPodleTiketu() ?? ''),
   );
-  protected readonly cenaZaSlosovaniVychozi = computed(() => cenaZaSlosovaniZPapiru(this.papir()));
+  /**
+   * Výchozí cena za slosování virtuálního tiketu: prázdná, když ceník cenu zná — pak se každé
+   * slosování počítá za cenu platnou v jeho den. Jinak podle papíru.
+   */
+  protected readonly cenaZaSlosovaniVychozi = computed(() =>
+    this.rozpisCeny() !== null ? null : cenaZaSlosovaniZPapiru(this.papir()),
+  );
+  /** Kolik stojí jedno slosování podle ceníku k datu prvního slosování, pro nápovědu v poli. */
+  protected readonly cenaZaSlosovaniZCeniku = computed(() => {
+    const rozpis = this.rozpisCeny();
+    return rozpis === null ? null : rozpis.celkemKc / rozpis.slosovani;
+  });
   protected readonly cenaZaSlosovaniPole = computed(
     () => this.cenaZaSlosovani() ?? String(this.cenaZaSlosovaniVychozi() ?? ''),
   );
@@ -507,9 +563,9 @@ export class NovyTiket {
     return [...new Set(data)].sort();
   });
 
-  protected readonly navrh = computed<Tiket>(() => {
+  private readonly sloupce = computed<readonly Sloupec[]>(() => {
     const hra = this.hra();
-    const sloupce: Sloupec[] = this.radky().map((radek): Sloupec => {
+    return this.radky().map((radek): Sloupec => {
       const cisla = prectiCisla(radek.cisla).map((c) => c.hodnota);
       const druhe = prectiCisla(radek.druheOsudi).map((c) => c.hodnota);
       switch (hra) {
@@ -521,7 +577,11 @@ export class NovyTiket {
           return { hra, cisla };
       }
     });
+  });
 
+  protected readonly navrh = computed<Tiket>(() => {
+    const hra = this.hra();
+    const sloupce = this.sloupce();
     const kontrola = this.kontrola();
     return {
       ...(kontrola === null ? {} : { kontrola }),
@@ -539,7 +599,7 @@ export class NovyTiket {
         pocet: this.pocet(),
         dny: dnyZVyberu(hra, this.zaskrtnuteDny()),
       },
-      kodDoplnkoveHry: this.doplnkova().trim() === '' ? null : this.doplnkova().trim(),
+      kodDoplnkoveHry: this.kodDoplnkoveHry(),
       cenaKc: this.papir().cenaKc,
       vlozeno: new Date().toISOString(),
     };
@@ -564,6 +624,7 @@ export class NovyTiket {
   });
 
   protected readonly popisProblemu = popisProblemu;
+  protected readonly popisRozpisuCeny = popisRozpisuCeny;
 
   protected readonly rozpoznanoZeSnimku = this.rozpoznane !== null;
 

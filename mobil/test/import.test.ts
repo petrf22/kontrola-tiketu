@@ -55,6 +55,15 @@ describe('nactiVysledky — platný soubor', () => {
     if (v.stav === 'ok') expect(v.tahy).toEqual([EJ_2026_09_01]);
   });
 
+  it('přečte ceník, starší balík bez něj a cenu hry, kterou aplikace nezná, přeskočí', () => {
+    const cena = { hra: 'sportka', platnostOd: '2024-10-02', sloupecKc: 30, doplnkovaHraKc: 30, zdroj: 'test' };
+    const keno = { hra: 'keno', platnostOd: '2024-10-02', sloupecKc: 20, doplnkovaHraKc: null, zdroj: 'test' };
+    const v = nactiVysledky(soubor({ ceny: [cena, keno] }));
+    expect(v.stav === 'ok' && v.ceny).toEqual([cena]);
+    const bez = nactiVysledky(soubor());
+    expect(bez.stav === 'ok' && bez.ceny).toEqual([]);
+  });
+
   it('chybějící období nezabrání importu', () => {
     const bezObdobi = nactiVysledky(soubor({ obdobi: undefined }));
     expect(bezObdobi.stav).toBe('ok');
@@ -116,6 +125,13 @@ describe('nactiVysledky — vadný soubor', () => {
   it('pozná Sportku bez dvojice tahů', () => {
     const jenJeden = { ...SP_2026_09_02, tahy: [SP_2026_09_02.tahy[0]] };
     expect(duvod(soubor({ tahy: [jenJeden] }))).toMatch(/dva tahy Sportky/);
+  });
+
+  it('odmítne ceník s neplatnou cenou — zkreslil by bilanci', () => {
+    const cena = { hra: 'sportka', platnostOd: '2024-10-02', sloupecKc: 30, doplnkovaHraKc: null, zdroj: 'test' };
+    expect(duvod(soubor({ ceny: [cena, { ...cena, sloupecKc: '30' }] }))).toBe('Cena č. 2 nemá kladnou cenu sloupce.');
+    expect(duvod(soubor({ ceny: [{ ...cena, platnostOd: '2. 10. 2024' }] }))).toContain('platnostOd');
+    expect(duvod(soubor({ ceny: [{ ...cena, doplnkovaHraKc: 0 }] }))).toContain('doplňkové hry');
   });
 
   it('řekne, který tah je vadný', () => {

@@ -2,6 +2,7 @@ import { NgTemplateOutlet } from '@angular/common';
 import { Component, ElementRef, computed, inject, input, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
+  platnyCenik,
   zkontrolujTiket,
   type Hra,
   type Problem,
@@ -93,12 +94,20 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
               <span class="tazene">
                 vsazeno {{ v.slosovani.length }} × {{ formatujKc(t.kontrola!.cenaZaSlosovaniKc!) }}
               </span>
+            } @else if (t.kontrola) {
+              <span class="tazene">
+                vsazeno {{ formatujKc(v.vsazenoKc!) }} za {{ pocetSlosovani(v.slosovani.length) }} podle ceníku
+              </span>
+            } @else if (t.cenaKc === null) {
+              <span class="tazene">tiket stál podle ceníku {{ formatujKc(v.vsazenoKc!) }}</span>
             } @else {
-              <span class="tazene">tiket stál {{ formatujKc(t.cenaKc ?? 0) }}</span>
+              <span class="tazene">tiket stál {{ formatujKc(t.cenaKc) }}</span>
             }
           </p>
         } @else if (t.kontrola) {
-          <p class="tazene">Bez ceny za slosování se bilance nedá spočítat.</p>
+          <p class="tazene">
+            Bez ceny za slosování se bilance nedá spočítat — ceník cenu pro všechna slosování nezná.
+          </p>
         }
 
         @if (v.pokracuje) {
@@ -245,7 +254,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
                 </label>
               </div>
               @if (upravenyTiket()?.kontrola) {
-                <label>Cena za jedno slosování v Kč
+                <label>Cena za jedno slosování v Kč (prázdné = podle ceníku)
                   <input type="number" min="0" step="any" inputmode="decimal"
                     [value]="upravaCena()" (input)="upravaCena.set($any($event.target).value)" />
                 </label>
@@ -530,7 +539,9 @@ export class Detail {
     const k = tiket.kontrola;
     this.upravaOd.set(k?.od ?? tiket.slosovani.prvni);
     this.upravaDo.set(k === undefined ? (konecPodlePapiru(tiket, this.stav.tahy()) ?? '') : (k.do ?? ''));
-    const cena = k === undefined ? cenaZaSlosovaniZPapiru(tiket) : k.cenaZaSlosovaniKc;
+    // Nový rozsah se počítá podle ceníku, když ho ceník pro první slosování zná; jinak podle papíru.
+    const cenikZna = platnyCenik(this.stav.ceny(), tiket.hra, tiket.slosovani.prvni) !== null;
+    const cena = k !== undefined ? k.cenaZaSlosovaniKc : cenikZna ? null : cenaZaSlosovaniZPapiru(tiket);
     this.upravaCena.set(cena === null ? '' : String(cena));
     this.overitUpravu.set(false);
     this.uprava.set('rozsah');

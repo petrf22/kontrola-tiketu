@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { SazbyEurosance, SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
+import type { CenikHry, SazbyEurosance, SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
 import { UlozisteVPameti, type Uloziste } from '../src/app/data/uloziste.js';
 import { EJ_2026_09_01, EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
 import { SP_2026_09_02 } from '../knihovny/jadro/test/fixtures/sportka.js';
@@ -104,6 +104,17 @@ function smlouvaUloziste(jmeno: string, vyrob: () => Uloziste): void {
         'eurojackpot|2026-09-08',
         'sportka|2026-09-02',
       ]);
+    });
+
+    it('ceník se ukládá celý, starý záznam nepřežije', async () => {
+      const u = vyrob();
+      expect(await u.nactiCeny()).toEqual([]);
+      const stara: CenikHry = { hra: 'sportka', platnostOd: '2014-05-21', sloupecKc: 20, doplnkovaHraKc: 20, zdroj: 'test' };
+      const nova: CenikHry = { ...stara, platnostOd: '2024-10-02', sloupecKc: 30, doplnkovaHraKc: 30 };
+      await u.ulozCeny([stara, nova]);
+      expect(await u.nactiCeny()).toEqual([stara, nova]);
+      await u.ulozCeny([nova]);
+      expect(await u.nactiCeny()).toEqual([nova]);
     });
 
     it('hashe stažených balíků se uloží a přepíšou', async () => {

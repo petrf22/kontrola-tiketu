@@ -9,6 +9,7 @@
 
 import {
   VERZE_FORMATU,
+  type CenikHry,
   type Hra,
   type SazbyEurosance,
   type SazbyExtra6,
@@ -21,6 +22,8 @@ export interface UspesnyImport {
   readonly tahy: readonly Tah[];
   readonly sazbyExtra6: readonly SazbyExtra6[];
   readonly sazbyEurosance: readonly SazbyEurosance[];
+  /** Ceník sázek. Starší balík ho nemá, pak je prázdný. */
+  readonly ceny: readonly CenikHry[];
   readonly vygenerovano: string | null;
   readonly obdobi: { readonly od: string; readonly do: string } | null;
 }
@@ -51,6 +54,25 @@ function chyba(duvod: string): NeuspesnyImport {
 
 function jeObjekt(hodnota: unknown): hodnota is Record<string, unknown> {
   return typeof hodnota === 'object' && hodnota !== null && !Array.isArray(hodnota);
+}
+
+/**
+ * Záznam ceníku, se kterým jde počítat. Špatná cena by zkreslila bilanci, proto vadný
+ * ceník shodí celý soubor stejně jako vadný tah.
+ */
+function zkontrolujCenu(cena: unknown, poradi: number): string | null {
+  const kde = `Cena č. ${poradi + 1}`;
+  if (!jeObjekt(cena)) return `${kde} není objekt.`;
+  if (typeof cena['hra'] !== 'string') return `${kde} nemá hru.`;
+  if (typeof cena['platnostOd'] !== 'string' || !DATUM.test(cena['platnostOd'])) {
+    return `${kde} nemá platné datum „platnostOd“.`;
+  }
+  const kladna = (x: unknown) => typeof x === 'number' && Number.isFinite(x) && x > 0;
+  if (!kladna(cena['sloupecKc'])) return `${kde} nemá kladnou cenu sloupce.`;
+  if (cena['doplnkovaHraKc'] !== null && !kladna(cena['doplnkovaHraKc'])) {
+    return `${kde} má neplatnou cenu doplňkové hry.`;
+  }
+  return null;
 }
 
 /** Kontroluje jen to, na čem stojí vyhodnocení. Podrobnosti řeší jádro. */
@@ -136,12 +158,18 @@ export function nactiVysledky(text: string): VysledekImportu {
   const sazby = obsah['sazbyExtra6'];
   const sazbyEurosance = obsah['sazbyEurosance'];
   const obdobi = obsah['obdobi'];
+  const ceny = Array.isArray(obsah['ceny']) ? (obsah['ceny'] as unknown[]) : [];
+  for (const [i, cena] of ceny.entries()) {
+    const problem = zkontrolujCenu(cena, i);
+    if (problem !== null) return chyba(problem);
+  }
 
   return {
     stav: 'ok',
     tahy: tahy.filter(jeZnamaHra) as Tah[],
     sazbyExtra6: Array.isArray(sazby) ? (sazby as SazbyExtra6[]) : [],
     sazbyEurosance: Array.isArray(sazbyEurosance) ? (sazbyEurosance as SazbyEurosance[]) : [],
+    ceny: ceny.filter(jeZnamaHra) as CenikHry[],
     vygenerovano: typeof obsah['vygenerovano'] === 'string' ? obsah['vygenerovano'] : null,
     obdobi:
       jeObjekt(obdobi) && typeof obdobi['od'] === 'string' && typeof obdobi['do'] === 'string'

@@ -8,7 +8,7 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 522 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm test             # vitest, 544 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -24,7 +24,8 @@ cd android && ./gradlew :app:assembleDebug
 knihovny/jadro/src/    model.ts, validace.ts, koncoveCislice.ts, slucovani.ts,
                        eurojackpot.ts, sportka.ts, sance.ts, extra6.ts,
                        euromiliony.ts, eurosance.ts, vyhodnoceni.ts,
-                       rozsah.ts (virtuální tiket, překryvy), bilance.ts
+                       rozsah.ts (virtuální tiket, překryvy), bilance.ts,
+                       cenik.ts (cena tiketu podle ceníku)
 knihovny/ocr/src/      radky.ts (párování podle rámečků), cisla.ts, tiket.ts, carovyKod.ts
 src/app/data/          import.ts, stahovani.ts, uloziste.ts, stav.ts, tokeny.ts, kontrola.ts
 src/app/obrazovky/     seznam.ts, prehled.ts + kolac.ts, novy-tiket.ts, sken.ts, sken-cisel.ts,
@@ -92,8 +93,17 @@ Protect navíc u velkých APK vypršel — proto jsou APK rozdělené podle arch
 Tiket s vyplněným `kontrola` (rozsah od–do, `do: null` = bez konce) je **virtuální**: kontroluje
 se na všechna slosování v rozsahu podle dnů tiketu, ne podle `slosovani.pocet`. Údaje z papíru
 zůstávají beze změny. Pole je nepovinné, aby tikety uložené dřív platily bez migrace. Vsazeno
-je `cenaZaSlosovaniKc × počet zkontrolovaných slosování` — Allwyn ceny mění, u starých slosování
-je to odhad. Rozsah shodný s papírem se neukládá (`sestavKontrolu` v `data/kontrola.ts`).
+je `cenaZaSlosovaniKc × počet zkontrolovaných slosování`; když je `cenaZaSlosovaniKc` `null`,
+počítá se každé slosování podle ceníku platného v jeho den (`knihovny/jadro/src/cenik.ts`).
+Rozsah shodný s papírem se neukládá (`sestavKontrolu` v `data/kontrola.ts`).
+
+## Ceník
+
+Ceník sázek (`CenikHry`) přichází z backendu v balíku jako `ceny` a ukládá se vždy celý. Cena
+papírového tiketu = (sloupce × cena sloupce + doplňková hra) × počet slosování, podle ceníku
+v den prvního slosování. Formulář ji předvyplní a u zadané nebo přečtené ceny, která nesedí,
+ukáže rozpis. Vytištěná nebo zadaná cena má vždy přednost — ceník ji nikdy nepřepíše. Před
+nejstarším záznamem hry (2012, u Eurojackpotu start v ČR 2014) je cena neznámá, nic se neodhaduje.
 
 Koláče v přehledu jsou vlastní SVG bez knihovny. Barvy `--barva-vsazeno` a `--barva-vyhrano`
 jsou ověřené na rozlišitelnost pro barvoslepé; hnědá a zelená aplikace to nesplňují.

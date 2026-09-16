@@ -6,7 +6,7 @@
  * kontrolou jako soubor vybraný ručně.
  */
 
-import { type SazbyEurosance, type SazbyExtra6, type Tah } from '@kontrola-tiketu/jadro';
+import { type CenikHry, type SazbyEurosance, type SazbyExtra6, type Tah } from '@kontrola-tiketu/jadro';
 import { nactiVysledky } from './import.js';
 import type { StazenyBalik } from './stahovani.js';
 
@@ -16,6 +16,7 @@ export interface PrectenyBalik {
   readonly tahy: readonly Tah[];
   readonly sazbyExtra6: readonly SazbyExtra6[];
   readonly sazbyEurosance: readonly SazbyEurosance[];
+  readonly ceny: readonly CenikHry[];
 }
 
 export type VysledekZpracovani =
@@ -51,6 +52,7 @@ export function zpracujStazene(
       tahy: precteno.tahy,
       sazbyExtra6: precteno.sazbyExtra6,
       sazbyEurosance: precteno.sazbyEurosance,
+      ceny: precteno.ceny,
     });
   }
 

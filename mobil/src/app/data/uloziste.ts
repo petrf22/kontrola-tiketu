@@ -8,6 +8,7 @@
 
 import {
   sloucTahy,
+  type CenikHry,
   type SazbyEurosance,
   type SazbyExtra6,
   type Tah,
@@ -41,6 +42,13 @@ export interface Uloziste {
   nactiSazbyEurosance(): Promise<SazbyEurosance[]>;
   ulozSazbyEurosance(sazby: readonly SazbyEurosance[]): Promise<void>;
 
+  /**
+   * Ceník sázek všech her. Ukládá se vždy celý: backend ho posílá v každém balíku úplný,
+   * takže opravený nebo smazaný záznam nesmí přežít.
+   */
+  nactiCeny(): Promise<CenikHry[]>;
+  ulozCeny(ceny: readonly CenikHry[]): Promise<void>;
+
   /** Hashe balíků stažených z backendu (`soubor` → `hash`) — co se znovu stahovat nemusí. */
   nactiHashe(): Promise<Map<string, string>>;
   ulozHash(soubor: string, hash: string): Promise<void>;
@@ -58,6 +66,7 @@ export class UlozisteVPameti implements Uloziste {
   private tahy: Tah[] = [];
   private sazby: SazbyExtra6[] = [];
   private sazbyEurosance: SazbyEurosance[] = [];
+  private ceny: CenikHry[] = [];
   private hashe = new Map<string, string>();
 
   async nactiTikety(): Promise<Tiket[]> {
@@ -95,6 +104,14 @@ export class UlozisteVPameti implements Uloziste {
 
   async ulozSazbyEurosance(sazby: readonly SazbyEurosance[]): Promise<void> {
     this.sazbyEurosance = [...sazby];
+  }
+
+  async nactiCeny(): Promise<CenikHry[]> {
+    return [...this.ceny];
+  }
+
+  async ulozCeny(ceny: readonly CenikHry[]): Promise<void> {
+    this.ceny = [...ceny];
   }
 
   async nactiHashe(): Promise<Map<string, string>> {

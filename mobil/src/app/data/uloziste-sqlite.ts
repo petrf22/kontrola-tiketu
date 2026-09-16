@@ -18,7 +18,7 @@ import {
   SQLiteConnection,
   type SQLiteDBConnection,
 } from '@capacitor-community/sqlite';
-import type { SazbyEurosance, SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
+import type { CenikHry, SazbyEurosance, SazbyExtra6, Tah, Tiket } from '@kontrola-tiketu/jadro';
 import type { Uloziste } from './uloziste.js';
 
 const NAZEV_DB = 'kontrola-tiketu';
@@ -44,6 +44,10 @@ CREATE TABLE IF NOT EXISTS sazby (
 );
 CREATE TABLE IF NOT EXISTS sazby_eurosance (
   platnostOd TEXT PRIMARY KEY NOT NULL,
+  data TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS ceny (
+  klic TEXT PRIMARY KEY NOT NULL,
   data TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS baliky (
@@ -156,6 +160,21 @@ export class UlozisteSqlite implements Uloziste {
       values: [s.platnostOd, JSON.stringify(s)],
     }));
     if (prikazy.length > 0) await this.spojeniDb.executeSet(prikazy);
+  }
+
+  async nactiCeny(): Promise<CenikHry[]> {
+    return this.precti<CenikHry>('SELECT data FROM ceny ORDER BY klic ASC');
+  }
+
+  async ulozCeny(ceny: readonly CenikHry[]): Promise<void> {
+    // Celý ceník najednou v jedné transakci: smazat staré a vložit nové.
+    await this.spojeniDb.executeSet([
+      { statement: 'DELETE FROM ceny', values: [] },
+      ...ceny.map((c) => ({
+        statement: 'INSERT INTO ceny (klic, data) VALUES (?, ?)',
+        values: [`${c.hra}|${c.platnostOd}`, JSON.stringify(c)],
+      })),
+    ]);
   }
 
   async nactiHashe(): Promise<Map<string, string>> {

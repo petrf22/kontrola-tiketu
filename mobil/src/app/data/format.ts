@@ -5,7 +5,7 @@
  * Uživateli se ale nikdy nemá ukazovat — čte se špatně a v Česku se tak datum nepíše.
  */
 
-import type { Hra, Problem } from '@kontrola-tiketu/jadro';
+import type { Hra, Problem, RozpisCeny } from '@kontrola-tiketu/jadro';
 
 const DATUM = new Intl.DateTimeFormat('cs-CZ', {
   day: 'numeric',
@@ -117,6 +117,22 @@ const NAZVY_DOPLNKOVYCH_HER: Readonly<Record<Hra, string>> = {
 /** Extra 6, Šance, nebo Eurošance. */
 export function nazevDoplnkoveHry(hra: Hra): string {
   return NAZVY_DOPLNKOVYCH_HER[hra];
+}
+
+/**
+ * Z čeho se skládá cena tiketu, např. `6 × 60 Kč + Extra 6 40 Kč = 400 Kč` nebo
+ * `(8 × 30 Kč + Šance 30 Kč) × 3 slosování = 810 Kč`.
+ */
+export function popisRozpisuCeny(hra: Hra, rozpis: RozpisCeny): string {
+  const sloupce = `${rozpis.sloupcu} × ${formatujKc(rozpis.sloupecKc)}`;
+  const vklad =
+    rozpis.doplnkovaHraKc === null
+      ? sloupce
+      : `${sloupce} + ${nazevDoplnkoveHry(hra)} ${formatujKc(rozpis.doplnkovaHraKc)}`;
+  const celkem = formatujKc(rozpis.celkemKc);
+  if (rozpis.slosovani === 1) return `${vklad} = ${celkem}`;
+  const zavorka = rozpis.doplnkovaHraKc === null ? vklad : `(${vklad})`;
+  return `${zavorka} × ${pocetSlosovani(rozpis.slosovani)} = ${celkem}`;
 }
 
 /** `1 sloupec`, `3 sloupce`, `5 sloupců` — čeština má tři tvary, ne dva. */

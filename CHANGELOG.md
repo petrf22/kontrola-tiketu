@@ -16,6 +16,13 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Přidáno
+- Cena tiketu se spočítá podle ceníku Allwynu: ručně zadaný tiket ji má předvyplněnou a u ceny přečtené z fotky aplikace upozorní, když nesedí s počtem sloupců, doplňkovou hrou a počtem slosování (aplikace)
+- Virtuální tiket bez zadané ceny za slosování počítá vsazenou částku podle ceníku platného v den každého slosování, takže starší slosování Sportky stojí 20 Kč a novější 30 Kč (aplikace)
+- Ceník sázek od roku 2012 opsaný z herních plánů je součástí balíku s výsledky jako `ceny` (backend)
+
 ## [0.4.0] – 2026-09-15
 
 ### Přidáno

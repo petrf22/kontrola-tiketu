@@ -10,6 +10,7 @@ import {
   prekryvy,
   sloucTahy,
   vyhodnotTiket,
+  type CenikHry,
   type Prekryv,
   type SazbyEurosance,
   type SazbyExtra6,
@@ -36,6 +37,7 @@ export class Stav {
   readonly tahy = signal<readonly Tah[]>([]);
   readonly sazby = signal<readonly SazbyExtra6[]>([]);
   readonly sazbyEurosance = signal<readonly SazbyEurosance[]>([]);
+  readonly ceny = signal<readonly CenikHry[]>([]);
   readonly nacteno = signal(false);
 
   /** Proč se úložiště nepodařilo otevřít. `null`, když je všechno v pořádku. */
@@ -80,16 +82,18 @@ export class Stav {
       return;
     }
 
-    const [tikety, tahy, sazby, sazbyEurosance] = await Promise.all([
+    const [tikety, tahy, sazby, sazbyEurosance, ceny] = await Promise.all([
       this.uloziste.nactiTikety(),
       this.uloziste.nactiTahy(),
       this.uloziste.nactiSazby(),
       this.uloziste.nactiSazbyEurosance(),
+      this.uloziste.nactiCeny(),
     ]);
     this.tikety.set(tikety);
     this.tahy.set(tahy);
     this.sazby.set(sazby);
     this.sazbyEurosance.set(sazbyEurosance);
+    this.ceny.set(ceny);
     this.nacteno.set(true);
   }
 
@@ -161,10 +165,11 @@ export class Stav {
     }
   }
 
-  /** Uloží sazby doplňkových her z balíku. Balík bez sazeb dosavadní nepřepíše. */
+  /** Uloží sazby doplňkových her a ceník z balíku. Balík bez nich dosavadní nepřepíše. */
   private async ulozSazby(balik: {
     readonly sazbyExtra6: readonly SazbyExtra6[];
     readonly sazbyEurosance: readonly SazbyEurosance[];
+    readonly ceny: readonly CenikHry[];
   }): Promise<void> {
     if (balik.sazbyExtra6.length > 0) {
       await this.uloziste.ulozSazby(balik.sazbyExtra6);
@@ -174,6 +179,10 @@ export class Stav {
       await this.uloziste.ulozSazbyEurosance(balik.sazbyEurosance);
       this.sazbyEurosance.set(balik.sazbyEurosance);
     }
+    if (balik.ceny.length > 0) {
+      await this.uloziste.ulozCeny(balik.ceny);
+      this.ceny.set(balik.ceny);
+    }
   }
 
   private zapis(zprava: Zprava): Zprava {
@@ -182,6 +191,6 @@ export class Stav {
   }
 
   vyhodnot(tiket: Tiket): VysledekTiketu {
-    return vyhodnotTiket(tiket, this.tahy(), this.sazby(), this.sazbyEurosance());
+    return vyhodnotTiket(tiket, this.tahy(), this.sazby(), this.sazbyEurosance(), this.ceny());
   }
 }

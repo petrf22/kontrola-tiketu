@@ -11,6 +11,7 @@ import {
   pocetSloupcu,
   popisDnuSlosovani,
   popisProblemu,
+  popisRozpisuCeny,
   popisRozsahuKontroly,
 } from '../src/app/data/format.js';
 
@@ -139,6 +140,20 @@ describe('formatujKc', () => {
     expect(formatujKc(61160).replace(/\s/g, ' ')).toBe('61 160 Kč');
     expect(formatujKc(-400)).toBe('-400 Kč');
     expect(formatujKc(133.33)).toBe('133,33 Kč');
+  });
+});
+
+describe('popisRozpisuCeny', () => {
+  it('rozepíše sloupce, doplňkovou hru i předplatné', () => {
+    expect(
+      popisRozpisuCeny('eurojackpot', { sloupcu: 6, sloupecKc: 60, doplnkovaHraKc: 40, slosovani: 1, celkemKc: 400 }),
+    ).toBe('6 × 60 Kč + Extra 6 40 Kč = 400 Kč');
+    expect(
+      popisRozpisuCeny('sportka', { sloupcu: 8, sloupecKc: 30, doplnkovaHraKc: 30, slosovani: 3, celkemKc: 810 }),
+    ).toBe('(8 × 30 Kč + Šance 30 Kč) × 3 slosování = 810 Kč');
+    expect(
+      popisRozpisuCeny('euromiliony', { sloupcu: 2, sloupecKc: 30, doplnkovaHraKc: null, slosovani: 2, celkemKc: 120 }),
+    ).toBe('2 × 30 Kč × 2 slosování = 120 Kč');
   });
 });
 

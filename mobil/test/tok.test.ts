@@ -156,6 +156,25 @@ describe('od serveru k vyhodnocení', () => {
     expect(vysledek.soucetJisty).toBe(true);
   });
 
+  it('stažený balík nese ceník, podle kterého stojí tiket bez ceny', async () => {
+    const stazeno = await stahniVysledky(sit, new Map());
+    if (stazeno.stav !== 'ok') throw new Error(stazeno.duvod);
+    const zpracovano = zpracujStazene([], stazeno.nove);
+    if (zpracovano.stav !== 'ok') throw new Error(zpracovano.duvod);
+
+    const balik = zpracovano.baliky[0]!;
+    expect(balik.ceny.map((c) => c.hra)).toEqual(expect.arrayContaining(['eurojackpot', 'sportka', 'euromiliony']));
+    // Jeden sloupec Eurojackpotu s Extra 6 podle ceníku: 60 + 40 Kč.
+    const vysledek = vyhodnotTiket(
+      tiketEJ([47, 14, 27, 34, 1], [4, 1], '912799'),
+      balik.tahy,
+      balik.sazbyExtra6,
+      balik.sazbyEurosance,
+      balik.ceny,
+    );
+    expect(vysledek.vsazenoKc).toBe(100);
+  });
+
   it('podruhé už nic nestahuje a nic nepřibude', async () => {
     const stazeno = await stahniVysledky(sit, new Map([['2026.json', hash]]));
     expect(stazeno).toMatchObject({ stav: 'ok', nove: [] });

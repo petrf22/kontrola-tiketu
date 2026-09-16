@@ -6,7 +6,9 @@
  * jehož podmínky se týkají celé sázenky.
  */
 
+import { cenaTiketuPodleCeniku, vsazenoPodleCeniku } from './cenik.js';
 import type {
+  CenikHry,
   Datum,
   SloupecEuromiliony,
   SloupecEurojackpot,
@@ -71,7 +73,8 @@ export interface VysledekTiketu {
    * Kolik tiket stál za zkontrolovaná slosování. `null`, když cena není známá.
    *
    * U papírového tiketu je to jeho cena, u virtuálního cena za slosování krát počet
-   * slosování, která rozsah kontroly zatím pokryl.
+   * slosování, která rozsah kontroly zatím pokryl. Kde uživatel cenu nezadal, počítá se
+   * z ceníku; u virtuálního tiketu každé slosování za cenu platnou v jeho den.
    */
   readonly vsazenoKc: number | null;
   /**
@@ -295,10 +298,15 @@ function sestav(
   };
 }
 
-function vsazeno(tiket: Tiket, pocetSlosovani: number): number | null {
-  if (tiket.kontrola === undefined) return tiket.cenaKc;
+/**
+ * Ruční cena má přednost před ceníkem: papírový tiket stojí, kolik je na něm vytištěno,
+ * a virtuální tiket s ruční cenou za slosování ji má pro všechna slosování.
+ */
+function vsazeno(tiket: Tiket, pouzite: readonly Tah[], ceny: readonly CenikHry[]): number | null {
+  if (tiket.kontrola === undefined) return tiket.cenaKc ?? cenaTiketuPodleCeniku(tiket, ceny);
   const cena = tiket.kontrola.cenaZaSlosovaniKc;
-  return cena === null ? null : cena * pocetSlosovani;
+  if (cena !== null) return cena * pouzite.length;
+  return vsazenoPodleCeniku(tiket, pouzite.map((t) => t.datum), ceny);
 }
 
 /** Sahá rozsah virtuálního tiketu za poslední známý tah jeho hry? */
@@ -315,12 +323,14 @@ function pokracuje(tiket: Tiket, tahy: readonly Tah[]): boolean {
 /**
  * @param sazby Sazby Extra 6 (Eurojackpot).
  * @param sazbyEurosance Sazby Eurošance (Euromiliony).
+ * @param ceny Ceník sázek. Určuje vsazenou částku tam, kde ji uživatel nezadal.
  */
 export function vyhodnotTiket(
   tiket: Tiket,
   tahy: readonly Tah[],
   sazby: readonly SazbyExtra6[] = [],
   sazbyEurosance: readonly SazbyEurosance[] = [],
+  ceny: readonly CenikHry[] = [],
 ): VysledekTiketu {
   const { pouzite, chybi } = vyberSlosovani(tiket, tahy);
 
@@ -338,7 +348,7 @@ export function vyhodnotTiket(
   const nejistych = slosovani.reduce((s, v) => s + v.nejistychVyher, 0);
 
   const celkemKc = slosovani.reduce((s, v) => s + v.celkemKc, 0);
-  const vsazenoKc = vsazeno(tiket, pouzite.length);
+  const vsazenoKc = vsazeno(tiket, pouzite, ceny);
   const dalsi = pokracuje(tiket, tahy);
 
   return {

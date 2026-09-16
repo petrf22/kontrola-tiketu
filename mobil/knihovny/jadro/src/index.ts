@@ -11,3 +11,4 @@ export * from './slucovani.js';
 export * from './vyhodnoceni.js';
 export * from './rozsah.js';
 export * from './bilance.js';
+export * from './cenik.js';

@@ -186,9 +186,11 @@ export interface RozsahKontroly {
   /** Poslední den kontroly včetně. `null` = každé další slosování, bez konce. */
   readonly do: Datum | null;
   /**
-   * Kolik stojí jedno slosování. `null` = neznámé, do vsazeného se nezapočte.
+   * Kolik stojí jedno slosování, když to uživatel zadal ručně. Přepíše ceník pro všechna
+   * slosování v rozsahu.
    *
-   * Allwyn ceny sázek občas mění, u slosování daleko v minulosti je to proto jen odhad.
+   * `null` = podle ceníku: každé slosování za cenu platnou v jeho den. Allwyn ceny mění
+   * (Sportka 2014 a 2024), takže jedna pevná částka by starší slosování zkreslila.
    */
   readonly cenaZaSlosovaniKc: number | null;
 }
@@ -211,7 +213,8 @@ export interface Tiket {
    */
   readonly kodDoplnkoveHry: string | null;
   /**
-   * Kolik tiket stál. `null`, když se nepodařilo přečíst a uživatel ho nedoplnil.
+   * Kolik tiket stál. `null`, když se nepodařilo přečíst a uživatel ho nedoplnil — vsazená
+   * částka se pak spočítá z ceníku, když ho aplikace má.
    *
    * Neslouží k vyhodnocení výhry — ta se počítá výhradně z tabulek tahů. Je to údaj pro
    * uživatele, aby viděl, jak si stojí.
@@ -262,5 +265,26 @@ export interface SazbyEurosance {
   readonly sazkaKc: number;
   readonly vyhryKc: Readonly<Record<PoradiEurosance, number>>;
   /** Zdroj, ze kterého byly sazby opsány — kvůli dohledatelnosti. */
+  readonly zdroj: string;
+}
+
+// ---------------------------------------------------------------------------
+// Ceník sázek
+// ---------------------------------------------------------------------------
+
+/**
+ * Cena sloupce a doplňkové hry od jednoho data slosování do dalšího záznamu téže hry.
+ *
+ * Ceny stanovuje herní plán a výherní listina je neuvádí. Backend je proto vede ručně
+ * a posílá je v balíku jako `ceny`. Před nejstarším záznamem hry cena známá není.
+ */
+export interface CenikHry {
+  readonly hra: Hra;
+  /** První den slosování za tuto cenu. */
+  readonly platnostOd: Datum;
+  readonly sloupecKc: number;
+  /** Šance, Extra 6 nebo Eurošance. `null` = doplňková hra tehdy neexistovala. */
+  readonly doplnkovaHraKc: number | null;
+  /** Herní plán, ze kterého byla cena opsána. */
   readonly zdroj: string;
 }

@@ -13,10 +13,23 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.4.0';
+export const VERZE = '0.5.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.5.0',
+    datum: '2026-09-17',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Cena tiketu se spočítá podle ceníku Allwynu: ručně zadaný tiket ji má předvyplněnou a u ceny přečtené z fotky aplikace upozorní, když nesedí s počtem sloupců, doplňkovou hrou a počtem slosování',
+          'Virtuální tiket bez zadané ceny za slosování počítá vsazenou částku podle ceníku platného v den každého slosování, takže starší slosování Sportky stojí 20 Kč a novější 30 Kč',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.4.0',
     datum: '2026-09-15',

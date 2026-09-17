@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [0.5.0] – 2026-09-17
 
 ### Přidáno
 - Cena tiketu se spočítá podle ceníku Allwynu: ručně zadaný tiket ji má předvyplněnou a u ceny přečtené z fotky aplikace upozorní, když nesedí s počtem sloupců, doplňkovou hrou a počtem slosování (aplikace)

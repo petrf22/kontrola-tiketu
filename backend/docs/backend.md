@@ -266,9 +266,12 @@ Zjištěno diagnostikou (13. 9. 2026):
   `.htaccess` přebije (`no-cache`, `Header unset Expires`); ověřeno na hostingu.
 - Kořen FTP je `/www/petrf22.cz`, hlavní web leží v `/petrf22.cz/`. Složka
   `kontrolatiketu-backend` tedy neodpovídá žádné doméně a web ji neservíruje (ověřeno: 404).
-- **FTP server posílá vadný řetěz certifikátů** — certifikát je na `vmm152.farma.gigaserver.cz`
-  (ne na `ftp.petrf22.cz`) a chybí mezilehlý Let's Encrypt YR2, jehož kořen ISRG Root YR systém
-  zatím nezná. Ověření se kvůli tomu **nevypíná**: řetěz se doplní a jméno ověří zvlášť.
+- **FTP server posílá neúplný řetěz certifikátů** vystavený na jméno stroje, ne na
+  `ftp.petrf22.cz`. Ověření se kvůli tomu **nevypíná**: řetěz se doplní a jméno ověří zvlášť.
+  Hosting certifikát mění i s vydavatelem: 13. 9. 2026 `vmm152.farma.gigaserver.cz` od Let's
+  Encrypt (chyběl mezilehlý YR2), 16. 9. 2026 `wh54.farma.gigaserver.cz` od ZeroSSL (chybí
+  mezilehlý „ZeroSSL RSA DV SSL CA 2“). Když ověření selže, podívat se, co server posílá
+  (`openssl s_client … -showcerts`), a balík vyrobit znovu.
 
 Rozložení na FTP — kód leží vedle docrootu, ne v něm:
 
@@ -288,11 +291,12 @@ return ['verejne' => dirname(__DIR__, 2) . '/kontrolatiketu.petrf22.cz/v1'];
 připojením ověřit certifikát i jméno, `lftp` pak smí vynechat jen kontrolu jména:
 
 ```bash
-curl -sS https://letsencrypt.org/certs/gen-y/root-yr-by-x1.pem https://letsencrypt.org/certs/gen-y/int-yr2.pem \
-  | cat /etc/ssl/certs/ca-certificates.crt - > ~/.local/share/kontrola-tiketu-ftp-ca.pem
+# mezilehlý certifikát podle „CA Issuers“ v certifikátu serveru (stav 16. 9. 2026)
+curl -sS http://crt.sectigo.com/ZeroSSLRSADVSSLCA2.crt | openssl x509 -inform DER \
+  | cat /etc/ssl/certs/ca-certificates.crt - > ~/.local/share/petrf22-ftp-ca.pem
 
 echo QUIT | openssl s_client -connect ftp.petrf22.cz:21 -starttls ftp -brief -verify_return_error \
-  -CAfile ~/.local/share/kontrola-tiketu-ftp-ca.pem -verify_hostname vmm152.farma.gigaserver.cz \
+  -CAfile ~/.local/share/petrf22-ftp-ca.pem -verify_hostname wh54.farma.gigaserver.cz \
   2>&1 | grep -q 'Verification: OK' && echo certifikát v pořádku
 ```
 
@@ -300,7 +304,7 @@ Do skriptu pro `lftp -f` pak patří na začátek (přihlášení bere `lftp` z 
 
 ```
 set ftp:ssl-force true
-set ssl:ca-file ~/.local/share/kontrola-tiketu-ftp-ca.pem
+set ssl:ca-file ~/.local/share/petrf22-ftp-ca.pem
 set ssl:check-hostname/ftp.petrf22.cz no
 open ftp.petrf22.cz
 ```
@@ -425,6 +429,13 @@ doložené herním plánem ani přesným datem, a proto v ceníku nejsou. Aplika
   „Aktualizace běžícího nasazení“. Server od té doby publikuje `verzeFormatu` 2 — aplikace
   do 0.1.1 ze serveru nestáhne nic. Serverová `konfigurace.lokalni.php` přepisuje jen `verejne`,
   rozvrh Euromilionů se tedy bere z výchozí konfigurace.
+
+- **Ceník sázek nasazen 17. 9. 2026 v 5:16** (commit `1baf154`). Změna se týkala jen výstupu,
+  takže databáze se nenahrávala: server byl přesně na `ce7d1ca`, nahrálo se 7 souborů `src/`
+  a `config/` (`vendor/` beze změny) a `public/v1` vyrobený novým kódem ze stažené serverové
+  databáze (`publikuj` ji nezměnil). Každý balík se od serverového lišil jen přidaným klíčem
+  `ceny`, balíky šly pod dočasným jménem s přejmenováním a manifest poslední. Po HTTPS sedí
+  hashe všech šesti balíků. Zbývá: po nejbližším běhu cronu zkontrolovat `var/tik.log`.
 
 - **Doména backendu** (`kontrolatiketu.petrf22.cz`) je natvrdo v aplikaci (adresa API i síťový
   allowlist). Změna domény znamená novou verzi aplikace.

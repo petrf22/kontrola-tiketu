@@ -392,6 +392,28 @@ Tenhle projekt je sólo a commituje se **přímo do `main`**, bez feature větv�
    git push origin vX.Y.Z
    ```
 7. Sestavit AAB z tagu (níž) a nahrát do Play Console.
+8. Sepsat poznámky k vydání pro Play (níž) a uložit je vedle AAB.
+
+### Poznámky k vydání pro Google Play
+
+Play Console je u vydání chce v poli *Poznámky k vydání*. Vznikají z `CHANGELOG.md`, ne z commitů:
+
+- **Rozsah: všechno od verze, která je naposledy v Play.** Výchozí předpoklad je předchozí tag.
+  Když se některá verze do Play nenahrála, poznámky zahrnou i její položky — v shrnutí vydání
+  proto vždy napsat, od které verze poznámky počítají, ať to jde opravit.
+- **Jen položky `(aplikace)`.** Backend, jádro bez viditelného dopadu a build uživatele nezajímají.
+  Když žádná položka `(aplikace)` není, napsat to a nic nevymýšlet.
+- **Přepsat pro uživatele, ne zkopírovat.** Vykat jako store listing, krátce, bez interních
+  názvů (`ceny`, `verzeFormatu`, SQLCipher…). Nepřislibovat nic, co verze neumí.
+- **Nejvýš 500 znaků** mezi tagy (limit Play na jazyk); počítat znaky, ne bajty:
+  `python3 -c 'import sys; print(len(sys.stdin.read().strip()))' < poznamky.txt`.
+- Formát, jak ho Play Console čeká — odrážky `•`, každá změna na vlastním řádku:
+  ```
+  <cs-CZ>
+  • …
+  </cs-CZ>
+  ```
+- Uložit do `~/releases/kontrola-tiketu/vX.Y.Z/poznamky-k-vydani.txt` a vypsat v shrnutí vydání.
 
 ### Z čeho stavět
 
@@ -444,6 +466,7 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
       stažení výsledků po otevření i tlačítkem, import souboru, vyhodnocení
 - [ ] v režimu letadlo se aplikace otevře bez chyby a stažení ohlásí, že server není dostupný
 - [ ] obrazovka „O aplikaci“ ukazuje správné číslo verze
+- [ ] poznámky k vydání pokrývají všechny verze od té, která je naposledy v Play
 - [ ] doména v `src/app/data/adresa-backendu.ts` (`kontrolatiketu.petrf22.cz`) odpovídá
       nasazenému backendu, backend na ní
       běží a `curl -sI …/v1/manifest.json` vrací `text/plain` (`backend/docs/backend.md`)

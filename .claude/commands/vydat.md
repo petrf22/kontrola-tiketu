@@ -115,10 +115,19 @@ cp "$WORKDIR/mobil/android/app/build/outputs/apk/release/app-arm64-v8a-release.a
 git worktree remove "$WORKDIR"
 ```
 
-## Krok 8: Shrnutí
+## Krok 8: Poznámky k vydání pro Google Play
 
-Vypiš verzi, `versionCode`, cestu k `.aab` a připomeň, co musí udělat člověk ručně:
+Sepiš text do pole *Poznámky k vydání* podle `mobil/docs/vydani.md`, „Poznámky k vydání pro
+Google Play“: položky `(aplikace)` z `CHANGELOG.md` od předchozího tagu, přepsané pro uživatele,
+vykání, odrážky `•`, obalené `<cs-CZ>` a `</cs-CZ>`, **nejvýš 500 znaků** (spočítej, neodhaduj).
+Ulož ho do `~/releases/kontrola-tiketu/vX.Y.Z/poznamky-k-vydani.txt`.
+
+## Krok 9: Shrnutí
+
+Vypiš verzi, `versionCode`, cestu k `.aab`, **celé poznámky k vydání v bloku kódu** (ať jdou
+zkopírovat) s počtem znaků a od které verze počítají, a připomeň, co musí udělat člověk ručně:
 
 - projít kontrolní seznam v `mobil/docs/vydani.md`,
-- nahrát AAB do Play Console a vyplnit „Co je nového“ z čerstvé sekce `CHANGELOG.md`,
+- nahrát AAB do Play Console a vložit poznámky k vydání — když se některá verze od předchozího
+  tagu do Play nenahrála, říct si o rozšíření poznámek,
 - **do Play Console se nepřihlašuj a nic tam nenahrávej sám.**

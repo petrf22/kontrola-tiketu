@@ -69,6 +69,7 @@ const MEZERA = 2;
     }
     .vzorek.vsazeno { background: var(--barva-vsazeno); }
     .vzorek.vyhrano { background: var(--barva-vyhrano); }
+    @media (max-width: 440px) { figure { flex-direction: column; align-items: flex-start; } }
   `,
 })
 export class Kolac {

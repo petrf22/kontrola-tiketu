@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import type { Hra } from '@kontrola-tiketu/jadro';
 import type { VysledekCteni } from '@kontrola-tiketu/ocr';
 import { HRY, nazevHry } from '../data/format.js';
@@ -18,7 +18,10 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
  */
 @Component({
   selector: 'app-sken-cisel',
+  imports: [RouterLink],
   template: `
+    <a class="zpet" routerLink="/pridat">← Přidat tiket</a>
+    <h2>Vyfotit tiket</h2>
     @if (!naZarizeni) {
       <p class="poznamka">Focení funguje jen v aplikaci na telefonu. V prohlížeči zadej čísla ručně.</p>
     } @else {
@@ -56,6 +59,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
     @if (chyba(); as text) {
       <p class="chyba">{{ text }}</p>
     }
+    <p><a class="zpet" routerLink="/tiket/novy">Zadat čísla ručně</a></p>
   `,
   styles: `
     .poznamka { color: var(--barva-text-tlumeny); font-size: 0.9rem; }

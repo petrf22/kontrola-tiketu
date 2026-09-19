@@ -1,7 +1,7 @@
 import { Component, computed, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { souhrnBilance, type Hra } from '@kontrola-tiketu/jadro';
-import { HRY, nazevHry } from '../data/format.js';
+import { HRY, nazevHry, formatujKc } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { Kolac } from './kolac.js';
 
@@ -27,12 +27,23 @@ function uTiketu(pocet: number): string {
   selector: 'app-prehled',
   imports: [Kolac, RouterLink],
   template: `
+    <h2>Přehled</h2>
     @if (souhrn().celkem.tiketu === 0) {
       <p class="prazdno">
         Zatím tu nic není. Přehled se spočítá z uložených tiketů —
         <a routerLink="/sken-cisel">vyfoť tiket</a> nebo ho <a routerLink="/tiket/novy">zadej ručně</a>.
       </p>
     } @else {
+      <dl class="souhrn-tiketu">
+        <div><dt>Vsazeno</dt><dd>{{ formatujKc(souhrn().celkem.vsazenoKc) }}</dd></div>
+        <div><dt>Vyhráno</dt><dd>{{ formatujKc(souhrn().celkem.vyhranoKc) }}</dd></div>
+        <div><dt>Bilance</dt><dd>{{ formatujKc(souhrn().celkem.vyhranoKc - souhrn().celkem.vsazenoKc) }}</dd></div>
+      </dl>
+      <p class="tlumene">Včetně archivovaných tiketů.</p>
+      @if (souhrn().celkem.nejistych > 0 || souhrn().celkem.tiketuBezCeny > 0) {
+        <p class="zprava-akce">Přehled není úplný: některé tikety nemají konečný výsledek nebo známou cenu.</p>
+      }
+      <details><summary>Grafy podle her</summary>
       <section class="celkem">
         <app-kolac class="velky" nazev="Celkem" [vsazenoKc]="souhrn().celkem.vsazenoKc"
           [vyhranoKc]="souhrn().celkem.vyhranoKc" />
@@ -49,6 +60,7 @@ function uTiketu(pocet: number): string {
         }
       </div>
 
+      </details>
       <ul class="poznamky">
         @if (souhrn().celkem.tiketuBezCeny > 0) {
           <li>
@@ -78,7 +90,7 @@ function uTiketu(pocet: number): string {
       padding: 0.9rem; border: 1px solid var(--barva-ram); border-radius: 6px;
     }
     .celkem { margin-bottom: 1rem; }
-    .hry { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; }
+    .hry { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; }
     .pocet { margin: 0.5rem 0 0; font-size: 0.8rem; color: var(--barva-text-tlumeny); }
     .poznamky {
       margin: 1.25rem 0 0; padding-left: 1.1rem;
@@ -87,6 +99,7 @@ function uTiketu(pocet: number): string {
   `,
 })
 export class Prehled {
+  protected readonly formatujKc = formatujKc;
   private readonly stav = inject(Stav);
 
   protected readonly nazevHry = nazevHry;

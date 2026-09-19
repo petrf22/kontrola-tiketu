@@ -1,4 +1,4 @@
-import { Component, computed, inject, linkedSignal, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, linkedSignal, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   DELKA_KODU_DOPLNKOVE_HRY,
@@ -105,7 +105,9 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
   selector: 'app-novy-tiket',
   imports: [RouterLink],
   template: `
-    <form (submit)="uloz($event)">
+    <a class="zpet" routerLink="/pridat">← Přidat tiket</a>
+    <h2>{{ rozpoznanoZeSnimku ? 'Potvrdit údaje z fotky' : 'Zadat tiket' }}</h2>
+    <form (submit)="uloz($event)" novalidate>
       <fieldset>
         <legend>Hra</legend>
         @for (h of hry; track h) {
@@ -123,12 +125,14 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
       <div class="dvojice">
         <label>První slosování
-          <input type="date" [value]="prvni()" (input)="prvni.set($any($event.target).value)" required />
-        </label>
+          <input data-cesta="slosovani.prvni" type="date" [value]="prvni()" (input)="prvni.set($any($event.target).value)" required />
+        @for (chyba of chybyPole('slosovani.prvni'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          </label>
         <label>Počet slosování
-          <input type="number" min="1" max="52" [value]="pocet()"
+          <input data-cesta="slosovani.pocet" type="number" min="1" max="52" [value]="pocet()"
             (input)="pocet.set(+$any($event.target).value)" required />
-        </label>
+        @for (chyba of chybyPole('slosovani.pocet'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          </label>
       </div>
 
       <!--
@@ -146,31 +150,11 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
           }
         }
         @for (den of nabidkaDnu(); track den) {
-          <label><input type="checkbox" name="dny" [value]="den"
+          <label><input data-cesta="slosovani.dny" type="checkbox" name="dny" [value]="den"
             [checked]="zaskrtnuteDny().includes(den)"
             (change)="prepniDen(den, $any($event.target).checked)" /> {{ nazevDne(den) }}</label>
         }
       </fieldset>
-
-      <label>Cena tiketu v Kč (nepovinné)
-        <input type="number" min="0" step="1" inputmode="numeric" placeholder="např. 400"
-          [value]="cenaPole()" (input)="cena.set($any($event.target).value)" />
-      </label>
-      @if (nesouhlasCeny(); as rozpis) {
-        <p class="upozorneni">
-          {{ rozpoznanoZeSnimku && cena() === cenaZeSnimku ? 'Cena přečtená z tiketu' : 'Zadaná cena' }}
-          nesedí s ceníkem: {{ popisRozpisuCeny(hra(), rozpis) }}. Zkontroluj počet sloupců,
-          {{ nazevDoplnkoveHry(hra()) }} a počet slosování.
-        </p>
-      } @else if (cena() === null && rozpisCeny(); as rozpis) {
-        <p class="napoveda">Spočítáno podle ceníku: {{ popisRozpisuCeny(hra(), rozpis) }}.</p>
-      }
-
-      <label>{{ nazevDoplnkoveHry(hra()) }} — {{ delkaKodu() === 5 ? 'pět' : 'šest' }} číslic (nepovinné)
-        <input type="text" inputmode="numeric" [attr.maxlength]="delkaKodu()"
-          [placeholder]="delkaKodu() === 5 ? 'např. 37960' : 'např. 236412'"
-          [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
-      </label>
 
       @if (serioveCislo) {
         <p class="ze-skenu">
@@ -231,19 +215,21 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
       <h2>Sloupce</h2>
       @for (radek of radky(); track $index) {
-        <div class="sloupec">
+        <div class="sloupec" [class.bez-druheho]="hra() === 'sportka'">
           <span class="poradi">{{ $index + 1 }}.</span>
-          <input type="text" inputmode="numeric" [value]="radek.cisla"
+          <input type="text" inputmode="numeric" [value]="radek.cisla" [attr.data-cesta]="'sloupce[' + $index + '].cisla'"
+            [attr.aria-invalid]="chybyPole('sloupce[' + $index + '].cisla').length > 0"
             [attr.aria-label]="'Čísla sloupce ' + ($index + 1)"
             [placeholder]="napoveda().cisla"
             (input)="zmenCisla($index, $any($event.target).value)"
             (blur)="dotkni($index, 'cisla')" />
           @if (napoveda().druheOsudi; as druhe) {
-            <input type="text" inputmode="numeric" class="euro" [value]="radek.druheOsudi"
+            <input type="text" inputmode="numeric" class="euro" [value]="radek.druheOsudi" [attr.data-cesta]="'sloupce[' + $index + '].' + (hra() === 'eurojackpot' ? 'eurocisla' : 'druheOsudi')"
               [attr.aria-label]="napoveda().druheOsudiNazev" [placeholder]="druhe"
               (input)="zmenDruheOsudi($index, $any($event.target).value)"
               (blur)="dotkni($index, 'druhe')" />
           }
+          @for (chyba of chybyPole('sloupce[' + $index + ']'); track $index) { <p class="chyba-pole">{{ chyba }}</p> }
           @if (radky().length > 1) {
             <button type="button" class="odebrat" (click)="odeber($index)" aria-label="Odebrat sloupec">×</button>
           }
@@ -264,16 +250,42 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         na papíře. Předvyplní se podle tiketu; kdo sází pořád stejná čísla, rozšíří ho
         do minulosti nebo nechá konec prázdný a tiket se kontroluje s každým losováním.
       -->
+      <label>{{ nazevDoplnkoveHry(hra()) }} — {{ delkaKodu() === 5 ? 'pět' : 'šest' }} číslic (nepovinné)
+        <input data-cesta="kodDoplnkoveHry" type="text" inputmode="numeric" [attr.maxlength]="delkaKodu()"
+          [placeholder]="delkaKodu() === 5 ? 'např. 37960' : 'např. 236412'"
+          [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
+      @for (chyba of chybyPole('kodDoplnkoveHry'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          </label>
+
+      <label>Cena tiketu v Kč (nepovinné)
+        <input data-cesta="cenaKc" type="number" min="0" step="any" inputmode="decimal" placeholder="např. 400"
+          [value]="cenaPole()" (input)="cena.set($any($event.target).value)" />
+      @for (chyba of chybyPole('cenaKc'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          </label>
+      @if (nesouhlasCeny(); as rozpis) {
+        <p class="upozorneni">
+          {{ rozpoznanoZeSnimku && cena() === cenaZeSnimku ? 'Cena přečtená z tiketu' : 'Zadaná cena' }}
+          nesedí s ceníkem: {{ popisRozpisuCeny(hra(), rozpis) }}. Zkontroluj počet sloupců,
+          {{ nazevDoplnkoveHry(hra()) }} a počet slosování.
+        </p>
+      } @else if (cena() === null && rozpisCeny(); as rozpis) {
+        <p class="napoveda">Spočítáno podle ceníku: {{ popisRozpisuCeny(hra(), rozpis) }}.</p>
+      }
+
+      <details [open]="virtualni()">
+        <summary>Rozsah kontroly{{ virtualni() ? ' · virtuální tiket' : '' }}</summary>
       <fieldset class="rozsah">
         <legend>Rozsah kontroly</legend>
         <div class="dvojice">
           <label>Od
-            <input type="date" [value]="odKontroly()"
+            <input data-cesta="kontrola.od" type="date" [value]="odKontroly()"
               (input)="kontrolaOd.set($any($event.target).value)" />
+          @for (chyba of chybyPole('kontrola.od'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
           </label>
           <label>Do
-            <input type="date" [value]="doKontroly() ?? ''"
+            <input data-cesta="kontrola.do" type="date" [value]="doKontroly() ?? ''"
               (input)="zmenDoKontroly($any($event.target).value)" />
+          @for (chyba of chybyPole('kontrola.do'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
           </label>
         </div>
         <div class="tlacitka-rozsahu">
@@ -287,9 +299,10 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
         @if (virtualni()) {
           <label>Cena za jedno slosování v Kč
-            <input type="number" min="0" step="any" inputmode="decimal"
+            <input data-cesta="kontrola.cenaZaSlosovaniKc" type="number" min="0" step="any" inputmode="decimal"
               [placeholder]="cenaZaSlosovaniZCeniku() === null ? 'např. 400' : 'podle ceníku'"
               [value]="cenaZaSlosovaniPole()" (input)="cenaZaSlosovani.set($any($event.target).value)" />
+          @for (chyba of chybyPole('kontrola.cenaZaSlosovaniKc'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
           </label>
           <p class="napoveda">
             Tiket bude <strong>virtuální</strong> — kontroluje se {{ popisRozsahuKontroly({ od: odKontroly(), do: doKontroly() }) }},
@@ -315,6 +328,8 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         }
       </fieldset>
 
+      </details>
+
       @if (prekryv().length > 0) {
         <p class="upozorneni">
           Stejnou sázku už má uložený tiket na {{ pocetSlosovani(prekryv().length) }}
@@ -327,18 +342,22 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         Tlačítko se jmenuje podle toho, proč ho uživatel mačká, ne podle toho, co dělá uvnitř.
         Uložení je vedlejší efekt, důvod je zjistit, jestli tiket vyhrál.
       -->
-      <button type="submit" class="ulozit">
+      @if (chybaUlozeni(); as chyba) { <p role="alert" class="chyba-akce">{{ chyba }}</p> }
+      <button type="submit" class="ulozit" [disabled]="uklada()">
         Zkontrolovat tiket
       </button>
       <p class="pod-tlacitkem">Tiket se zároveň uloží do seznamu, ať ho můžeš zkontrolovat i po dalších losováních.</p>
     </form>
   `,
   styles: `
+    .chyba-pole { display: block; color: var(--barva-chyba); grid-column: 1 / -1; margin: .25rem 0; font-size: .85rem; }
+    input[aria-invalid=true] { border-color: var(--barva-chyba); }
     form { display: grid; gap: 1rem; }
-    fieldset { border: 1px solid var(--barva-ram); }
+    fieldset { min-width: 0; border: 1px solid var(--barva-ram); border-radius: .75rem; padding: .85rem; }
+    fieldset > label:has(input[type=radio]), fieldset > label:has(input[type=checkbox]) { display: flex; align-items: center; min-height: 48px; gap: .5rem; }
     label { display: block; font-size: 0.85rem; }
     input[type='text'], input[type='date'], input[type='number'] {
-      width: 100%; padding: 0.45rem; margin-top: 0.2rem;
+      width: 100%; min-width: 0; padding: 0.45rem; margin-top: 0.2rem;
       border: 1px solid var(--barva-ram); border-radius: 4px;
       background: var(--barva-plocha); color: inherit; font: inherit;
     }
@@ -351,15 +370,27 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
       background: var(--barva-plocha); color: inherit; font: inherit; font-size: 0.85rem; cursor: pointer;
     }
     .napoveda { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--barva-text-tlumeny); }
-    h2 { margin: 0.5rem 0 0; font-size: 1rem; }
-    .sloupec { display: flex; gap: 0.4rem; align-items: center; }
+    form h2 { margin: 0.5rem 0 0; font-size: 1.1rem; }
+    .sloupec { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr) minmax(4rem, 6rem) auto; gap: .4rem; align-items: center; }
+    .sloupec.bez-druheho { grid-template-columns: 1.25rem minmax(0, 1fr) auto; }
+    .sloupec .poradi { grid-column: 1; grid-row: 1; }
+    .sloupec input:not(.euro) { grid-column: 2; grid-row: 1; }
+    .sloupec .euro { grid-column: 3; grid-row: 1; }
+    .sloupec .odebrat { grid-column: 4; grid-row: 1; }
+    .sloupec.bez-druheho .odebrat { grid-column: 3; }
+    @media (max-width: 480px) {
+      .dvojice { grid-template-columns: minmax(0, 1fr); }
+      .sloupec { grid-template-columns: 1.25rem minmax(0, 1fr) auto; }
+      .sloupec .euro { grid-column: 2; grid-row: 2; }
+      .sloupec .odebrat { grid-column: 3; }
+    }
     .poradi { width: 1.5rem; color: var(--barva-text-tlumeny); font-variant-numeric: tabular-nums; }
     .euro { max-width: 8rem; }
     .odebrat, .pridat, .ulozit {
       padding: 0.45rem 0.8rem; border: 1px solid var(--barva-ram); border-radius: 4px;
       background: var(--barva-plocha); color: inherit; font: inherit; cursor: pointer;
     }
-    .ulozit { background: var(--barva-duraz); color: #fff; border-color: transparent; }
+    .ulozit { background: var(--barva-duraz); color: var(--barva-pozadi); border-color: transparent; }
     .problemy { margin: 0; padding-left: 1.1rem; color: var(--barva-chyba); font-size: 0.85rem; }
     .pod-tlacitkem {
       margin: -0.5rem 0 0; font-size: 0.78rem; color: var(--barva-text-tlumeny);
@@ -385,6 +416,9 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 })
 export class NovyTiket {
   private readonly stav = inject(Stav);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
+  protected readonly uklada = signal(false);
+  protected readonly chybaUlozeni = signal<string | null>(null);
   private readonly router = inject(Router);
 
   /**
@@ -605,7 +639,15 @@ export class NovyTiket {
     };
   });
 
-  protected readonly problemy = computed(() => zkontrolujTiket(this.navrh()));
+  protected readonly problemy = computed(() => {
+    const problemy = zkontrolujTiket(this.navrh());
+    if (!this.prvni()) problemy.push({ kod: 'spatne-datum', cesta: 'slosovani.prvni', zprava: 'Vyplň datum prvního slosování.' });
+    const cena = this.cena();
+    if (cena !== null && cena.trim() !== '' && (prectiCastku(cena) === null || prectiCastku(cena)! < 0)) {
+      problemy.push({ kod: 'spatna-cena', cesta: 'cenaKc', zprava: 'Cena musí být nezáporná částka.' });
+    }
+    return problemy;
+  });
 
   /** Stisk „Zkontrolovat tiket“ ukáže všechny chyby, i v polích, kam uživatel nesáhl. */
   private readonly odeslano = signal(false);
@@ -622,6 +664,10 @@ export class NovyTiket {
       return misto === null || radky[misto.index]?.dotceno[misto.pole] === true;
     });
   });
+
+  protected chybyPole(cesta: string): string[] {
+    return this.viditelneProblemy().filter(p => p.cesta === cesta || p.cesta.startsWith(cesta + '[') || p.cesta.startsWith(cesta + '.')).map(p => popisProblemu(p));
+  }
 
   protected readonly popisProblemu = popisProblemu;
   protected readonly popisRozpisuCeny = popisRozpisuCeny;
@@ -688,9 +734,29 @@ export class NovyTiket {
   protected async uloz(udalost: Event): Promise<void> {
     udalost.preventDefault();
     this.odeslano.set(true);
-    if (this.problemy().length > 0 || this.prvni() === '') return;
+    if (this.uklada()) return;
+    if (this.problemy().length > 0 || this.prvni() === '') {
+      requestAnimationFrame(() => {
+        const cesta = this.problemy()[0]?.cesta ?? 'slosovani.prvni';
+        const pole = [...this.element.nativeElement.querySelectorAll<HTMLElement>('[data-cesta]')]
+          .find(el => cesta.startsWith(el.dataset['cesta']!));
+        const rozsah = pole?.closest('details');
+        if (rozsah) rozsah.open = true;
+        pole?.focus();
+      });
+      return;
+    }
+    const form = udalost.target as HTMLFormElement;
+    if (!form.reportValidity()) return;
     const tiket = this.navrh();
-    await this.stav.ulozTiket(tiket);
+    this.uklada.set(true);
+    this.chybaUlozeni.set(null);
+    try {
+      await this.stav.ulozTiket(tiket);
+    } catch {
+      this.chybaUlozeni.set('Tiket se nepodařilo uložit. Zadané údaje zůstaly ve formuláři.');
+      return;
+    } finally { this.uklada.set(false); }
     // Průchozí údaje ze skenu už splnily účel.
     this.naskenovany.zapomen();
     await this.router.navigate(['/tiket', tiket.id]);

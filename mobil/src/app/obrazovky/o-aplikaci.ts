@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { formatujDatum } from '../data/format.js';
 import { HISTORIE, VERZE } from '../data/verze.generated.js';
 
@@ -9,7 +10,10 @@ import { HISTORIE, VERZE } from '../data/verze.generated.js';
  */
 @Component({
   selector: 'app-o-aplikaci',
+  imports: [RouterLink],
   template: `
+    <a class="zpet" routerLink="/dalsi">← Další</a>
+    <h2>O aplikaci</h2>
     <p class="verze">Verze {{ verze }}</p>
 
     <p>

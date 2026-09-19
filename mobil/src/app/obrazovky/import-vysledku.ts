@@ -1,10 +1,15 @@
 import { Component, inject, signal } from '@angular/core';
 import { formatujDatum, formatujDatumCas } from '../data/format.js';
 import { Stav } from '../data/stav.js';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-import-vysledku',
+  imports: [RouterLink],
   template: `
+    <a class="zpet" routerLink="/dalsi">← Další</a>
+    <h2>Výsledky losování</h2>
+    <p class="tlumene">{{ stav.stahuje() ? 'Probíhá aktualizace…' : stav.vysledkyDo() ? 'Uložené výsledky do ' + formatujDatum(stav.vysledkyDo()!) : 'Zatím nejsou stažené žádné výsledky.' }}</p>
     <section>
       <button type="button" class="stahnout" [disabled]="stav.stahuje()" (click)="stahni()">
         {{ stav.stahuje() ? 'Stahuji…' : 'Stáhnout výsledky' }}
@@ -40,8 +45,8 @@ import { Stav } from '../data/stav.js';
       }
     </section>
 
-    <section class="vysvetleni">
-      <h2>Co se při stažení odesílá</h2>
+    <details class="vysvetleni">
+      <summary>Soukromí při stahování</summary>
       <p>
         Nic, co by prozradilo tvoje tikety. Aplikace si stáhne <strong>všechny</strong> výsledky
         za poslední roky, pro každého stejně — jen seznam a pak celé balíky po letech. Na server
@@ -52,21 +57,22 @@ import { Stav } from '../data/stav.js';
         Server s výsledky patří tomuto projektu, ne provozovateli loterie. Allwyn se o tobě
         nedozví vůbec nic.
       </p>
-    </section>
+    </details>
 
-    <section class="zaloha">
-      <h2>Ze souboru</h2>
+    <details class="zaloha">
+      <summary>Importovat ze souboru</summary>
       <p>
         Když server není dostupný, dají se výsledky naimportovat souborem. Stačí roční balík
         stažený ze serveru výsledků jinde (například <code>2026.json</code>).
       </p>
       <label class="vyber">
+        Soubor s výsledky
         <input type="file" accept="application/json,.json" (change)="vyber($event)" />
       </label>
       @if (zprava(); as z) {
         <p class="zprava" [class.chyba]="!uspech()">{{ z }}</p>
       }
-    </section>
+    </details>
   `,
   styles: `
     .stahnout { font-size: 1rem; padding: 0.6rem 1.1rem; }

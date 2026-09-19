@@ -23,6 +23,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
   selector: 'app-sken',
   imports: [RouterLink],
   template: `
+    @if (!skenuje()) { <a class="zpet" routerLink="/pridat">← Přidat tiket</a><h2>Naskenovat kód</h2> }
     @if (!naZarizeni) {
       <p class="poznamka">
         Sken funguje jen v aplikaci na telefonu. V prohlížeči zadej tiket ručně.
@@ -43,6 +44,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
     @if (chyba(); as text) {
       <p class="chyba">{{ text }}</p>
     }
+    @if (!skenuje()) { <a class="zpet" routerLink="/tiket/novy">Zadat tiket ručně</a> }
   `,
   styles: `
     .poznamka { color: var(--barva-text-tlumeny); font-size: 0.9rem; }

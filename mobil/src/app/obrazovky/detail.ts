@@ -1,8 +1,10 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, ElementRef, computed, inject, input, signal, viewChild } from '@angular/core';
+import { Component, ElementRef, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   platnyCenik,
+  rozpisCenyTiketu,
+  type Tiket,
   zkontrolujTiket,
   type Hra,
   type Problem,
@@ -32,6 +34,7 @@ import {
   popisRozsahuKontroly,
 } from '../data/format.js';
 import { Stav } from '../data/stav.js';
+import { historieTiketu, neuplneSlosovani, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
 const DELKA_SHODY: Readonly<Record<string, number>> = {
@@ -57,57 +60,89 @@ function druheOsudiSloupce(sloupec: Sloupec | undefined): readonly number[] {
 }
 
 /** Která úprava rozsahu je rozdělaná. Dvoukrokově místo systémového dialogu — ten blokuje webview. */
-type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
+type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
 
 @Component({
   selector: 'app-detail',
   imports: [NgTemplateOutlet, RouterLink],
   template: `
     @if (tiket(); as t) {
-      <h2>
-        {{ nazevHry(t.hra) }}
-        @if (t.kontrola) { <span class="stitek">virtuální</span> }
-      </h2>
-      <p class="popis">
-        {{ pocetSloupcu(t.sloupce.length) }}, {{ t.slosovani.pocet }} slosování od
-        {{ formatujDatum(t.slosovani.prvni) }}{{ t.slosovani.dny ? ', ' + popisDnuSlosovani(t.slosovani.dny) : '' }}.
-        @if (t.kodDoplnkoveHry) {
-          <br />{{ nazevDoplnkoveHry(t.hra) }}: {{ t.kodDoplnkoveHry }}
-        }
-        @if (t.kontrola; as k) {
-          <br /><strong>Kontrola {{ popisRozsahuKontroly(k) }}</strong>
-        }
-      </p>
-
-      @if (vysledek(); as v) {
-        <p class="soucet" [class.nejisty]="!v.soucetJisty">
-          <span class="popisek">Výhra</span>
-          <strong>{{ formatujKc(v.celkemKc) }}</strong>
-          @if (!v.soucetJisty) { <span class="hvezda">*</span> }
-        </p>
-
-        @if (v.bilanceKc !== null) {
-          <p class="bilance" [class.zisk]="v.bilanceKc > 0">
-            <span class="popisek">Bilance</span>
-            <strong>{{ v.bilanceKc > 0 ? '+' : '' }}{{ formatujKc(v.bilanceKc) }}</strong>
-            @if (t.kontrola?.cenaZaSlosovaniKc != null) {
-              <span class="tazene">
-                vsazeno {{ v.slosovani.length }} × {{ formatujKc(t.kontrola!.cenaZaSlosovaniKc!) }}
-              </span>
+      <div class="akce-tiketu">
+        <a routerLink="/" [queryParams]="t.archivovany ? {archiv: '1'} : {}">← {{ t.archivovany ? 'Archiv' : 'Tikety' }}</a>
+        <details class="nabidka-akci" (click)="zavriAkce($event)">
+          <summary>Akce tiketu</summary>
+          <div>
+            <button type="button" [disabled]="uklada()" (click)="zacniUpravuCeny()">Upravit cenu</button>
+            <button type="button" [disabled]="uklada()" (click)="zacniUpravuRozsahu()">Upravit rozsah kontroly</button>
+            @if (t.kontrola?.do === null) {
+              <button type="button" [disabled]="uklada()" (click)="zacniUkonceni()">Ukončit kontrolu</button>
             } @else if (t.kontrola) {
-              <span class="tazene">
-                vsazeno {{ formatujKc(v.vsazenoKc!) }} za {{ pocetSlosovani(v.slosovani.length) }} podle ceníku
-              </span>
-            } @else if (t.cenaKc === null) {
-              <span class="tazene">tiket stál podle ceníku {{ formatujKc(v.vsazenoKc!) }}</span>
-            } @else {
-              <span class="tazene">tiket stál {{ formatujKc(t.cenaKc) }}</span>
+              <button type="button" [disabled]="uklada()" (click)="pokracujBezKonce()">Pokračovat bez konce</button>
             }
-          </p>
-        } @else if (t.kontrola) {
-          <p class="tazene">
-            Bez ceny za slosování se bilance nedá spočítat — ceník cenu pro všechna slosování nezná.
-          </p>
+            <button type="button" [disabled]="uklada()" (click)="archivuj()">{{ t.archivovany ? 'Vrátit z archivu' : 'Archivovat' }}</button>
+            <button type="button" class="smazat" [disabled]="uklada()" (click)="otevriMazani()">Smazat tiket</button>
+            <button type="button">Zavřít nabídku</button>
+          </div>
+        </details>
+      </div>
+      <h2>{{ nazevHry(t.hra) }} @if (t.kontrola) { <span class="stitek">virtuální</span> }</h2>
+      @if (t.archivovany) {
+        <p class="info">V archivu. Tiket se dál započítává do bilance.
+          @if (t.kontrola?.do === null) { Průběžná kontrola pokračuje. }
+        </p>
+      }
+      @if (zpravaAkce(); as zprava) {
+        <p class="zprava-akce" role="status">{{ zprava }}
+          @if (vratitelnyArchiv() !== null) { <button type="button" [disabled]="uklada()" (click)="vratArchiv()">Zpět</button> }
+        </p>
+      }
+      @if (chybaAkce(); as chyba) { <p class="chyba-akce" role="alert">{{ chyba }}</p> }
+      <p class="popis">
+        {{ pocetSloupcu(t.sloupce.length) }} ·
+        @if (t.kontrola; as k) { Kontrola {{ popisRozsahuKontroly(k) }} }
+        @else { {{ pocetSlosovani(t.slosovani.pocet) }} od {{ formatujDatum(t.slosovani.prvni) }} }
+        {{ t.slosovani.dny ? ' · ' + popisDnuSlosovani(t.slosovani.dny) : '' }}
+      </p>
+      <ng-container *ngTemplateOutlet="upravaRozsahu; context: { $implicit: t }" />
+      @if (uprava() === 'cena') {
+        <form class="uprava" (submit)="ulozCenu($event)">
+          <label>{{ t.kontrola ? 'Cena za jedno slosování v Kč' : 'Cena celého tiketu v Kč' }}
+            <input type="text" inputmode="decimal" [value]="novaCena()" (input)="novaCena.set($any($event.target).value)" aria-describedby="napoveda-ceny" />
+          </label>
+          <p id="napoveda-ceny" class="tlumene">Prázdné pole použije ceník. Zadaná cena má přednost.</p>
+          @if (rozpisCeny(); as r) {
+            <p class="tlumene">Cena papírového tiketu podle ceníku: {{ formatujKc(r.celkemKc) }} ({{ r.sloupcu }} × {{ formatujKc(r.sloupecKc) }}@if (r.doplnkovaHraKc !== null) { + {{ formatujKc(r.doplnkovaHraKc) }} } za slosování, {{ pocetSlosovani(r.slosovani) }}).</p>
+          }
+          <div class="tlacitka"><button type="submit" class="hlavni" [disabled]="uklada()">Uložit cenu</button><button type="button" (click)="uprava.set('zadna')">Zrušit</button></div>
+        </form>
+      }
+      @if (vysledek(); as v) {
+        <dl class="souhrn-tiketu">
+          <div>
+            <dt>{{ t.kontrola ? 'Vsazeno' : 'Cena tiketu' }}</dt>
+            <dd>{{ v.vsazenoKc === null ? 'Neznámá' : formatujKc(v.vsazenoKc) }}</dd>
+          </div>
+          <div>
+            <dt>Výhra</dt>
+            <dd [class.nejisty]="!v.soucetJisty">{{ formatujKc(v.celkemKc) }}@if (!v.soucetJisty) { * }</dd>
+          </div>
+            <div>
+              <dt>Bilance</dt>
+              <dd [class.zisk]="v.bilanceKc !== null && v.bilanceKc > 0">{{ v.bilanceKc === null ? 'Nelze určit' : (v.bilanceKc > 0 ? '+' : '') + formatujKc(v.bilanceKc) }}</dd>
+            </div>
+        </dl>
+
+        <p class="tlumene">
+          @if (t.kontrola) {
+            @if (t.kontrola.cenaZaSlosovaniKc !== null) {
+              {{ pocetSlosovani(v.slosovani.length) }} × {{ formatujKc(t.kontrola.cenaZaSlosovaniKc) }} za slosování.
+            } @else { Cena podle ceníku platného pro jednotlivá slosování. }
+          } @else { {{ t.cenaKc === null ? 'Cena podle ceníku.' : 'Cena z tiketu nebo ručně upravená.' }} }
+          @if (v.vsazenoKc === null) { Cena není známá, bilanci nelze spočítat. }
+        </p>
+        @if (!v.soucetJisty) { <p class="info">Průběžný výsledek: výhra ani bilance nejsou konečné.</p> }
+        @if (!t.kontrola && t.cenaKc !== null && rozpisCeny(); as r) {
+          @if (t.cenaKc !== r.celkemKc) { <p class="varovani">Cena se liší od ceníku ({{ formatujKc(r.celkemKc) }}). Používá se zadaná cena.</p> }
         }
 
         @if (v.pokracuje) {
@@ -125,32 +160,45 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
           </p>
         }
 
-        <ng-container *ngTemplateOutlet="upravaRozsahu; context: { $implicit: t }" />
+
 
         @if (v.chybejicichSlosovani > 0) {
           <p class="varovani">
             Chybí výsledky {{ v.chybejicichSlosovani }} slosování, takže tohle není konečná
-            částka. „Nevyhrál jsi“ a „zatím nevím“ nejsou totéž — doimportuj novější výsledky.
+            částka. <a routerLink="/import">Aktualizovat výsledky</a>.
           </p>
         }
 
-        @for (slosovani of zobrazenaSlosovani().hlavni; track slosovani.datum) {
-          <ng-container *ngTemplateOutlet="sekce; context: { $implicit: slosovani }" />
-        }
-
-        @if (zobrazenaSlosovani().bezVyhry.length > 0) {
-          @if (!ukazatBezVyhry()) {
-            <button type="button" class="rozbalit" (click)="ukazatBezVyhry.set(true)">
-              Ukázat {{ pocetSlosovani(zobrazenaSlosovani().bezVyhry.length) }} bez výhry
-            </button>
-          } @else {
-            <button type="button" class="rozbalit" (click)="ukazatBezVyhry.set(false)">
-              Skrýt slosování bez výhry
-            </button>
-            @for (slosovani of zobrazenaSlosovani().bezVyhry; track slosovani.datum) {
-              <ng-container *ngTemplateOutlet="sekce; context: { $implicit: slosovani }" />
+        <details class="obsah-tiketu">
+          <summary>Vsazená čísla · {{ pocetSloupcu(t.sloupce.length) }}</summary>
+          <ol>
+            @for (sloupec of t.sloupce; track $index) {
+              <li>{{ sloupec.cisla.join(' · ') }}
+                @if (druheOsudi(sloupec).length > 0) { <strong> + {{ druheOsudi(sloupec).join(' · ') }}</strong> }
+              </li>
             }
-          }
+          </ol>
+          @if (t.kodDoplnkoveHry) { <p>{{ nazevDoplnkoveHry(t.hra) }}: {{ t.kodDoplnkoveHry }}</p> }
+        </details>
+        <h3>Historie slosování</h3>
+        <div class="prepinace" aria-label="Filtr historie">
+          <button type="button" [attr.aria-pressed]="filtrHistorie() === 'vsechna'" (click)="zmenFiltr('vsechna')">Všechna</button>
+          <button type="button" [attr.aria-pressed]="filtrHistorie() === 'vyherni'" (click)="zmenFiltr('vyherni')">Výherní</button>
+          <button type="button" [attr.aria-pressed]="filtrHistorie() === 'neuplna'" (click)="zmenFiltr('neuplna')">Neúplná</button>
+        </div>
+        <p class="tlumene">Zobrazeno {{ zobrazenaSlosovani().length }} z {{ historie().length }} slosování.</p>
+        @for (slosovani of zobrazenaSlosovani(); track slosovani.datum) {
+          <details class="historie-radek" [open]="!t.kontrola && v.slosovani.length === 1">
+            <summary>
+              {{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}
+              <span>{{ slosovani.vyhry.length ? 'Výhra ' + formatujKc(slosovani.celkemKc) : 'Bez výhry' }}</span>
+              @if (neuplne(slosovani)) { <small>Neúplné vyhodnocení</small> }
+            </summary>
+            <ng-container *ngTemplateOutlet="sekce; context: { $implicit: slosovani }" />
+          </details>
+        } @empty { <p class="tlumene">Tomuto filtru zatím neodpovídá žádné slosování.</p> }
+        @if (zobrazenaSlosovani().length < historie().length) {
+          <button type="button" class="rozbalit" (click)="limitHistorie.update(dalsiStrana)">Načíst dalších 20</button>
         }
 
         @if (!v.soucetJisty) {
@@ -160,7 +208,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
 
       <ng-template #sekce let-slosovani>
         <section>
-          <h3>{{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}</h3>
+
 
           <!--
             Vsazená čísla se zvýrazněnými shodami. Bez nich se nedá zkontrolovat, jestli
@@ -238,7 +286,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
                 <p class="chyba">{{ problem.zprava }}</p>
               }
               <div class="tlacitka">
-                <button type="button" class="hlavni" (click)="ulozRozsah()">Ukončit</button>
+                <button type="button" class="hlavni" [disabled]="uklada()" (click)="ulozRozsah()">Ukončit</button>
                 <button type="button" (click)="uprava.set('zadna')">Zpět</button>
               </div>
             </div>
@@ -273,19 +321,12 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
               </div>
             </div>
           }
-          @default {
-            <div class="tlacitka">
-              @if (t.kontrola?.do === null) {
-                <button type="button" (click)="zacniUkonceni()">Ukončit kontrolu</button>
-              } @else if (t.kontrola) {
-                <button type="button" (click)="pokracujBezKonce()">Pokračovat bez konce</button>
-              }
-              <button type="button" (click)="zacniUpravuRozsahu()">Upravit rozsah kontroly</button>
-            </div>
-          }
         }
       </ng-template>
 
+      <details>
+        <summary>{{ t.kontrola ? 'Původní tiket a údaje' : 'Údaje o tiketu' }}</summary>
+        <p>{{ pocetSlosovani(t.slosovani.pocet) }} od {{ formatujDatum(t.slosovani.prvni) }} · Cena papírového tiketu: {{ t.cenaKc === null ? 'Neznámá' : formatujKc(t.cenaKc) }}</p>
       <dl class="puvod">
         @if (serioveCislo(); as cislo) {
           <dt>Sériové číslo z čárového kódu</dt>
@@ -301,11 +342,11 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
         Odkaz otevře prohlížeč; aplikace sama na stránky Allwyn nechodí a nic jim neposílá.
       </p>
 
-      <button type="button" class="smazat" (click)="otevriMazani()">Smazat tiket</button>
+      </details>
       <dialog #dialogMazani class="potvrzeni" aria-labelledby="potvrzeni-text">
         <p id="potvrzeni-text">Opravdu smazat tenhle tiket? Vrátit to nepůjde.</p>
         <div>
-          <button type="button" class="smazat" (click)="smaz()">Ano, smazat</button>
+          <button type="button" class="smazat" [disabled]="uklada()" (click)="smaz()">Ano, smazat</button>
           <button type="button" autofocus (click)="ponechat()">Ponechat</button>
         </div>
       </dialog>
@@ -314,6 +355,13 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
     }
   `,
   styles: `
+    .nabidka-akci { position: relative; margin: 0; border: 0; padding: 0; }
+    .nabidka-akci > div { position: fixed; right: max(1rem, calc((100vw - 44rem) / 2)); bottom: calc(6rem + env(safe-area-inset-bottom)); z-index: 6; max-height: calc(100dvh - 8rem - env(safe-area-inset-bottom) - env(safe-area-inset-top)); overflow-y: auto; display: grid; width: min(20rem, calc(100vw - 2rem)); padding: .5rem; gap: .25rem; background: var(--barva-pozadi); border: 1px solid var(--barva-ram); border-radius: .75rem; box-shadow: 0 .5rem 1.5rem #0003; }
+    .nabidka-akci button { text-align: left; }
+    .historie-radek summary span, .historie-radek summary small { display: block; font-weight: 400; margin-left: 1.1rem; }
+    .historie-radek summary small { color: var(--barva-text-tlumeny); }
+    .obsah-tiketu li { padding: .4rem 0; overflow-wrap: anywhere; }
+
     .popis { color: var(--barva-text-tlumeny); font-size: 0.85rem; }
     .stitek {
       margin-left: 0.4rem; padding: 0.05rem 0.45rem; border: 1px solid var(--barva-duraz);
@@ -335,29 +383,11 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
       background: var(--barva-plocha); color: inherit; font: inherit;
     }
     .dvojice { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    @media (max-width: 480px) { .dvojice { grid-template-columns: minmax(0, 1fr); } }
     .chyba { margin: 0; color: var(--barva-chyba); font-size: 0.85rem; }
     .tlacitka { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
-    .tlacitka button, .rozbalit {
-      padding: 0.45rem 0.8rem; border: 1px solid var(--barva-ram); border-radius: 4px;
-      background: transparent; color: inherit; font: inherit; cursor: pointer;
-    }
-    .tlacitka button.hlavni { background: var(--barva-duraz); color: #fff; border-color: transparent; }
+    .tlacitka button.hlavni { background: var(--barva-duraz); color: var(--barva-pozadi); border-color: transparent; }
     .rozbalit { margin-top: 1.25rem; width: 100%; }
-    .soucet {
-      display: flex; align-items: baseline; gap: 0.5rem;
-      font-size: 1.6rem; margin: 0.5rem 0; font-variant-numeric: tabular-nums;
-    }
-    .bilance {
-      display: flex; align-items: baseline; gap: 0.5rem; flex-wrap: wrap;
-      margin: 0 0 0.5rem; font-size: 1.1rem; font-variant-numeric: tabular-nums;
-      color: var(--barva-text-tlumeny);
-    }
-    .bilance.zisk strong { color: var(--barva-ok); }
-    .soucet .popisek, .bilance .popisek {
-      font-size: 0.85rem; font-weight: 400; color: var(--barva-text-tlumeny);
-      text-transform: uppercase; letter-spacing: 0.05em;
-    }
-    .soucet.nejisty strong { color: var(--barva-text-tlumeny); }
     .varovani {
       padding: 0.6rem 0.75rem; background: var(--barva-plocha);
       border-left: 3px solid var(--barva-duraz); font-size: 0.85rem;
@@ -377,7 +407,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
       background: var(--barva-plocha); text-align: center;
       font-variant-numeric: tabular-nums; font-size: 0.9rem;
     }
-    .cislo.shoda { background: var(--barva-duraz); color: #fff; font-weight: 600; }
+    .cislo.shoda { background: var(--barva-duraz); color: var(--barva-pozadi); font-weight: 600; }
     .sloupce .poradi { margin-left: auto; font-size: 0.8rem; color: var(--barva-text-tlumeny); }
     .doplnkova {
       display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem;
@@ -403,11 +433,6 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah';
     .puvod dd { margin: 0 0 0.5rem; }
     .overeni {
       margin-top: 1.5rem; font-size: 0.8rem; color: var(--barva-text-tlumeny);
-    }
-    .smazat, .potvrzeni button {
-      margin-top: 0.5rem; padding: 0.45rem 0.8rem; border: 1px solid var(--barva-ram);
-      border-radius: 4px; background: transparent; color: inherit;
-      font: inherit; cursor: pointer;
     }
     .smazat { color: var(--barva-chyba); }
     .potvrzeni {
@@ -470,22 +495,92 @@ export class Detail {
 
   protected readonly prekryvyTiketu = computed(() => this.stav.prekryvy().get(this.id()) ?? []);
 
-  /** Slosování bez výhry jsou u virtuálního tiketu schovaná — za tři roky jich jsou stovky. */
-  protected readonly ukazatBezVyhry = signal(false);
-
-  /**
-   * Papírový tiket ukazuje slosování, jak jdou po sobě. Virtuální od nejnovějšího a ta bez
-   * výhry až na požádání.
-   */
-  protected readonly zobrazenaSlosovani = computed(() => {
-    const vsechna = this.vysledek()?.slosovani ?? [];
-    if (this.tiket()?.kontrola === undefined) return { hlavni: vsechna, bezVyhry: [] };
-    const odNejnovejsiho = [...vsechna].reverse();
-    return {
-      hlavni: odNejnovejsiho.filter((s) => s.vyhry.length > 0),
-      bezVyhry: odNejnovejsiho.filter((s) => s.vyhry.length === 0),
-    };
+  protected readonly filtrHistorie = linkedSignal<FiltrHistorie>(() => { this.id(); return 'vsechna'; });
+  protected readonly limitHistorie = linkedSignal(() => { this.id(); return 20; });
+  protected readonly historie = computed(() => historieTiketu(this.vysledek()?.slosovani ?? [], this.filtrHistorie()));
+  protected readonly zobrazenaSlosovani = computed(() => this.historie().slice(0, this.limitHistorie()));
+  protected readonly dalsiStrana = (n: number) => n + 20;
+  protected readonly neuplne = neuplneSlosovani;
+  protected readonly druheOsudi = druheOsudiSloupce;
+  protected zmenFiltr(filtr: FiltrHistorie): void {
+    this.filtrHistorie.set(filtr);
+    this.limitHistorie.set(20);
+  }
+  protected readonly novaCena = signal('');
+  protected readonly rozpisCeny = computed(() => {
+    const t = this.tiket();
+    return t ? rozpisCenyTiketu(t, this.stav.ceny()) : null;
   });
+  protected readonly uklada = signal(false);
+  protected readonly chybaAkce = signal<string | null>(null);
+  protected readonly zpravaAkce = signal<string | null>(null);
+  protected readonly vratitelnyArchiv = signal<boolean | null>(null);
+
+  constructor() {
+    effect(() => {
+      this.id();
+      this.uprava.set('zadna');
+      this.vratitelnyArchiv.set(null);
+      this.zpravaAkce.set(null);
+      this.chybaAkce.set(null);
+    });
+  }
+
+  protected zavriAkce(e: Event): void {
+    if ((e.target as HTMLElement).closest('button')) (e.currentTarget as HTMLDetailsElement).open = false;
+  }
+
+  /** Chyba ukládání zůstane viditelná; oznámení úspěchu až po zápisu. */
+  private async provedAkci(akce: () => Promise<void>): Promise<boolean> {
+    if (this.uklada()) return false;
+    this.uklada.set(true);
+    this.chybaAkce.set(null);
+    const id = this.id();
+    try {
+      await akce();
+      if (id !== this.id()) return false;
+      this.zpravaAkce.set(null);
+      this.vratitelnyArchiv.set(null);
+      return true;
+    }
+    catch { this.chybaAkce.set('Změnu se nepodařilo uložit. Zkus to znovu.'); return false; }
+    finally { this.uklada.set(false); }
+  }
+
+  protected async archivuj(): Promise<void> {
+    const t = this.tiket();
+    if (!t) return;
+    if (await this.provedAkci(() => this.stav.ulozTiket({ ...t, archivovany: !t.archivovany }))) {
+      this.vratitelnyArchiv.set(!!t.archivovany);
+      this.zpravaAkce.set(t.archivovany ? 'Tiket byl vrácen mezi aktuální.' : 'Tiket byl přesunut do archivu.');
+    }
+  }
+
+  protected async vratArchiv(): Promise<void> {
+    const t = this.tiket(), archivovany = this.vratitelnyArchiv();
+    if (!t || archivovany === null) return;
+    if (await this.provedAkci(() => this.stav.ulozTiket({ ...t, archivovany }))) this.zpravaAkce.set('Přesun byl vrácen.');
+  }
+
+  protected zacniUpravuCeny(): void {
+    const t = this.tiket();
+    if (!t) return;
+    this.novaCena.set(String((t.kontrola ? t.kontrola.cenaZaSlosovaniKc : t.cenaKc) ?? ''));
+    this.uprava.set('cena');
+  }
+
+  protected async ulozCenu(e: Event): Promise<void> {
+    e.preventDefault();
+    const t = this.tiket();
+    if (!t) return;
+    let upraveny: Tiket;
+    try { upraveny = sUpravenouCenou(t, this.novaCena()); }
+    catch (chyba) { this.chybaAkce.set((chyba as Error).message); return; }
+    if (await this.provedAkci(() => this.stav.ulozTiket(upraveny))) {
+      this.uprava.set('zadna');
+      this.zpravaAkce.set('Cena byla uložena.');
+    }
+  }
 
   protected readonly uprava = signal<Uprava>('zadna');
   protected readonly upravaOd = signal('');
@@ -551,21 +646,19 @@ export class Detail {
     this.overitUpravu.set(true);
     const tiket = this.upravenyTiket();
     if (tiket === undefined || this.problemyUpravy().length > 0) return;
-    await this.stav.ulozTiket(tiket);
-    this.uprava.set('zadna');
+    if (await this.provedAkci(() => this.stav.ulozTiket(tiket))) this.uprava.set('zadna');
   }
 
   protected async pokracujBezKonce(): Promise<void> {
     const tiket = this.tiket();
     if (tiket?.kontrola === undefined) return;
-    await this.stav.ulozTiket(sRozsahem(tiket, { ...tiket.kontrola, do: null }));
+    await this.provedAkci(() => this.stav.ulozTiket(sRozsahem(tiket, { ...tiket.kontrola!, do: null })));
   }
 
   protected async podleTiketu(): Promise<void> {
     const tiket = this.tiket();
     if (tiket === undefined) return;
-    await this.stav.ulozTiket(sRozsahem(tiket, null));
-    this.uprava.set('zadna');
+    if (await this.provedAkci(() => this.stav.ulozTiket(sRozsahem(tiket, null)))) this.uprava.set('zadna');
   }
 
   /**
@@ -676,7 +769,6 @@ export class Detail {
 
   protected async smaz(): Promise<void> {
     this.dialogMazani()?.nativeElement.close();
-    await this.stav.smazTiket(this.id());
-    await this.router.navigate(['/']);
+    if (await this.provedAkci(() => this.stav.smazTiket(this.id()))) await this.router.navigate(['/']);
   }
 }

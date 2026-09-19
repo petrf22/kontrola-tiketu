@@ -221,6 +221,8 @@ export interface Tiket {
    */
   readonly cenaKc: number | null;
   readonly vlozeno: string;
+  /** Archiv ovlivňuje jen seznam; vyhodnocení a bilance pokračují. */
+  readonly archivovany?: boolean;
   /**
    * Rozsah kontroly odlišný od papíru. Když chybí, tiket se kontroluje podle `slosovani`;
    * když je vyplněný, tiket je virtuální. Údaje z papíru (`slosovani`, `cenaKc`) zůstávají

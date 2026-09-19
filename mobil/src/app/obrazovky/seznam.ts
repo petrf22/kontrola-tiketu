@@ -1,5 +1,5 @@
-import { Component, computed, inject } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, computed, inject, signal } from '@angular/core';
+import { ActivatedRoute, RouterLink } from '@angular/router';
 import { formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import type { Tiket } from '@kontrola-tiketu/jadro';
@@ -16,11 +16,21 @@ interface RadekSeznamu {
   selector: 'app-seznam',
   imports: [RouterLink],
   template: `
+    <div class="zahlavi"><h2>Tikety</h2><a class="pridat-tiket hlavni" routerLink="/pridat">+ Přidat tiket</a></div>
+    <div class="prepinace" aria-label="Umístění tiketů">
+      <button type="button" [attr.aria-pressed]="!archiv()" (click)="archiv.set(false)">Aktuální</button>
+      <button type="button" [attr.aria-pressed]="archiv()" (click)="archiv.set(true)">Archiv</button>
+    </div>
+    <label class="filtr">Typ tiketu
+      <select [value]="typ()" (change)="typ.set($any($event.target).value)">
+        <option value="vsechny">Všechny</option><option value="papirove">Papírové</option><option value="virtualni">Virtuální</option>
+      </select>
+    </label>
     @if (radky().length === 0) {
       <p class="prazdno">
-        Zatím tu nic není. Vyfoť tiket, nebo ho zadej ručně.
-        <a routerLink="/sken-cisel">Vyfotit tiket</a>
+        {{ archiv() ? 'V archivu nejsou žádné tikety tohoto typu.' : 'Zatím tu nejsou žádné tikety tohoto typu.' }}
       </p>
+      @if (!archiv()) { <p><a class="zpet" routerLink="/sken-cisel">Vyfotit tiket</a> · <a class="zpet" routerLink="/tiket/novy">Zadat ručně</a></p> }
     } @else {
       <ul class="tikety">
         @for (radek of radky(); track radek.tiket.id) {
@@ -41,15 +51,18 @@ interface RadekSeznamu {
                 }
               </span>
               <span class="castka" [class.nejisty]="!radek.jisty">
-                @if (radek.chybi > 0) {
-                  chybí {{ radek.chybi }} slos.
-                } @else if (radek.castkaKc > 0) {
-                  {{ formatujKc(radek.castkaKc) }}
+                @if (radek.castkaKc > 0) {
+                  Výhra {{ formatujKc(radek.castkaKc) }}
+                } @else if (!radek.jisty) {
+                  Výsledek zatím neúplný
                 } @else if (radek.pokracuje) {
                   zatím bez výhry
                 } @else {
                   bez výhry
                 }
+                @if (radek.chybi > 0) { <small>Chybí {{ radek.chybi }} slosování</small> }
+                @else if (!radek.jisty) { <small>Vyhodnocení není konečné</small> }
+                @else { <small>Vyhodnoceno</small> }
               </span>
             </a>
           </li>
@@ -58,9 +71,14 @@ interface RadekSeznamu {
     }
   `,
   styles: `
+    .zahlavi { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
+    .pridat-tiket { padding: .75rem 1rem; border-radius: .75rem; text-decoration: none; }
+    .filtr { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; }
+    .castka small { display: block; font-size: .8rem; color: var(--barva-text-tlumeny); margin-top: .25rem; }
+    @media (max-width: 440px) { .tikety a .castka { grid-column: 1 / -1; grid-row: auto; margin-top: .5rem; } }
     .prazdno { color: var(--barva-text-tlumeny); }
     .tikety { list-style: none; margin: 0; padding: 0; }
-    .tikety li { border-bottom: 1px solid var(--barva-ram); }
+    .tikety li { border: 1px solid var(--barva-ram); border-radius: .85rem; margin: .75rem 0; padding: .5rem .75rem; }
     .tikety a {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -89,13 +107,17 @@ interface RadekSeznamu {
 })
 export class Seznam {
   private readonly stav = inject(Stav);
+  protected readonly archiv = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('archiv') === '1');
+  protected readonly typ = signal('vsechny');
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujKc = formatujKc;
   protected readonly nazevHry = nazevHry;
 
   protected readonly radky = computed<RadekSeznamu[]>(() =>
-    this.stav.tikety().map((tiket) => {
+    [...this.stav.tikety()].filter(t => !!t.archivovany === this.archiv())
+      .filter(t => this.typ() === 'vsechny' || (this.typ() === 'virtualni' ? !!t.kontrola : !t.kontrola))
+      .sort((a, b) => b.vlozeno.localeCompare(a.vlozeno)).map((tiket) => {
       const vysledek = this.stav.vysledky().get(tiket.id) ?? this.stav.vyhodnot(tiket);
       return {
         tiket,

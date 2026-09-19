@@ -98,7 +98,8 @@ export class Stav {
   }
 
   async ulozTiket(tiket: Tiket): Promise<void> {
-    await this.uloziste.ulozTiket(tiket);
+    const puvodni = this.tikety().find(t => t.id === tiket.id);
+    await this.uloziste.ulozTiket({ ...tiket, archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false });
     this.tikety.set(await this.uloziste.nactiTikety());
   }
 

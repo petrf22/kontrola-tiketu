@@ -13,10 +13,42 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.5.0';
+export const VERZE = '0.6.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.6.0',
+    datum: '2026-09-19',
+    sekce: [
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'Navigace má tři položky — Tikety, Přehled a Další; focení, ruční zadání i sken samotného kódu jsou pod tlačítkem „+ Přidat tiket“ a výsledky s informacemi o aplikaci pod „Další“',
+          'Seznam tiketů má přepínač Aktuální/Archiv a filtr podle typu tiketu; řádek napřed řekne výhru nebo že výhra není a teprve pod tím stav vyhodnocení',
+          'Detail tiketu má všechny akce pod jednou nabídkou, vsazená čísla a údaje o tiketu sbalené a historii slosování s filtrem Všechna/Výherní/Neúplná po dvaceti řádcích',
+          'Smazání tiketu, úprava ceny i rozsahu hlásí výsledek přímo v detailu a tlačítka jsou během ukládání zablokovaná',
+        ],
+      },
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Cenu tiketu jde upravit přímo v detailu; prázdné pole vrátí cenu podle ceníku',
+          'Přesun tiketu do archivu jde hned vrátit tlačítkem „Zpět“',
+        ],
+      },
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Po neúspěšném uložení změny už v detailu tiketu nezůstane svítit hláška o úspěchu té předchozí akce',
+          'Tiket, který ještě běží a zatím nic nevyhrál, se v seznamu popíše „zatím bez výhry“ místo „Výsledek zatím neúplný“, což vypadalo jako chyba',
+          'Chyba ve formuláři ručního zadání se vypíše jednou u svého pole, ne podruhé ještě v souhrnu pod formulářem',
+          'Neúplné datum ve sbalené sekci „Rozsah kontroly“ už tlačítko „Zkontrolovat tiket“ neumlčí — sekce se rozbalí a ukáže, co je špatně',
+          'Nápověda k ceně u virtuálního tiketu mluví o ceně za jedno slosování, tedy o tom, co se do pole opravdu zadává; dřív ukazovala cenu celého papírového tiketu',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.5.0',
     datum: '2026-09-17',

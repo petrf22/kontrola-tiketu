@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [0.6.0] – 2026-09-19
 
 ### Změněno
 - Navigace má tři položky — Tikety, Přehled a Další; focení, ruční zadání i sken samotného kódu jsou pod tlačítkem „+ Přidat tiket“ a výsledky s informacemi o aplikaci pod „Další“ (aplikace)

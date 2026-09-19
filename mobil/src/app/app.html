@@ -1,17 +1,14 @@
 <header>
   <h1>Kontrola tiketu</h1>
   <p class="upozorneni">
-    Vyhodnocení je neoficiální a nezávazné. Závazná je vždy kontrola na terminálu Allwyn.
+    Neoficiální vyhodnocení. Závazná je kontrola na terminálu Allwyn.
   </p>
 </header>
 
-<nav>
-  <a routerLink="/" routerLinkActive="aktivni" [routerLinkActiveOptions]="{ exact: true }">Tikety</a>
-  <a routerLink="/prehled" routerLinkActive="aktivni">Přehled</a>
-  <a routerLink="/sken-cisel" routerLinkActive="aktivni">Vyfotit</a>
-  <a routerLink="/tiket/novy" routerLinkActive="aktivni">Ručně</a>
-  <a routerLink="/import" routerLinkActive="aktivni">Výsledky</a>
-  <a routerLink="/o-aplikaci" routerLinkActive="aktivni">O aplikaci</a>
+<nav aria-label="Hlavní navigace">
+  <a routerLink="/" [class.aktivni]="sekce() === 'tikety'" [attr.aria-current]="sekce() === 'tikety' ? 'page' : null">Tikety</a>
+  <a routerLink="/prehled" [class.aktivni]="sekce() === 'prehled'" [attr.aria-current]="sekce() === 'prehled' ? 'page' : null">Přehled</a>
+  <a routerLink="/dalsi" [class.aktivni]="sekce() === 'dalsi'" [attr.aria-current]="sekce() === 'dalsi' ? 'page' : null">Další</a>
 </nav>
 
 @if (stav.chybaUloziste(); as chyba) {

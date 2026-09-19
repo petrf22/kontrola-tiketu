@@ -38,7 +38,7 @@ body {
   margin: 0;
   background: var(--barva-pozadi);
   color: var(--barva-text);
-  font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 1rem/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 /*
@@ -53,4 +53,54 @@ body.skenuje app-root > header,
 body.skenuje app-root > nav,
 body.skenuje app-root > footer {
   visibility: hidden;
+}
+
+/* Souhrn a akce jsou nahoře v detailu, aby se cena i smazání neztratily v dlouhé historii. */
+app-detail .akce-tiketu {
+  position: sticky; top: 0; z-index: 1; display: flex; align-items: center;
+  justify-content: space-between; gap: 0.75rem; margin: 0.5rem -0.35rem 0.75rem;
+  padding: 0.4rem 0.35rem; border-bottom: 1px solid var(--barva-ram);
+  background: var(--barva-pozadi);
+}
+
+app-detail .akce-tiketu a { color: var(--barva-text-tlumeny); font-size: 0.85rem; }
+
+.souhrn-tiketu dd {
+  margin: 0.1rem 0 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
+}
+app-detail .souhrn-tiketu .zisk { color: var(--barva-ok); }
+app-detail .souhrn-tiketu .nejisty { color: var(--barva-text-tlumeny); }
+
+/* Společné ovládání všech obrazovek. */
+html { scroll-padding-top: 6rem; }
+h2 { margin: .75rem 0 1rem; font-size: 1.55rem; line-height: 1.25; }
+h3 { font-size: 1.1rem; }
+a { color: var(--barva-duraz); text-underline-offset: .2em; }
+button, input, select, summary, .zpet { min-height: 48px; }
+input[type=checkbox], input[type=radio] { min-height: 24px; width: 24px; vertical-align: middle; accent-color: var(--barva-duraz); }
+button, select { border: 1px solid var(--barva-ram); border-radius: .65rem; padding: .65rem .85rem; background: var(--barva-plocha); color: var(--barva-text); font: inherit; cursor: pointer; }
+input { max-width: 100%; }
+button:disabled { opacity: .6; cursor: default; }
+:focus-visible { outline: 3px solid var(--barva-duraz); outline-offset: 3px; }
+.tlumene { color: var(--barva-text-tlumeny); }
+.zpet { display: inline-flex; align-items: center; }
+.hlavni { background: var(--barva-duraz); color: var(--barva-pozadi); }
+.nabidka { display: grid; gap: .75rem; }
+.nabidka a { display: block; padding: 1rem; border: 1px solid var(--barva-ram); border-radius: .85rem; text-decoration: none; font-weight: 600; }
+.nabidka small { display: block; margin-top: .35rem; font-weight: 400; }
+.prepinace { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
+.prepinace [aria-pressed=true] { background: var(--barva-duraz); color: var(--barva-pozadi); }
+details { margin: .75rem 0; border: 1px solid var(--barva-ram); border-radius: .75rem; padding: 0 .85rem; }
+summary { padding: .75rem 0; cursor: pointer; font-weight: 600; }
+details[open] { padding-bottom: .85rem; }
+.souhrn-tiketu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; padding: 1rem; margin: 1rem 0; background: var(--barva-plocha); border-radius: .85rem; }
+.souhrn-tiketu dt { font-size: .85rem; color: var(--barva-text-tlumeny); }
+.souhrn-tiketu > div { min-width: 0; }
+.souhrn-tiketu dd { font-size: 1.15rem; }
+.zprava-akce { padding: .75rem; border-left: 3px solid var(--barva-ok); background: var(--barva-plocha); }
+.chyba-akce { color: var(--barva-chyba); }
+@media (max-width: 380px) {
+  .souhrn-tiketu, app-detail .souhrn-tiketu { grid-template-columns: 1fr; }
+  .souhrn-tiketu > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem; }
+  app-detail .souhrn-tiketu div + div { border-left: 0; }
 }

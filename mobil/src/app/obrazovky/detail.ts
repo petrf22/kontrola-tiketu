@@ -318,7 +318,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
                 <p class="chyba">{{ problem.zprava }}</p>
               }
               <div class="tlacitka">
-                <button type="button" class="hlavni" (click)="ulozRozsah()">Uložit rozsah</button>
+                <button type="button" class="hlavni" [disabled]="uklada()" (click)="ulozRozsah()">Uložit rozsah</button>
                 @if (t.kontrola) {
                   <button type="button" (click)="podleTiketu()">Podle tiketu</button>
                 }

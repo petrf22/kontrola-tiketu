@@ -55,6 +55,20 @@ interface Radek {
 const PRAZDNY_RADEK: Radek = { cisla: '', druheOsudi: '', dotceno: { cisla: false, druhe: false } };
 
 /**
+ * Cesty, které mají v šabloně vlastní hlášku u pole. Souhrnný seznam je pak jen záchrana pro
+ * cestu, na kterou žádné pole nesedí — jinak by se tatáž chyba vypsala dvakrát.
+ */
+const CESTY_POLI = [
+  'slosovani.prvni', 'slosovani.pocet', 'kodDoplnkoveHry', 'cenaKc',
+  'kontrola.od', 'kontrola.do', 'kontrola.cenaZaSlosovaniKc',
+] as const;
+
+/** Patří chyba na cestě `cesta` poli, které vypisuje chyby pro `pole` a všechno pod ním? */
+function patriPoli(cesta: string, pole: string): boolean {
+  return cesta === pole || cesta.startsWith(pole + '.') || cesta.startsWith(pole + '[');
+}
+
+/**
  * Kolik sloupců formulář dovolí přidat. Euromiliony: jedna až devět sázek na sázence
  * (herní plán, Euromiliony bod 2).
  */
@@ -237,9 +251,9 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
       }
       <button type="button" class="pridat" (click)="pridej()">Přidat sloupec</button>
 
-      @if (viditelneProblemy().length > 0) {
+      @if (nepokryteProblemy().length > 0) {
         <ul class="problemy">
-          @for (problem of viditelneProblemy(); track problem.cesta + problem.kod) {
+          @for (problem of nepokryteProblemy(); track problem.cesta + problem.kod) {
             <li>{{ popisProblemu(problem) }}</li>
           }
         </ul>
@@ -666,8 +680,16 @@ export class NovyTiket {
   });
 
   protected chybyPole(cesta: string): string[] {
-    return this.viditelneProblemy().filter(p => p.cesta === cesta || p.cesta.startsWith(cesta + '[') || p.cesta.startsWith(cesta + '.')).map(p => popisProblemu(p));
+    return this.viditelneProblemy().filter(p => patriPoli(p.cesta, cesta)).map(p => popisProblemu(p));
   }
+
+  /** Chyby, které nevypisuje žádné pole — ty a jen ty patří do souhrnného seznamu. */
+  protected readonly nepokryteProblemy = computed(() => {
+    const sloupce = this.radky().map((_, i) => `sloupce[${i}]`);
+    return this.viditelneProblemy().filter(
+      p => ![...CESTY_POLI, ...sloupce].some(pole => patriPoli(p.cesta, pole)),
+    );
+  });
 
   protected readonly popisProblemu = popisProblemu;
   protected readonly popisRozpisuCeny = popisRozpisuCeny;

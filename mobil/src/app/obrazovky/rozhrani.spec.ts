@@ -169,13 +169,17 @@ describe('Správa tiketů', () => {
     expect(smaz).toHaveBeenCalledWith(tiket.id);
   });
 
-  it('neplatný formulář neukládá a ukáže chybu u sloupce', async () => {
+  it('neplatný formulář neukládá a ukáže chybu u sloupce právě jednou', async () => {
     const f = TestBed.createComponent(NovyTiket);
     await f.whenStable();
     const uloz = vi.spyOn(stav, 'ulozTiket');
     await klikni(f, 'Zkontrolovat tiket');
     expect(uloz).not.toHaveBeenCalled();
-    expect(f.nativeElement.querySelector('.sloupec .chyba-pole')).not.toBeNull();
+    const chyba = f.nativeElement.querySelector('.sloupec .chyba-pole') as HTMLElement;
+    expect(chyba).not.toBeNull();
+    const vyskyty = [...f.nativeElement.querySelectorAll('.chyba-pole, .problemy li')]
+      .filter((el: Element) => el.textContent?.trim() === chyba.textContent?.trim());
+    expect(vyskyty).toHaveLength(1);
   });
 
   it('údaje OCR zůstanou viditelné k potvrzení a lze je opravit před uložením', async () => {

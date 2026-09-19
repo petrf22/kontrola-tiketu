@@ -185,7 +185,12 @@ async function nafot(posli) {
     throw new Error(`Nedočkal jsem se: ${popis}`);
   };
 
+  /*
+   * Čeká na prvek, teprve pak klikne: routy se načítají líně a řetězené kliknutí přes
+   * mezistránku by jinak trefilo prázdný DOM a spadlo na TypeError místo hlášky.
+   */
   const klikni = async (selektor) => {
+    await cekejNa(`document.querySelector(${JSON.stringify(selektor)})`, `prvek ${selektor}`);
     await vyhodnot(`document.querySelector(${JSON.stringify(selektor)}).click()`);
     await pockej(250);
   };

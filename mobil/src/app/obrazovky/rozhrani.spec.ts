@@ -94,6 +94,19 @@ describe('Správa tiketů', () => {
     expect(f.nativeElement.querySelector('.zprava-akce')).toBeNull();
   });
 
+  it('chyba akce smaže hlášku o úspěchu té předchozí', async () => {
+    const f = await detail();
+    await klikni(f, 'Archivovat');
+    expect(f.nativeElement.querySelector('.zprava-akce').textContent).toContain('archivu');
+    await klikni(f, 'Upravit cenu');
+    const pole = f.nativeElement.querySelector('form input') as HTMLInputElement;
+    pole.value = '100'; pole.dispatchEvent(new Event('input', { bubbles: true }));
+    vi.spyOn(stav, 'ulozTiket').mockRejectedValueOnce(new Error('disk'));
+    await klikni(f, 'Uložit cenu');
+    expect(f.nativeElement.querySelector('[role=alert]').textContent).toContain('nepodařilo');
+    expect(f.nativeElement.querySelector('.zprava-akce')).toBeNull();
+  });
+
   it('archivované tikety jsou dostupné pouze v archivu seznamu', async () => {
     await stav.ulozTiket({ ...tiket, archivovany: true });
     const f = TestBed.createComponent(Seznam);

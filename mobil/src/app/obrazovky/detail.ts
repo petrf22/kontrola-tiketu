@@ -530,17 +530,20 @@ export class Detail {
     if ((e.target as HTMLElement).closest('button')) (e.currentTarget as HTMLDetailsElement).open = false;
   }
 
-  /** Chyba ukládání zůstane viditelná; oznámení úspěchu až po zápisu. */
+  /**
+   * Chyba ukládání zůstane viditelná; oznámení úspěchu až po zápisu. Hlášku i nabídku vrácení
+   * maže hned na začátku, aby po neúspěchu nezůstala svítit vedle chyby z minulé akce.
+   */
   private async provedAkci(akce: () => Promise<void>): Promise<boolean> {
     if (this.uklada()) return false;
     this.uklada.set(true);
     this.chybaAkce.set(null);
+    this.zpravaAkce.set(null);
+    this.vratitelnyArchiv.set(null);
     const id = this.id();
     try {
       await akce();
       if (id !== this.id()) return false;
-      this.zpravaAkce.set(null);
-      this.vratitelnyArchiv.set(null);
       return true;
     }
     catch { this.chybaAkce.set('Změnu se nepodařilo uložit. Zkus to znovu.'); return false; }

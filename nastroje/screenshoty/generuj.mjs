@@ -232,18 +232,22 @@ async function nafot(posli) {
   await cekejNa('document.querySelectorAll(".tikety li").length === 2', 'seznam obou tiketů');
   await snimek('01-seznam.png');
 
-  await klikni('nav a[href="/import"]');
+  await klikni('nav a[href="/dalsi"]');
+  await klikni('a[href="/import"]');
   await cekejNa('document.querySelector("button.stahnout")', 'obrazovka výsledků');
   await snimek('04-vysledky.png');
 
-  await klikni('nav a[href="/o-aplikaci"]');
+  await klikni('nav a[href="/dalsi"]');
+  await klikni('a[href="/o-aplikaci"]');
   await cekejNa('document.querySelector(".verze")', 'obrazovka o aplikaci');
   await snimek('05-o-aplikaci.png');
 }
 
 /** Projde ruční zadání tiketu stejnou cestou jako uživatel: vyplní formulář a odešle ho. */
 async function zalozTiket(tiket, { klikni, nastav, vyhodnot, cekejNa }) {
-  await klikni('nav a[href="/tiket/novy"]');
+  await klikni('nav a[href="/"]');
+  await klikni('a[href="/pridat"]');
+  await klikni('a[href="/tiket/novy"]');
   await cekejNa('document.querySelector("form .sloupec")', 'formulář ručního zadání');
 
   if (tiket.hra === 'sportka') await klikni('input[name="hra"][value="sportka"]');
@@ -274,7 +278,7 @@ async function zalozTiket(tiket, { klikni, nastav, vyhodnot, cekejNa }) {
   await cekejNa('!document.querySelector("button.ulozit").disabled', 'tiket bez chyb');
   await vyhodnot('document.querySelector("form").requestSubmit()');
   await cekejNa('location.pathname.startsWith("/tiket/")', 'detail tiketu');
-  await cekejNa('document.querySelector(".soucet")', 'vyhodnocení tiketu');
+  await cekejNa('document.querySelector(".souhrn-tiketu")', 'vyhodnocení tiketu');
 }
 
 await main();

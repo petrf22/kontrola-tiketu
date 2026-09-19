@@ -16,6 +16,26 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Změněno
+- Navigace má tři položky — Tikety, Přehled a Další; focení, ruční zadání i sken samotného kódu jsou pod tlačítkem „+ Přidat tiket“ a výsledky s informacemi o aplikaci pod „Další“ (aplikace)
+- Seznam tiketů má přepínač Aktuální/Archiv a filtr podle typu tiketu; řádek napřed řekne výhru nebo že výhra není a teprve pod tím stav vyhodnocení (aplikace)
+- Detail tiketu má všechny akce pod jednou nabídkou, vsazená čísla a údaje o tiketu sbalené a historii slosování s filtrem Všechna/Výherní/Neúplná po dvaceti řádcích (aplikace)
+- Smazání tiketu, úprava ceny i rozsahu hlásí výsledek přímo v detailu a tlačítka jsou během ukládání zablokovaná (aplikace)
+
+### Přidáno
+- Cenu tiketu jde upravit přímo v detailu; prázdné pole vrátí cenu podle ceníku (aplikace)
+- Přesun tiketu do archivu jde hned vrátit tlačítkem „Zpět“ (aplikace)
+
+### Opraveno
+- Po neúspěšném uložení změny už v detailu tiketu nezůstane svítit hláška o úspěchu té předchozí akce (aplikace)
+- Tiket, který ještě běží a zatím nic nevyhrál, se v seznamu popíše „zatím bez výhry“ místo „Výsledek zatím neúplný“, což vypadalo jako chyba (aplikace)
+- Chyba ve formuláři ručního zadání se vypíše jednou u svého pole, ne podruhé ještě v souhrnu pod formulářem (aplikace)
+- Neúplné datum ve sbalené sekci „Rozsah kontroly“ už tlačítko „Zkontrolovat tiket“ neumlčí — sekce se rozbalí a ukáže, co je špatně (aplikace)
+- Nápověda k ceně u virtuálního tiketu mluví o ceně za jedno slosování, tedy o tom, co se do pole opravdu zadává; dřív ukazovala cenu celého papírového tiketu (aplikace)
+- Generátor screenshotů počká na prvek, než na něj klikne, takže přes líně načítané obrazovky nespadne na nesrozumitelné chybě (build)
+
 ## [0.5.0] – 2026-09-17
 
 ### Přidáno

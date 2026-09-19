@@ -8,6 +8,8 @@ interface RadekSeznamu {
   readonly tiket: Tiket;
   readonly castkaKc: number;
   readonly jisty: boolean;
+  /** Všechna proběhlá slosování jsou spočítaná — na rozdíl od `jisty` nevadí, že tiket běží dál. */
+  readonly dosudJisty: boolean;
   readonly chybi: number;
   readonly pokracuje: boolean;
 }
@@ -53,7 +55,7 @@ interface RadekSeznamu {
               <span class="castka" [class.nejisty]="!radek.jisty">
                 @if (radek.castkaKc > 0) {
                   Výhra {{ formatujKc(radek.castkaKc) }}
-                } @else if (!radek.jisty) {
+                } @else if (!radek.dosudJisty) {
                   Výsledek zatím neúplný
                 } @else if (radek.pokracuje) {
                   zatím bez výhry
@@ -61,7 +63,8 @@ interface RadekSeznamu {
                   bez výhry
                 }
                 @if (radek.chybi > 0) { <small>Chybí {{ radek.chybi }} slosování</small> }
-                @else if (!radek.jisty) { <small>Vyhodnocení není konečné</small> }
+                @else if (!radek.dosudJisty) { <small>Vyhodnocení není konečné</small> }
+                @else if (radek.pokracuje) { <small>Další slosování ještě přijdou</small> }
                 @else { <small>Vyhodnoceno</small> }
               </span>
             </a>
@@ -123,6 +126,7 @@ export class Seznam {
         tiket,
         castkaKc: vysledek.celkemKc,
         jisty: vysledek.soucetJisty,
+        dosudJisty: vysledek.chybejicichSlosovani === 0 && vysledek.slosovani.every(s => s.nejistychVyher === 0),
         chybi: vysledek.chybejicichSlosovani,
         pokracuje: vysledek.pokracuje,
       };

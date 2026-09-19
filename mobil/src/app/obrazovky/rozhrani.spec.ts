@@ -116,6 +116,24 @@ describe('Správa tiketů', () => {
     expect(f.nativeElement.querySelectorAll('.tikety li')).toHaveLength(1);
   });
 
+  it('běžící tiket bez výhry se liší od neúplného výsledku', async () => {
+    const bezVyhry = { hra: 'eurojackpot', cisla: [2, 3, 5, 6, 7], eurocisla: [1, 2] } as const;
+    await stav.ulozTiket({
+      ...tiket, id: 'virtualni', sloupce: [bezVyhry],
+      kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null },
+    });
+    await stav.ulozTiket({
+      ...tiket, id: 'papirovy', sloupce: [bezVyhry], slosovani: { ...tiket.slosovani, pocet: 2 },
+    });
+    const f = TestBed.createComponent(Seznam);
+    await f.whenStable();
+    const castka = (id: string) =>
+      (f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"] .castka`) as HTMLElement).textContent;
+    expect(castka('virtualni')).toContain('zatím bez výhry');
+    expect(castka('papirovy')).toContain('Výsledek zatím neúplný');
+    expect(castka('papirovy')).toContain('Chybí 1 slosování');
+  });
+
   it('historie omezuje počet řádků a filtr nemění souhrn', async () => {
     const v = stav.vysledky().get(tiket.id)!;
     const slosovani: VysledekSlosovani[] = Array.from({ length: 225 }, (_, i) => ({

@@ -753,6 +753,13 @@ export class NovyTiket {
     this.radky.update((r) => r.filter((_, i) => i !== index));
   }
 
+  /** Rozbalí sekci, ve které pole leží, a zaostří ho — jinak by chyba zůstala skrytá. */
+  private odkryjAZaostri(pole: HTMLElement | undefined): void {
+    const rozsah = pole?.closest('details');
+    if (rozsah) rozsah.open = true;
+    pole?.focus();
+  }
+
   protected async uloz(udalost: Event): Promise<void> {
     udalost.preventDefault();
     this.odeslano.set(true);
@@ -760,16 +767,19 @@ export class NovyTiket {
     if (this.problemy().length > 0 || this.prvni() === '') {
       requestAnimationFrame(() => {
         const cesta = this.problemy()[0]?.cesta ?? 'slosovani.prvni';
-        const pole = [...this.element.nativeElement.querySelectorAll<HTMLElement>('[data-cesta]')]
-          .find(el => cesta.startsWith(el.dataset['cesta']!));
-        const rozsah = pole?.closest('details');
-        if (rozsah) rozsah.open = true;
-        pole?.focus();
+        this.odkryjAZaostri([...this.element.nativeElement.querySelectorAll<HTMLElement>('[data-cesta]')]
+          .find(el => cesta.startsWith(el.dataset['cesta']!)));
       });
       return;
     }
     const form = udalost.target as HTMLFormElement;
-    if (!form.reportValidity()) return;
+    // Nejdřív checkValidity: bublinu na skrytém prvku prohlížeč neukáže, takže se sekce
+    // s neplatným polem musí rozbalit dřív, než o hlášku požádáme.
+    if (!form.checkValidity()) {
+      this.odkryjAZaostri(form.querySelector<HTMLElement>('input:invalid, select:invalid, textarea:invalid') ?? undefined);
+      form.reportValidity();
+      return;
+    }
     const tiket = this.navrh();
     this.uklada.set(true);
     this.chybaUlozeni.set(null);

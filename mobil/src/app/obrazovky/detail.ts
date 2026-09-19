@@ -31,6 +31,7 @@ import {
   pocetSloupcu,
   pocetSlosovani,
   popisDnuSlosovani,
+  popisRozpisuCeny,
   popisRozsahuKontroly,
 } from '../data/format.js';
 import { Stav } from '../data/stav.js';
@@ -110,7 +111,11 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
             <input type="text" inputmode="decimal" [value]="novaCena()" (input)="novaCena.set($any($event.target).value)" aria-describedby="napoveda-ceny" />
           </label>
           <p id="napoveda-ceny" class="tlumene">Prázdné pole použije ceník. Zadaná cena má přednost.</p>
-          @if (rozpisCeny(); as r) {
+          @if (t.kontrola) {
+            @if (rozpisZaSlosovani(); as r) {
+              <p class="tlumene">Cena jednoho slosování podle ceníku: {{ popisRozpisuCeny(t.hra, r) }}.</p>
+            }
+          } @else if (rozpisCeny(); as r) {
             <p class="tlumene">Cena papírového tiketu podle ceníku: {{ formatujKc(r.celkemKc) }} ({{ r.sloupcu }} × {{ formatujKc(r.sloupecKc) }}@if (r.doplnkovaHraKc !== null) { + {{ formatujKc(r.doplnkovaHraKc) }} } za slosování, {{ pocetSlosovani(r.slosovani) }}).</p>
           }
           <div class="tlacitka"><button type="submit" class="hlavni" [disabled]="uklada()">Uložit cenu</button><button type="button" (click)="uprava.set('zadna')">Zrušit</button></div>
@@ -462,6 +467,7 @@ export class Detail {
   protected readonly formatujDatumCas = formatujDatumCas;
   protected readonly formatujKc = formatujKc;
   protected readonly pocetSlosovani = pocetSlosovani;
+  protected readonly popisRozpisuCeny = popisRozpisuCeny;
   protected readonly popisRozsahuKontroly = popisRozsahuKontroly;
   protected readonly nazevHry = nazevHry;
   protected readonly nazevDoplnkoveHry = nazevDoplnkoveHry;
@@ -510,6 +516,15 @@ export class Detail {
   protected readonly rozpisCeny = computed(() => {
     const t = this.tiket();
     return t ? rozpisCenyTiketu(t, this.stav.ceny()) : null;
+  });
+
+  /**
+   * Týž rozpis přepočtený na jedno slosování. Virtuální tiket se zadává cenou za slosování,
+   * takže rozpis za celý papír by mluvil o jiné veličině, než je v poli nad ním.
+   */
+  protected readonly rozpisZaSlosovani = computed(() => {
+    const r = this.rozpisCeny();
+    return r === null ? null : { ...r, slosovani: 1, celkemKc: r.sloupcu * r.sloupecKc + (r.doplnkovaHraKc ?? 0) };
   });
   protected readonly uklada = signal(false);
   protected readonly chybaAkce = signal<string | null>(null);

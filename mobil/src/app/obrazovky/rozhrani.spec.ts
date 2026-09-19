@@ -107,6 +107,24 @@ describe('Správa tiketů', () => {
     expect(f.nativeElement.querySelector('.zprava-akce')).toBeNull();
   });
 
+  it('u virtuálního tiketu mluví nápověda k ceně o jednom slosování', async () => {
+    // Ceník opsaný z test/fixtures/vysledky-2026-35-az-37.json: sloupec 60 Kč, Extra 6 40 Kč.
+    stav.ceny.set([{
+      hra: 'eurojackpot', platnostOd: '2014-10-10', sloupecKc: 60, doplnkovaHraKc: 40,
+      zdroj: 'Herní plán číselné loterie EUROJACKPOT, účinný od 3. 10. 2014',
+    }]);
+    await stav.ulozTiket({
+      ...tiket, slosovani: { ...tiket.slosovani, pocet: 5 },
+      kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null },
+    });
+    const f = await detail();
+    await klikni(f, 'Upravit cenu');
+    const uprava = (f.nativeElement.querySelector('form.uprava') as HTMLElement).textContent ?? '';
+    expect(uprava).toContain('Cena jednoho slosování podle ceníku');
+    expect(uprava).toContain('60');
+    expect(uprava).not.toContain('300');
+  });
+
   it('archivované tikety jsou dostupné pouze v archivu seznamu', async () => {
     await stav.ulozTiket({ ...tiket, archivovany: true });
     const f = TestBed.createComponent(Seznam);

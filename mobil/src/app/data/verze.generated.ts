@@ -13,10 +13,23 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.6.0';
+export const VERZE = '0.7.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.7.0',
+    datum: '2026-09-22',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Tikety lze pojmenovat při přidání i dodatečně v detailu; pole nabízí už použité názvy a opětovný sken pojmenování zachová',
+          'Seznam podporuje filtr a seskupení podle názvu napříč hrami, přehled ukazuje společné sázky, výhry a bilanci jednotlivých skupin včetně archivovaných tiketů a odkazem otevře tikety skupiny v seznamu',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.6.0',
     datum: '2026-09-19',

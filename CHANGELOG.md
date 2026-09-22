@@ -16,6 +16,12 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Přidáno
+- Tikety lze pojmenovat při přidání i dodatečně v detailu; pole nabízí už použité názvy a opětovný sken pojmenování zachová (aplikace)
+- Seznam podporuje filtr a seskupení podle názvu napříč hrami, přehled ukazuje společné sázky, výhry a bilanci jednotlivých skupin včetně archivovaných tiketů (aplikace)
+
 ## [0.6.0] – 2026-09-19
 
 ### Změněno

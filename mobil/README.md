@@ -42,6 +42,26 @@ Příznak `archivovany` je nepovinnou součástí uloženého JSON tiketu. Star�
 jsou aktuální; SQL schéma se nemění. Neznámá cena se zobrazuje výslovně, ručně zadaná nula je
 platná cena. Prázdné pole ceny použije ceník.
 
+## Pojmenování a skupiny
+
+Při přidání tiketu lze vyplnit nepovinný název, například „kolega“ nebo „práce“.
+Existující tiket pojmenuješ přes Akce tiketu → Pojmenovat tiket. Pole nabízí už použité
+názvy; prázdné pole název odstraní. Úprava mění jen vybraný tiket.
+
+Stejný název seskupuje tikety napříč hrami. Velikost písmen ani nadbytečné mezery nerozhodují,
+diakritika se rozlišuje. Seznam lze přepnout mezi seskupením podle názvu a řazením podle data;
+filtr názvu funguje současně s archivem a typem tiketu. Nepojmenované tikety jsou pod „Bez názvu“.
+
+Přehled ukazuje vsazené částky, výhry a bilanci za jednotlivé názvy včetně archivovaných
+tiketů. Výběr názvu omezí také celkový souhrn, grafy podle her a upozornění na překryvy.
+Odkaz „Zobrazit tikety skupiny“ otevře seznam vyfiltrovaný na daný název; skupinu, která je
+celá v archivu, otevře rovnou v archivu.
+Částky jsou za celé tikety skupiny; název neurčuje počet sázejících ani jejich podíly.
+
+Nepovinné pole `nazev` se ukládá v dosavadním šifrovaném JSON tiketu, bez migrace SQL
+a bez odesílání na server. Starší tikety patří mezi nepojmenované. Opětovný sken bez změny
+názvu zachová dosavadní pojmenování; explicitní `null` nebo prázdný text ho odstraní.
+
 **Nesahej na `android/app/src/main/AndroidManifest.xml` bez rozmyslu.** Právě dvě oprávnění
 (`CAMERA`, `INTERNET`), síťový allowlist, `allowBackup="false"` a `FLAG_SECURE`
 v `MainActivity` jsou akceptační kritéria.

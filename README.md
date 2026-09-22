@@ -3,6 +3,8 @@
 Offline kontrola papírových tiketů Allwyn (Eurojackpot, Sportka, Euromiliony) na vlastním zařízení —
 bez toho, aby se provozovatel dozvěděl, že sázíte nebo že jste vyhráli.
 
+Aplikace pro Android ke stažení: **[petrf22.cz](https://petrf22.cz/)** (odkaz do Google Play a QR kód).
+
 > [!WARNING]
 > **Vyhodnocení je neoficiální a nezávazné.** Aplikace nenahrazuje kontrolu tiketu.
 > Závazná je vždy kontrola na terminálu Allwyn. Výhru lze uplatnit pouze tam a pouze
@@ -105,7 +107,8 @@ Aby nevznikl mylný dojem, že je všechno vyzkoušené:
   je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
   a míří na uzavřený test, ne rovnou do produkce.
 - **Tiket Euromilionů není ověřený na papíře.** Server výsledků je publikuje od 13. 9. 2026.
-- **Aplikace zatím není v Google Play** — viz [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
+- **Na Google Play je aplikace zatím ve veřejném testování**, ne v produkci — viz
+  [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
 - **Stahování výsledků se ještě neověřovalo na telefonu.** Backend běží na
   `kontrolatiketu.petrf22.cz` (od 13. 9. 2026), ale síťový allowlist se na zařízení nezkoušel.
   Do té doby je jistý import souboru.

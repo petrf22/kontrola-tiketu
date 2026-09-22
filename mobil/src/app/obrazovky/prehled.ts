@@ -1,9 +1,11 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { souhrnBilance, type Hra } from '@kontrola-tiketu/jadro';
 import { HRY, nazevHry, formatujKc } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { Kolac } from './kolac.js';
+import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
+import { FiltrNazvu } from './filtr-nazvu.js';
 
 /** `1 tiket`, `3 tikety`, `5 tiketů`. */
 function pocetTiketu(pocet: number): string {
@@ -25,12 +27,14 @@ function uTiketu(pocet: number): string {
  */
 @Component({
   selector: 'app-prehled',
-  imports: [Kolac, RouterLink],
+  imports: [Kolac, RouterLink, FiltrNazvu],
   template: `
     <h2>Přehled</h2>
+    <app-filtr-nazvu [hodnota]="nazev()" (zmena)="nazev.set($event)" />
     @if (souhrn().celkem.tiketu === 0) {
       <p class="prazdno">
-        Zatím tu nic není. Přehled se spočítá z uložených tiketů —
+        @if (nazev() === '*') { Zatím tu nic není. } @else { Pro vybraný název tu nejsou žádné tikety. }
+        Přehled se spočítá z uložených tiketů —
         <a routerLink="/sken-cisel">vyfoť tiket</a> nebo ho <a routerLink="/tiket/novy">zadej ručně</a>.
       </p>
     } @else {
@@ -43,6 +47,29 @@ function uTiketu(pocet: number): string {
       @if (souhrn().celkem.nejistych > 0 || souhrn().celkem.tiketuBezCeny > 0) {
         <p class="zprava-akce">Přehled není úplný: některé tikety nemají konečný výsledek nebo známou cenu.</p>
       }
+      <h3>Podle názvu</h3>
+      <div class="skupiny-nazvu">
+        @for (skupina of skupiny(); track skupina.klic) {
+          <section>
+            <h4>{{ skupina.nazev }}</h4>
+            <p class="pocet">{{ pocetTiketu(skupina.bilance.tiketu) }}</p>
+            <dl class="souhrn-tiketu">
+              <div><dt>Vsazeno</dt><dd>{{ formatujKc(skupina.bilance.vsazenoKc) }}</dd></div>
+              <div><dt>Vyhráno</dt><dd>{{ formatujKc(skupina.bilance.vyhranoKc) }}</dd></div>
+              <div><dt>Bilance</dt><dd>{{ formatujKc(skupina.bilance.vyhranoKc - skupina.bilance.vsazenoKc) }}</dd></div>
+            </dl>
+            @if (skupina.bilance.nejistych > 0 || skupina.bilance.tiketuBezCeny > 0) {
+              <p class="tlumene">Neúplná bilance — chybí konečný výsledek nebo cena.</p>
+            }
+            <p class="akce-skupiny">
+              @if (nazev() === '*') {
+                <button type="button" (click)="nazev.set(skupina.klic)">Zobrazit přehled skupiny</button>
+              }
+              <a routerLink="/" [queryParams]="skupina.jenArchiv ? { nazev: skupina.klic, archiv: '1' } : { nazev: skupina.klic }">Zobrazit tikety skupiny</a>
+            </p>
+          </section>
+        }
+      </div>
       <details><summary>Grafy podle her</summary>
       <section class="celkem">
         <app-kolac class="velky" nazev="Celkem" [vsazenoKc]="souhrn().celkem.vsazenoKc"
@@ -85,6 +112,9 @@ function uTiketu(pocet: number): string {
     }
   `,
   styles: `
+    .skupiny-nazvu { display: grid; gap: 1rem; margin-bottom: 1rem; }
+    h4 { margin: 0; overflow-wrap: anywhere; }
+    .akce-skupiny { display: flex; flex-wrap: wrap; align-items: center; gap: .75rem; margin: .5rem 0 0; }
     .prazdno { color: var(--barva-text-tlumeny); }
     section {
       padding: 0.9rem; border: 1px solid var(--barva-ram); border-radius: 6px;
@@ -106,12 +136,25 @@ export class Prehled {
   protected readonly pocetTiketu = pocetTiketu;
   protected readonly uTiketu = uTiketu;
 
-  protected readonly souhrn = computed(() => souhrnBilance(this.stav.tikety(), this.stav.vysledky()));
+  protected readonly nazev = signal('*');
+  private readonly vybraneTikety = computed(() => this.stav.tikety().filter(t => odpovidaNazvu(t, this.nazev())));
+  protected readonly souhrn = computed(() => souhrnBilance(this.vybraneTikety(), this.stav.vysledky()));
+  protected readonly skupiny = computed(() => seskupPodleNazvu(this.vybraneTikety(), t => t.nazev)
+    .map(skupina => ({
+      ...skupina,
+      bilance: souhrnBilance(skupina.polozky, this.stav.vysledky()).celkem,
+      // Seznam ukazuje buď aktuální, nebo archiv; skupina jen v archivu by jinak otevřela prázdný seznam.
+      jenArchiv: skupina.polozky.every(t => t.archivovany),
+    })));
 
   /** Hra bez tiketů by ukazovala prázdný koláč, který nic neříká. */
   protected readonly hrySTikety = computed<readonly Hra[]>(() =>
     HRY.filter((hra) => this.souhrn().podleHry[hra].tiketu > 0),
   );
 
-  protected readonly tiketuSPrekryvem = computed(() => this.stav.prekryvy().size);
+  protected readonly tiketuSPrekryvem = computed(() => {
+    const ids = new Set(this.vybraneTikety().map(t => t.id));
+    const prekryvy = this.stav.prekryvy();
+    return this.vybraneTikety().filter(t => prekryvy.get(t.id)?.some(p => ids.has(p.tiketId))).length;
+  });
 }

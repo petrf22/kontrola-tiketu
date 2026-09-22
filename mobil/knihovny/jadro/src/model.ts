@@ -202,6 +202,8 @@ export interface RozsahKontroly {
  * nepředává dál, takže není co zapomenout zahodit.
  */
 export interface Tiket {
+  /** Vlastní název pro seskupení napříč hrami. Starší tikety jej nemají; null název odstraní. */
+  readonly nazev?: string | null;
   /** Lokální identifikátor odvozený ze sériového čísla tiketu. Slouží k deduplikaci. */
   readonly id: string;
   readonly hra: Hra;

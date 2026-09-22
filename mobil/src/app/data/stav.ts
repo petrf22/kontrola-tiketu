@@ -22,6 +22,7 @@ import { maTrvaleUloziste, SIT, ULOZISTE } from './tokeny.js';
 import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js';
 import { stahniVysledky, type KontrolaServeru } from './stahovani.js';
 import { shrnutiStazeni, zpracujStazene } from './vysledkyZeServeru.js';
+import { seskupPodleNazvu, upravNazev } from './nazvyTiketu.js';
 
 export interface Zprava {
   readonly uspech: boolean;
@@ -34,6 +35,7 @@ export class Stav {
   private readonly sit = inject(SIT);
 
   readonly tikety = signal<readonly Tiket[]>([]);
+  readonly skupinyNazvu = computed(() => seskupPodleNazvu(this.tikety(), t => t.nazev));
   readonly tahy = signal<readonly Tah[]>([]);
   readonly sazby = signal<readonly SazbyExtra6[]>([]);
   readonly sazbyEurosance = signal<readonly SazbyEurosance[]>([]);
@@ -99,7 +101,12 @@ export class Stav {
 
   async ulozTiket(tiket: Tiket): Promise<void> {
     const puvodni = this.tikety().find(t => t.id === tiket.id);
-    await this.uloziste.ulozTiket({ ...tiket, archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false });
+    await this.uloziste.ulozTiket({
+      ...tiket,
+      // Nový sken bez názvu zachová původní; explicitní null nebo prázdný text jej odstraní.
+      nazev: upravNazev(tiket.nazev === undefined ? puvodni?.nazev : tiket.nazev),
+      archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false,
+    });
     this.tikety.set(await this.uloziste.nactiTikety());
   }
 

@@ -2,6 +2,8 @@ import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Stav } from '../data/stav.js';
+import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
+import { FiltrNazvu } from './filtr-nazvu.js';
 import type { Tiket } from '@kontrola-tiketu/jadro';
 
 interface RadekSeznamu {
@@ -16,7 +18,7 @@ interface RadekSeznamu {
 
 @Component({
   selector: 'app-seznam',
-  imports: [RouterLink],
+  imports: [RouterLink, FiltrNazvu],
   template: `
     <div class="zahlavi"><h2>Tikety</h2><a class="pridat-tiket hlavni" routerLink="/pridat">+ Přidat tiket</a></div>
     <div class="prepinace" aria-label="Umístění tiketů">
@@ -28,18 +30,25 @@ interface RadekSeznamu {
         <option value="vsechny">Všechny</option><option value="papirove">Papírové</option><option value="virtualni">Virtuální</option>
       </select>
     </label>
+    <app-filtr-nazvu [hodnota]="nazev()" (zmena)="nazev.set($event)" />
+    <div class="prepinace" aria-label="Seskupení tiketů">
+      <button type="button" [attr.aria-pressed]="!seskupit()" (click)="seskupit.set(false)">Podle data</button>
+      <button type="button" [attr.aria-pressed]="seskupit()" (click)="seskupit.set(true)">Podle názvu</button>
+    </div>
     @if (radky().length === 0) {
       <p class="prazdno">
-        {{ archiv() ? 'V archivu nejsou žádné tikety tohoto typu.' : 'Zatím tu nejsou žádné tikety tohoto typu.' }}
+        {{ archiv() ? 'V archivu nejsou žádné tikety odpovídající filtrům.' : 'Zatím tu nejsou žádné tikety odpovídající filtrům.' }}
       </p>
       @if (!archiv()) { <p><a class="zpet" routerLink="/sken-cisel">Vyfotit tiket</a> · <a class="zpet" routerLink="/tiket/novy">Zadat ručně</a></p> }
     } @else {
+      @for (skupina of skupiny(); track skupina.klic) {
+        @if (seskupit()) { <h3 class="nazev-skupiny">{{ skupina.nazev }} <small>({{ skupina.polozky.length }})</small></h3> }
       <ul class="tikety">
-        @for (radek of radky(); track radek.tiket.id) {
+        @for (radek of skupina.polozky; track radek.tiket.id) {
           <li>
             <a [routerLink]="['/tiket', radek.tiket.id]">
               <span class="hra">
-                {{ nazevHry(radek.tiket.hra) }}
+                {{ radek.tiket.nazev ? radek.tiket.nazev + ' · ' : '' }}{{ nazevHry(radek.tiket.hra) }}
                 @if (radek.tiket.kontrola) { <span class="stitek">virtuální</span> }
               </span>
               <span class="detail">
@@ -71,6 +80,7 @@ interface RadekSeznamu {
           </li>
         }
       </ul>
+      }
     }
   `,
   styles: `
@@ -90,7 +100,9 @@ interface RadekSeznamu {
       color: inherit;
       text-decoration: none;
     }
-    .hra { font-weight: 600; }
+    .hra { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
+    .nazev-skupiny { margin: 1.5rem 0 .5rem; overflow-wrap: anywhere; }
+    .nazev-skupiny small { color: var(--barva-text-tlumeny); font-weight: 400; }
     .stitek {
       margin-left: 0.3rem; padding: 0 0.4rem; border: 1px solid var(--barva-duraz);
       border-radius: 999px; color: var(--barva-duraz); font-size: 0.65rem; font-weight: 600;
@@ -110,16 +122,25 @@ interface RadekSeznamu {
 })
 export class Seznam {
   private readonly stav = inject(Stav);
-  protected readonly archiv = signal(inject(ActivatedRoute).snapshot.queryParamMap.get('archiv') === '1');
+  private readonly parametry = inject(ActivatedRoute).snapshot.queryParamMap;
+  protected readonly archiv = signal(this.parametry.get('archiv') === '1');
   protected readonly typ = signal('vsechny');
+  /** Klíč z `klicNazvu`; Přehled sem odkazuje u každé skupiny. */
+  protected readonly nazev = signal(this.parametry.get('nazev') ?? '*');
+  protected readonly seskupit = signal(true);
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujKc = formatujKc;
   protected readonly nazevHry = nazevHry;
 
+  protected readonly skupiny = computed(() => this.seskupit()
+    ? seskupPodleNazvu(this.radky(), r => r.tiket.nazev)
+    : [{ klic: '*', nazev: '', polozky: this.radky() }]);
+
   protected readonly radky = computed<RadekSeznamu[]>(() =>
     [...this.stav.tikety()].filter(t => !!t.archivovany === this.archiv())
       .filter(t => this.typ() === 'vsechny' || (this.typ() === 'virtualni' ? !!t.kontrola : !t.kontrola))
+      .filter(t => odpovidaNazvu(t, this.nazev()))
       .sort((a, b) => b.vlozeno.localeCompare(a.vlozeno)).map((tiket) => {
       const vysledek = this.stav.vysledky().get(tiket.id) ?? this.stav.vyhodnot(tiket);
       return {

@@ -39,6 +39,7 @@ import {
 } from '../data/format.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { Stav } from '../data/stav.js';
+import { NazevTiketu } from './nazev-tiketu.js';
 
 interface Radek {
   cisla: string;
@@ -117,11 +118,12 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
 @Component({
   selector: 'app-novy-tiket',
-  imports: [RouterLink],
+  imports: [RouterLink, NazevTiketu],
   template: `
     <a class="zpet" routerLink="/pridat">← Přidat tiket</a>
     <h2>{{ rozpoznanoZeSnimku ? 'Potvrdit údaje z fotky' : 'Zadat tiket' }}</h2>
     <form (submit)="uloz($event)" novalidate>
+      <app-nazev-tiketu [hodnota]="nazevPole()" (zmena)="nazev.set($event)" />
       <fieldset>
         <legend>Hra</legend>
         @for (h of hry; track h) {
@@ -442,6 +444,9 @@ export class NovyTiket {
    */
   private readonly naskenovany = inject(NaskenovanyTiket);
   protected readonly serioveCislo = this.naskenovany.precti();
+  protected readonly nazev = signal<string | null>(null);
+  protected readonly nazevPole = computed(() => this.nazev() ??
+    this.stav.tikety().find(t => t.id === this.serioveCislo)?.nazev ?? '');
 
   /** Čísla rozpoznaná ze snímku. Jsou jen návrh — uživatel je tu potvrzuje a opravuje. */
   private readonly nacteny = inject(NactenaCisla).vyzvedni();
@@ -633,6 +638,7 @@ export class NovyTiket {
     const kontrola = this.kontrola();
     return {
       ...(kontrola === null ? {} : { kontrola }),
+      ...(this.nazev() === null ? {} : { nazev: this.nazev() }),
       // Sériové číslo z kódu je nejlepší identifikátor — díky němu druhý sken téhož tiketu
       // nevytvoří duplicitu. Ručně zadaný tiket ho nemá, tak si vyrobí vlastní.
       // Virtuální tiket má vlastní předponu, jinak by ho ručně zadaný papírový tiket se stejnými

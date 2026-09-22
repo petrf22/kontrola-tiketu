@@ -35,6 +35,7 @@ import {
   popisRozsahuKontroly,
 } from '../data/format.js';
 import { Stav } from '../data/stav.js';
+import { NazevTiketu } from './nazev-tiketu.js';
 import { historieTiketu, neuplneSlosovani, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
@@ -61,11 +62,11 @@ function druheOsudiSloupce(sloupec: Sloupec | undefined): readonly number[] {
 }
 
 /** Která úprava rozsahu je rozdělaná. Dvoukrokově místo systémového dialogu — ten blokuje webview. */
-type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
+type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
 
 @Component({
   selector: 'app-detail',
-  imports: [NgTemplateOutlet, RouterLink],
+  imports: [NgTemplateOutlet, RouterLink, NazevTiketu],
   template: `
     @if (tiket(); as t) {
       <div class="akce-tiketu">
@@ -73,6 +74,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
         <details class="nabidka-akci" (click)="zavriAkce($event)">
           <summary>Akce tiketu</summary>
           <div>
+            <button type="button" [disabled]="uklada()" (click)="zacniUpravuNazvu()">Pojmenovat tiket</button>
             <button type="button" [disabled]="uklada()" (click)="zacniUpravuCeny()">Upravit cenu</button>
             <button type="button" [disabled]="uklada()" (click)="zacniUpravuRozsahu()">Upravit rozsah kontroly</button>
             @if (t.kontrola?.do === null) {
@@ -86,7 +88,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
           </div>
         </details>
       </div>
-      <h2>{{ nazevHry(t.hra) }} @if (t.kontrola) { <span class="stitek">virtuální</span> }</h2>
+      <h2>{{ t.nazev ? t.nazev + ' · ' : '' }}{{ nazevHry(t.hra) }} @if (t.kontrola) { <span class="stitek">virtuální</span> }</h2>
       @if (t.archivovany) {
         <p class="info">V archivu. Tiket se dál započítává do bilance.
           @if (t.kontrola?.do === null) { Průběžná kontrola pokračuje. }
@@ -105,6 +107,12 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
         {{ t.slosovani.dny ? ' · ' + popisDnuSlosovani(t.slosovani.dny) : '' }}
       </p>
       <ng-container *ngTemplateOutlet="upravaRozsahu; context: { $implicit: t }" />
+      @if (uprava() === 'nazev') {
+        <form class="uprava" (submit)="ulozNazev($event)">
+          <app-nazev-tiketu [hodnota]="novyNazev()" (zmena)="novyNazev.set($event)" />
+          <div class="tlacitka"><button type="submit" class="hlavni" [disabled]="uklada()">Uložit název</button><button type="button" (click)="uprava.set('zadna')">Zrušit</button></div>
+        </form>
+      }
       @if (uprava() === 'cena') {
         <form class="uprava" (submit)="ulozCenu($event)">
           <label>{{ t.kontrola ? 'Cena za jedno slosování v Kč' : 'Cena celého tiketu v Kč' }}
@@ -367,6 +375,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena';
     .historie-radek summary small { color: var(--barva-text-tlumeny); }
     .obsah-tiketu li { padding: .4rem 0; overflow-wrap: anywhere; }
 
+    h2 { overflow-wrap: anywhere; }
     .popis { color: var(--barva-text-tlumeny); font-size: 0.85rem; }
     .stitek {
       margin-left: 0.4rem; padding: 0.05rem 0.45rem; border: 1px solid var(--barva-duraz);
@@ -512,6 +521,23 @@ export class Detail {
     this.filtrHistorie.set(filtr);
     this.limitHistorie.set(20);
   }
+  protected readonly novyNazev = signal('');
+
+  protected zacniUpravuNazvu(): void {
+    this.novyNazev.set(this.tiket()?.nazev ?? '');
+    this.uprava.set('nazev');
+  }
+
+  protected async ulozNazev(e: Event): Promise<void> {
+    e.preventDefault();
+    const t = this.tiket();
+    if (!t) return;
+    if (await this.provedAkci(() => this.stav.ulozTiket({ ...t, nazev: this.novyNazev() }))) {
+      this.uprava.set('zadna');
+      this.zpravaAkce.set('Název byl uložen.');
+    }
+  }
+
   protected readonly novaCena = signal('');
   protected readonly rozpisCeny = computed(() => {
     const t = this.tiket();

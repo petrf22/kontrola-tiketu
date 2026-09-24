@@ -134,6 +134,8 @@ export class SkenCisel implements OnInit {
     // Když se nenajde, nevadí — uživatel ho může doskenovat zvlášť.
     if (snimek.serioveCislo !== null) this.naskenovany.uloz(snimek.serioveCislo, cteni.hra);
     this.nactena.uloz(cteni, hraPodle);
-    await this.router.navigate(['/tiket/novy']);
+    // Snímání se v historii nahradí formulářem. Jinak by Zpět z formuláře vrátilo sem
+    // a obrazovka by fotoaparát hned otevřela znovu.
+    await this.router.navigate(['/tiket/novy'], { replaceUrl: true });
   }
 }

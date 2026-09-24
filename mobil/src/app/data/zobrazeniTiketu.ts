@@ -1,4 +1,4 @@
-import type { Tiket, VysledekSlosovani } from '@kontrola-tiketu/jadro';
+import type { Datum, Tiket, VysledekSlosovani, VysledekTiketu } from '@kontrola-tiketu/jadro';
 
 export type FiltrHistorie = 'vsechna' | 'vyherni' | 'neuplna';
 export function neuplneSlosovani(s: VysledekSlosovani): boolean {
@@ -19,4 +19,20 @@ export function sUpravenouCenou(tiket: Tiket, text: string): Tiket {
   return tiket.kontrola
     ? { ...tiket, kontrola: { ...tiket.kontrola, cenaZaSlosovaniKc: cena } }
     : { ...tiket, cenaKc: cena };
+}
+
+/**
+ * Proč tiket zatím nemá žádné vyhodnocené slosování; `null`, když nějaké má.
+ *
+ * Bez slosování by souhrn ukázal výhru 0 Kč a bilanci rovnou ceně tiketu — jako by prohrál.
+ * V den slosování se losuje až večer, takže i „dnes“ se ještě čeká.
+ */
+export interface Cekani {
+  readonly duvod: 'pred-slosovanim' | 'chybi-vysledky';
+  readonly od: Datum;
+}
+export function cekaniNaSlosovani(tiket: Tiket, vysledek: VysledekTiketu, dnes: Datum): Cekani | null {
+  if (vysledek.slosovani.length > 0) return null;
+  const od = tiket.kontrola?.od ?? tiket.slosovani.prvni;
+  return { duvod: od >= dnes ? 'pred-slosovanim' : 'chybi-vysledky', od };
 }

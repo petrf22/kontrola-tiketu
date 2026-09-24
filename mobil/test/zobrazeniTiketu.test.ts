@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { vyhodnotTiket, type Tiket } from '@kontrola-tiketu/jadro';
 import { EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
-import { historieTiketu, neuplneSlosovani, sUpravenouCenou } from '../src/app/data/zobrazeniTiketu.js';
+import { dnesniDatum } from '../src/app/data/format.js';
+import { cekaniNaSlosovani, historieTiketu, neuplneSlosovani, sUpravenouCenou } from '../src/app/data/zobrazeniTiketu.js';
 
 const tiket: Tiket = {
   id: 'test', hra: 'eurojackpot', sloupce: [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 1], eurocisla: [4, 1] }],
@@ -37,5 +38,29 @@ describe('cena a historie pro rozhraní', () => {
     const puvodni = [{ ...s, datum: '2026-09-01' }, s];
     expect(historieTiketu(puvodni, 'vsechna').map(s => s.datum)).toEqual(['2026-09-08', '2026-09-01']);
     expect(puvodni[0]?.datum).toBe('2026-09-01');
+  });
+});
+
+describe('tiket, který ještě nebyl slosován', () => {
+  const budouci = { ...tiket, slosovani: { ...tiket.slosovani, prvni: '2026-09-12' } };
+  const cekani = (t: Tiket, dnes: string) => cekaniNaSlosovani(t, vyhodnotTiket(t, [EJ_2026_09_08]), dnes);
+
+  it('s vyhodnoceným slosováním se nečeká', () => {
+    expect(cekani(tiket, '2026-09-20')).toBeNull();
+  });
+  it('slosování zítra i dnes večer je teprve před námi', () => {
+    expect(cekani(budouci, '2026-09-11')).toEqual({ duvod: 'pred-slosovanim', od: '2026-09-12' });
+    expect(cekani(budouci, '2026-09-12')).toEqual({ duvod: 'pred-slosovanim', od: '2026-09-12' });
+  });
+  it('proběhlé slosování bez stažených výsledků se od čekání liší', () => {
+    expect(cekani(budouci, '2026-09-13')).toEqual({ duvod: 'chybi-vysledky', od: '2026-09-12' });
+  });
+  it('virtuální tiket čeká od začátku rozsahu kontroly', () => {
+    const t = { ...tiket, kontrola: { od: '2026-09-15', do: null, cenaZaSlosovaniKc: null } };
+    expect(cekani(t, '2026-09-14')).toEqual({ duvod: 'pred-slosovanim', od: '2026-09-15' });
+  });
+  it('dnešní datum je místní, ne UTC', () => {
+    expect(dnesniDatum(new Date(2026, 8, 24, 23, 59))).toBe('2026-09-24');
+    expect(dnesniDatum(new Date(2026, 0, 1, 0, 1))).toBe('2026-01-01');
   });
 });

@@ -21,6 +21,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ### Změněno
 - Filtr seznamu tiketů (Aktuální/Archiv, typ tiketu, název a seskupení) je schovaný pod rozbalovacím řádkem, který i zavřený ukazuje, co je vybráno (aplikace)
 - Volba „Vyfotit tiket“ otevře rovnou fotoaparát; rada k focení je už v nabídce a po zrušení snímku nabídne obrazovka „Vyfotit znovu“ (aplikace)
+- Tiket, který ještě nebyl slosován, místo výhry 0 Kč a záporné bilance napíše, že se čeká na slosování; když slosování proběhlo a jen chybí výsledky, odkáže na jejich aktualizaci (aplikace)
 
 ## [0.7.0] – 2026-09-22
 

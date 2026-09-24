@@ -156,6 +156,37 @@ describe('Správa tiketů', () => {
     expect(castka('papirovy')).toContain('Chybí 1 slosování');
   });
 
+  it('tiket před slosováním neukazuje výhru ani bilanci, ale že se čeká', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 11, 12));
+    try {
+      await stav.ulozTiket({ ...tiket, cenaKc: 400, slosovani: { ...tiket.slosovani, prvni: '2026-09-12' } });
+      const f = await detail();
+      const text = (f.nativeElement as HTMLElement).textContent ?? '';
+      expect(f.nativeElement.querySelector('.souhrn-tiketu').textContent).toContain('400');
+      expect(text).toContain('zatím nebyl slosován');
+      for (const skryte of ['Výhra', 'Bilance', 'Historie slosování', 'Průběžný výsledek', 'Chybí výsledky', 'Součet není úplný']) {
+        expect(text).not.toContain(skryte);
+      }
+      const s = TestBed.createComponent(Seznam);
+      await s.whenStable();
+      expect(s.nativeElement.querySelector('.tikety .castka').textContent).toContain('Čeká na slosování');
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('proběhlé slosování bez stažených výsledků odkáže na aktualizaci', async () => {
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 8, 20, 12));
+    try {
+      await stav.ulozTiket({ ...tiket, slosovani: { ...tiket.slosovani, prvni: '2026-09-12' } });
+      const f = await detail();
+      const upozorneni = f.nativeElement.querySelector('.cekani') as HTMLElement;
+      expect(upozorneni.textContent).toContain('už proběhlo');
+      expect(upozorneni.querySelector('a')?.textContent).toContain('Aktualizovat výsledky');
+      expect(f.nativeElement.querySelector('.souhrn-tiketu').textContent).not.toContain('Bilance');
+    } finally { vi.useRealTimers(); }
+  });
+
   it('historie omezuje počet řádků a filtr nemění souhrn', async () => {
     const v = stav.vysledky().get(tiket.id)!;
     const slosovani: VysledekSlosovani[] = Array.from({ length: 225 }, (_, i) => ({

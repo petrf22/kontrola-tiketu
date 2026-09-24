@@ -38,6 +38,12 @@ export function formatujDatumCas(iso: string): string {
   return Number.isNaN(datum.getTime()) ? iso : DATUM_CAS.format(datum);
 }
 
+/** Dnešní datum v ISO tvaru podle místního času — `toISOString` je v UTC a kolem půlnoci by ukázal včerejšek. */
+export function dnesniDatum(ted = new Date()): string {
+  const dvojmistne = (n: number) => String(n).padStart(2, '0');
+  return `${ted.getFullYear()}-${dvojmistne(ted.getMonth() + 1)}-${dvojmistne(ted.getDate())}`;
+}
+
 const KORUNY = new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 2 });
 
 /** `61160` → `61 160 Kč`, `-400` → `-400 Kč`. U víc slosování jdou částky do tisíců. */

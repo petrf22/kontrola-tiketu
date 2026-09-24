@@ -1,8 +1,9 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { formatujDatum, formatujKc, nazevHry } from '../data/format.js';
+import { dnesniDatum, formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
+import { cekaniNaSlosovani, type Cekani } from '../data/zobrazeniTiketu.js';
 import { FiltrNazvu } from './filtr-nazvu.js';
 import type { Tiket } from '@kontrola-tiketu/jadro';
 
@@ -14,6 +15,8 @@ interface RadekSeznamu {
   readonly dosudJisty: boolean;
   readonly chybi: number;
   readonly pokracuje: boolean;
+  /** Tiket ještě nemá žádné vyhodnocené slosování. */
+  readonly cekani: Cekani | null;
 }
 
 @Component({
@@ -65,19 +68,24 @@ interface RadekSeznamu {
                 }
               </span>
               <span class="castka" [class.nejisty]="!radek.jisty">
-                @if (radek.castkaKc > 0) {
-                  Výhra {{ formatujKc(radek.castkaKc) }}
-                } @else if (!radek.dosudJisty) {
-                  Výsledek zatím neúplný
-                } @else if (radek.pokracuje) {
-                  zatím bez výhry
+                @if (radek.cekani; as c) {
+                  {{ c.duvod === 'pred-slosovanim' ? 'Čeká na slosování' : 'Výsledky zatím nestažené' }}
+                  <small>{{ c.duvod === 'pred-slosovanim' ? 'Slosování od' : 'Slosování' }} {{ formatujDatum(c.od) }}</small>
                 } @else {
-                  bez výhry
+                  @if (radek.castkaKc > 0) {
+                    Výhra {{ formatujKc(radek.castkaKc) }}
+                  } @else if (!radek.dosudJisty) {
+                    Výsledek zatím neúplný
+                  } @else if (radek.pokracuje) {
+                    zatím bez výhry
+                  } @else {
+                    bez výhry
+                  }
+                  @if (radek.chybi > 0) { <small>Chybí {{ radek.chybi }} slosování</small> }
+                  @else if (!radek.dosudJisty) { <small>Vyhodnocení není konečné</small> }
+                  @else if (radek.pokracuje) { <small>Další slosování ještě přijdou</small> }
+                  @else { <small>Vyhodnoceno</small> }
                 }
-                @if (radek.chybi > 0) { <small>Chybí {{ radek.chybi }} slosování</small> }
-                @else if (!radek.dosudJisty) { <small>Vyhodnocení není konečné</small> }
-                @else if (radek.pokracuje) { <small>Další slosování ještě přijdou</small> }
-                @else { <small>Vyhodnoceno</small> }
               </span>
             </a>
           </li>
@@ -165,6 +173,7 @@ export class Seznam {
         dosudJisty: vysledek.chybejicichSlosovani === 0 && vysledek.slosovani.every(s => s.nejistychVyher === 0),
         chybi: vysledek.chybejicichSlosovani,
         pokracuje: vysledek.pokracuje,
+        cekani: cekaniNaSlosovani(tiket, vysledek, dnesniDatum()),
       };
     }),
   );

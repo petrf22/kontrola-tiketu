@@ -22,6 +22,7 @@ import {
 } from '../data/kontrola.js';
 import {
   formatujDatum,
+  dnesniDatum,
   formatujDatumCas,
   formatujKc,
   nazevDne,
@@ -36,7 +37,7 @@ import {
 } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { NazevTiketu } from './nazev-tiketu.js';
-import { historieTiketu, neuplneSlosovani, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
+import { cekaniNaSlosovani, historieTiketu, neuplneSlosovani, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
 const DELKA_SHODY: Readonly<Record<string, number>> = {
@@ -135,14 +136,16 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             <dt>{{ t.kontrola ? 'Vsazeno' : 'Cena tiketu' }}</dt>
             <dd>{{ v.vsazenoKc === null ? 'Neznámá' : formatujKc(v.vsazenoKc) }}</dd>
           </div>
-          <div>
-            <dt>Výhra</dt>
-            <dd [class.nejisty]="!v.soucetJisty">{{ formatujKc(v.celkemKc) }}@if (!v.soucetJisty) { * }</dd>
-          </div>
+          @if (!cekani()) {
+            <div>
+              <dt>Výhra</dt>
+              <dd [class.nejisty]="!v.soucetJisty">{{ formatujKc(v.celkemKc) }}@if (!v.soucetJisty) { * }</dd>
+            </div>
             <div>
               <dt>Bilance</dt>
               <dd [class.zisk]="v.bilanceKc !== null && v.bilanceKc > 0">{{ v.bilanceKc === null ? 'Nelze určit' : (v.bilanceKc > 0 ? '+' : '') + formatujKc(v.bilanceKc) }}</dd>
             </div>
+          }
         </dl>
 
         <p class="tlumene">
@@ -151,35 +154,49 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
               {{ pocetSlosovani(v.slosovani.length) }} × {{ formatujKc(t.kontrola.cenaZaSlosovaniKc) }} za slosování.
             } @else { Cena podle ceníku platného pro jednotlivá slosování. }
           } @else { {{ t.cenaKc === null ? 'Cena podle ceníku.' : 'Cena z tiketu nebo ručně upravená.' }} }
-          @if (v.vsazenoKc === null) { Cena není známá, bilanci nelze spočítat. }
+          @if (v.vsazenoKc === null && !cekani()) { Cena není známá, bilanci nelze spočítat. }
         </p>
-        @if (!v.soucetJisty) { <p class="info">Průběžný výsledek: výhra ani bilance nejsou konečné.</p> }
+        @if (cekani(); as c) {
+          @if (c.duvod === 'pred-slosovanim') {
+            <p class="info cekani">
+              Tiket zatím nebyl slosován — {{ t.kontrola ? 'kontrola začíná' : 'první slosování je' }}
+              {{ formatujDatum(c.od) }}. Výhru a bilanci uvidíš po slosování, až si stáhneš výsledky.
+            </p>
+          } @else {
+            <p class="varovani cekani">
+              Slosování {{ t.kontrola ? 'od' : 'z' }} {{ formatujDatum(c.od) }} už proběhlo, ale výsledky
+              v aplikaci zatím nejsou. <a routerLink="/import">Aktualizovat výsledky</a>.
+            </p>
+          }
+        } @else if (!v.soucetJisty) { <p class="info">Průběžný výsledek: výhra ani bilance nejsou konečné.</p> }
         @if (!t.kontrola && t.cenaKc !== null && rozpisCeny(); as r) {
           @if (t.cenaKc !== r.celkemKc) { <p class="varovani">Cena se liší od ceníku ({{ formatujKc(r.celkemKc) }}). Používá se zadaná cena.</p> }
         }
 
-        @if (v.pokracuje) {
-          <p class="info">
-            Zkontrolováno {{ pocetSlosovani(v.slosovani.length) }}.
-            Kontroluje se dál s každým dalším staženým slosováním.
-          </p>
-        }
+        @if (!cekani()) {
+          @if (v.pokracuje) {
+            <p class="info">
+              Zkontrolováno {{ pocetSlosovani(v.slosovani.length) }}.
+              Kontroluje se dál s každým dalším staženým slosováním.
+            </p>
+          }
 
-        @for (p of prekryvyTiketu(); track p.tiketId) {
-          <p class="varovani">
-            Stejnou sázku má i <a [routerLink]="['/tiket', p.tiketId]">jiný tiket</a>
-            na {{ pocetSlosovani(p.data.length) }}. Výhry i vsazené částky těch slosování se
-            v přehledu započítají dvakrát.
-          </p>
-        }
+          @for (p of prekryvyTiketu(); track p.tiketId) {
+            <p class="varovani">
+              Stejnou sázku má i <a [routerLink]="['/tiket', p.tiketId]">jiný tiket</a>
+              na {{ pocetSlosovani(p.data.length) }}. Výhry i vsazené částky těch slosování se
+              v přehledu započítají dvakrát.
+            </p>
+          }
 
 
 
-        @if (v.chybejicichSlosovani > 0) {
-          <p class="varovani">
-            Chybí výsledky {{ v.chybejicichSlosovani }} slosování, takže tohle není konečná
-            částka. <a routerLink="/import">Aktualizovat výsledky</a>.
-          </p>
+          @if (v.chybejicichSlosovani > 0) {
+            <p class="varovani">
+              Chybí výsledky {{ v.chybejicichSlosovani }} slosování, takže tohle není konečná
+              částka. <a routerLink="/import">Aktualizovat výsledky</a>.
+            </p>
+          }
         }
 
         <details class="obsah-tiketu">
@@ -193,29 +210,31 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           </ol>
           @if (t.kodDoplnkoveHry) { <p>{{ nazevDoplnkoveHry(t.hra) }}: {{ t.kodDoplnkoveHry }}</p> }
         </details>
-        <h3>Historie slosování</h3>
-        <div class="prepinace" aria-label="Filtr historie">
-          <button type="button" [attr.aria-pressed]="filtrHistorie() === 'vsechna'" (click)="zmenFiltr('vsechna')">Všechna</button>
-          <button type="button" [attr.aria-pressed]="filtrHistorie() === 'vyherni'" (click)="zmenFiltr('vyherni')">Výherní</button>
-          <button type="button" [attr.aria-pressed]="filtrHistorie() === 'neuplna'" (click)="zmenFiltr('neuplna')">Neúplná</button>
-        </div>
-        <p class="tlumene">Zobrazeno {{ zobrazenaSlosovani().length }} z {{ historie().length }} slosování.</p>
-        @for (slosovani of zobrazenaSlosovani(); track slosovani.datum) {
-          <details class="historie-radek" [open]="!t.kontrola && v.slosovani.length === 1">
-            <summary>
-              {{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}
-              <span>{{ slosovani.vyhry.length ? 'Výhra ' + formatujKc(slosovani.celkemKc) : 'Bez výhry' }}</span>
-              @if (neuplne(slosovani)) { <small>Neúplné vyhodnocení</small> }
-            </summary>
-            <ng-container *ngTemplateOutlet="sekce; context: { $implicit: slosovani }" />
-          </details>
-        } @empty { <p class="tlumene">Tomuto filtru zatím neodpovídá žádné slosování.</p> }
-        @if (zobrazenaSlosovani().length < historie().length) {
-          <button type="button" class="rozbalit" (click)="limitHistorie.update(dalsiStrana)">Načíst dalších 20</button>
-        }
+        @if (!cekani()) {
+          <h3>Historie slosování</h3>
+          <div class="prepinace" aria-label="Filtr historie">
+            <button type="button" [attr.aria-pressed]="filtrHistorie() === 'vsechna'" (click)="zmenFiltr('vsechna')">Všechna</button>
+            <button type="button" [attr.aria-pressed]="filtrHistorie() === 'vyherni'" (click)="zmenFiltr('vyherni')">Výherní</button>
+            <button type="button" [attr.aria-pressed]="filtrHistorie() === 'neuplna'" (click)="zmenFiltr('neuplna')">Neúplná</button>
+          </div>
+          <p class="tlumene">Zobrazeno {{ zobrazenaSlosovani().length }} z {{ historie().length }} slosování.</p>
+          @for (slosovani of zobrazenaSlosovani(); track slosovani.datum) {
+            <details class="historie-radek" [open]="!t.kontrola && v.slosovani.length === 1">
+              <summary>
+                {{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}
+                <span>{{ slosovani.vyhry.length ? 'Výhra ' + formatujKc(slosovani.celkemKc) : 'Bez výhry' }}</span>
+                @if (neuplne(slosovani)) { <small>Neúplné vyhodnocení</small> }
+              </summary>
+              <ng-container *ngTemplateOutlet="sekce; context: { $implicit: slosovani }" />
+            </details>
+          } @empty { <p class="tlumene">Tomuto filtru zatím neodpovídá žádné slosování.</p> }
+          @if (zobrazenaSlosovani().length < historie().length) {
+            <button type="button" class="rozbalit" (click)="limitHistorie.update(dalsiStrana)">Načíst dalších 20</button>
+          }
 
-        @if (!v.soucetJisty) {
-          <p class="poznamka">* Součet není úplný — viz poznámky výše.</p>
+          @if (!v.soucetJisty) {
+            <p class="poznamka">* Součet není úplný — viz poznámky výše.</p>
+          }
         }
       }
 
@@ -507,6 +526,12 @@ export class Detail {
   protected readonly vysledek = computed<VysledekTiketu | null>(
     () => this.stav.vysledky().get(this.id()) ?? null,
   );
+
+  /** Tiket bez jediného vyhodnoceného slosování — místo nulové výhry a záporné bilance se čeká. */
+  protected readonly cekani = computed(() => {
+    const t = this.tiket(), v = this.vysledek();
+    return t === undefined || v === null ? null : cekaniNaSlosovani(t, v, dnesniDatum());
+  });
 
   protected readonly prekryvyTiketu = computed(() => this.stav.prekryvy().get(this.id()) ?? []);
 

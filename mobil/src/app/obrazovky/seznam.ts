@@ -21,20 +21,23 @@ interface RadekSeznamu {
   imports: [RouterLink, FiltrNazvu],
   template: `
     <div class="zahlavi"><h2>Tikety</h2><a class="pridat-tiket hlavni" routerLink="/pridat">+ Přidat tiket</a></div>
-    <div class="prepinace" aria-label="Umístění tiketů">
-      <button type="button" [attr.aria-pressed]="!archiv()" (click)="archiv.set(false)">Aktuální</button>
-      <button type="button" [attr.aria-pressed]="archiv()" (click)="archiv.set(true)">Archiv</button>
-    </div>
-    <label class="filtr">Typ tiketu
-      <select [value]="typ()" (change)="typ.set($any($event.target).value)">
-        <option value="vsechny">Všechny</option><option value="papirove">Papírové</option><option value="virtualni">Virtuální</option>
-      </select>
-    </label>
-    <app-filtr-nazvu [hodnota]="nazev()" (zmena)="nazev.set($event)" />
-    <div class="prepinace" aria-label="Seskupení tiketů">
-      <button type="button" [attr.aria-pressed]="!seskupit()" (click)="seskupit.set(false)">Podle data</button>
-      <button type="button" [attr.aria-pressed]="seskupit()" (click)="seskupit.set(true)">Podle názvu</button>
-    </div>
+    <details class="filtry">
+      <summary>Filtr · <span class="popis-filtru">{{ popisFiltru() }}</span></summary>
+      <div class="prepinace" aria-label="Umístění tiketů">
+        <button type="button" [attr.aria-pressed]="!archiv()" (click)="archiv.set(false)">Aktuální</button>
+        <button type="button" [attr.aria-pressed]="archiv()" (click)="archiv.set(true)">Archiv</button>
+      </div>
+      <label class="filtr">Typ tiketu
+        <select [value]="typ()" (change)="typ.set($any($event.target).value)">
+          <option value="vsechny">Všechny</option><option value="papirove">Papírové</option><option value="virtualni">Virtuální</option>
+        </select>
+      </label>
+      <app-filtr-nazvu [hodnota]="nazev()" (zmena)="nazev.set($event)" />
+      <div class="prepinace" aria-label="Seskupení tiketů">
+        <button type="button" [attr.aria-pressed]="!seskupit()" (click)="seskupit.set(false)">Podle data</button>
+        <button type="button" [attr.aria-pressed]="seskupit()" (click)="seskupit.set(true)">Podle názvu</button>
+      </div>
+    </details>
     @if (radky().length === 0) {
       <p class="prazdno">
         {{ archiv() ? 'V archivu nejsou žádné tikety odpovídající filtrům.' : 'Zatím tu nejsou žádné tikety odpovídající filtrům.' }}
@@ -86,7 +89,8 @@ interface RadekSeznamu {
   styles: `
     .zahlavi { display: flex; align-items: center; justify-content: space-between; gap: .75rem; flex-wrap: wrap; }
     .pridat-tiket { padding: .75rem 1rem; border-radius: .75rem; text-decoration: none; }
-    .filtr { display: flex; align-items: center; gap: .75rem; margin: 1rem 0; }
+    .popis-filtru { font-weight: 400; color: var(--barva-text-tlumeny); }
+    .filtr { display: flex; align-items: center; gap: .75rem; margin: .75rem 0 0; }
     .castka small { display: block; font-size: .8rem; color: var(--barva-text-tlumeny); margin-top: .25rem; }
     @media (max-width: 440px) { .tikety a .castka { grid-column: 1 / -1; grid-row: auto; margin-top: .5rem; } }
     .prazdno { color: var(--barva-text-tlumeny); }
@@ -136,6 +140,17 @@ export class Seznam {
   protected readonly skupiny = computed(() => this.seskupit()
     ? seskupPodleNazvu(this.radky(), r => r.tiket.nazev)
     : [{ klic: '*', nazev: '', polozky: this.radky() }]);
+
+  /**
+   * Souhrn filtru je vidět i zavřený — po návratu z detailu archivovaného tiketu je vybraný archiv
+   * a z přehledu skupin se sem přichází rovnou s filtrem podle názvu.
+   */
+  protected readonly popisFiltru = computed(() => {
+    const nazev = this.nazev() === '*' ? undefined : this.stav.skupinyNazvu().find(s => s.klic === this.nazev())?.nazev;
+    return (this.archiv() ? 'Archiv' : 'Aktuální')
+      + ({ papirove: ' · Papírové', virtualni: ' · Virtuální' }[this.typ()] ?? '')
+      + (nazev === undefined ? '' : ` · ${nazev}`);
+  });
 
   protected readonly radky = computed<RadekSeznamu[]>(() =>
     [...this.stav.tikety()].filter(t => !!t.archivovany === this.archiv())

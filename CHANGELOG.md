@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Změněno
+- Filtr seznamu tiketů (Aktuální/Archiv, typ tiketu, název a seskupení) je schovaný pod rozbalovacím řádkem, který i zavřený ukazuje, co je vybráno (aplikace)
+
 ## [0.7.0] – 2026-09-22
 
 ### Přidáno

@@ -129,9 +129,13 @@ describe('Správa tiketů', () => {
     await stav.ulozTiket({ ...tiket, archivovany: true });
     const f = TestBed.createComponent(Seznam);
     await f.whenStable();
+    const filtry = f.nativeElement.querySelector('details.filtry') as HTMLDetailsElement;
+    expect(filtry.open).toBe(false);
+    expect(filtry.querySelector('summary')!.textContent).toContain('Aktuální');
     expect(f.nativeElement.querySelectorAll('.tikety li')).toHaveLength(0);
     await klikni(f, 'Archiv');
     expect(f.nativeElement.querySelectorAll('.tikety li')).toHaveLength(1);
+    expect(filtry.querySelector('summary')!.textContent).toContain('Archiv');
   });
 
   it('běžící tiket bez výhry se liší od neúplného výsledku', async () => {

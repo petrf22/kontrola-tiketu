@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, type OnInit } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import type { Hra } from '@kontrola-tiketu/jadro';
 import type { VysledekCteni } from '@kontrola-tiketu/ocr';
@@ -74,7 +74,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
     .vedlejsi { color: var(--barva-text-tlumeny); }
   `,
 })
-export class SkenCisel {
+export class SkenCisel implements OnInit {
   private readonly router = inject(Router);
   private readonly nactena = inject(NactenaCisla);
   private readonly naskenovany = inject(NaskenovanyTiket);
@@ -90,7 +90,13 @@ export class SkenCisel {
    */
   protected readonly nejistaHra = signal<VysledekSnimku | null>(null);
 
+  ngOnInit(): void {
+    // Volba „Vyfotit tiket“ už padla v nabídce; další potvrzení není potřeba.
+    if (this.naZarizeni) void this.vyfot();
+  }
+
   protected async vyfot(): Promise<void> {
+    if (this.pracuje()) return;
     this.chyba.set(null);
     this.nejistaHra.set(null);
     this.pracuje.set(true);

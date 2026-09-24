@@ -22,6 +22,7 @@ describe('Přímé focení tiketu', () => {
     await expect.poll(() => f.nativeElement.textContent).toContain('Focení zrušeno.');
     const tlacitko = (f.nativeElement as HTMLElement).querySelector('button')!;
     expect(tlacitko.disabled).toBe(false);
+    expect(tlacitko.textContent?.trim()).toBe('Vyfotit znovu');
     tlacitko.click();
     await f.whenStable();
     expect(poriz).toHaveBeenCalledTimes(2);

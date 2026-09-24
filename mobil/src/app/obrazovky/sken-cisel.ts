@@ -50,7 +50,8 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
       } @else {
         <div class="volby">
           <button type="button" [disabled]="pracuje()" (click)="vyfot()">
-            @if (pracuje()) { Rozpoznávám… } @else { Vyfotit tiket }
+            <!-- Fotoaparát se otevírá sám při příchodu, takže tlačítko je vždy až další pokus. -->
+            @if (pracuje()) { Rozpoznávám… } @else { Vyfotit znovu }
           </button>
         </div>
       }

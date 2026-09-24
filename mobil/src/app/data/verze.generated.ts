@@ -13,10 +13,26 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.7.0';
+export const VERZE = '0.7.1';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.7.1',
+    datum: '2026-09-24',
+    sekce: [
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'Filtr seznamu tiketů (Aktuální/Archiv, typ tiketu, název a seskupení) je schovaný pod rozbalovacím řádkem, který i zavřený ukazuje, co je vybráno',
+          'Volba „Vyfotit tiket“ otevře rovnou fotoaparát; rada k focení je už v nabídce a po zrušení snímku nabídne obrazovka „Vyfotit znovu“',
+          'Tiket, který ještě nebyl slosován, místo výhry 0 Kč a záporné bilance napíše, že se čeká na slosování; když slosování proběhlo a jen chybí výsledky, odkáže na jejich aktualizaci',
+          'Tlačítko Zpět z formuláře po vyfocení tiketu už znovu neotevírá fotoaparát',
+          'Vsazená čísla v detailu tiketu jsou v přehledných dlaždicích jako v historii slosování a číslo sloupce je od nich viditelně oddělené',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.7.0',
     datum: '2026-09-22',

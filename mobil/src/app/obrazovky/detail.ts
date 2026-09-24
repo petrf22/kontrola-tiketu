@@ -201,10 +201,18 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
 
         <details class="obsah-tiketu">
           <summary>Vsazená čísla · {{ pocetSloupcu(t.sloupce.length) }}</summary>
-          <ol>
+          <ol class="sloupce vsazene">
             @for (sloupec of t.sloupce; track $index) {
-              <li>{{ sloupec.cisla.join(' · ') }}
-                @if (druheOsudi(sloupec).length > 0) { <strong> + {{ druheOsudi(sloupec).join(' · ') }}</strong> }
+              <li>
+                <span class="sloupec-cislo" [attr.aria-label]="'Sloupec ' + ($index + 1)">{{ $index + 1 }}</span>
+                <span class="cisla">
+                  @for (c of sloupec.cisla; track $index) { <span class="cislo">{{ c }}</span> }
+                </span>
+                @if (druheOsudi(sloupec).length > 0) {
+                  <span class="cisla euro">
+                    @for (c of druheOsudi(sloupec); track $index) { <span class="cislo">{{ c }}</span> }
+                  </span>
+                }
               </li>
             }
           </ol>
@@ -392,7 +400,6 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     .nabidka-akci button { text-align: left; }
     .historie-radek summary span, .historie-radek summary small { display: block; font-weight: 400; margin-left: 1.1rem; }
     .historie-radek summary small { color: var(--barva-text-tlumeny); }
-    .obsah-tiketu li { padding: .4rem 0; overflow-wrap: anywhere; }
 
     h2 { overflow-wrap: anywhere; }
     .popis { color: var(--barva-text-tlumeny); font-size: 0.85rem; }
@@ -441,6 +448,15 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       font-variant-numeric: tabular-nums; font-size: 0.9rem;
     }
     .cislo.shoda { background: var(--barva-duraz); color: var(--barva-pozadi); font-weight: 600; }
+    /* Číslo sloupce nesmí vypadat jako vsazené číslo: menší, tlumené, bez dlaždice, za čarou. */
+    .vsazene li { flex-wrap: nowrap; align-items: flex-start; }
+    .vsazene .cisla { flex-wrap: wrap; }
+    .sloupec-cislo {
+      flex: none; min-width: 1.4rem; padding: 0.2rem 0.5rem 0.2rem 0;
+      border-right: 1px solid var(--barva-ram);
+      color: var(--barva-text-tlumeny); font-size: 0.75rem; text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
     .sloupce .poradi { margin-left: auto; font-size: 0.8rem; color: var(--barva-text-tlumeny); }
     .doplnkova {
       display: flex; flex-wrap: wrap; align-items: center; gap: 0.3rem 0.6rem;

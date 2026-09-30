@@ -53,12 +53,12 @@ interface RadekSeznamu {
           <li>
             <a [routerLink]="['/tiket', radek.tiket.id]">
               <span class="hra">{{ nazevHry(radek.tiket.hra) }}</span>
-              <!-- Semafor: čekající tiket je v běžném textu, neúplný oranžově, výhra zeleně, nula tlumeně.
-                   Proč se čeká nebo co chybí, říká poznámka dole. -->
+              <!-- Semafor: výsledek, který ještě není konečný (čeká, nebo je neúplný), oranžově v rámečku, výhra zeleně,
+                   nula tlumeně. Proč se čeká nebo co chybí, říká poznámka dole. -->
               @if (radek.cekani) {
-                <span class="vysledek">--- Kč</span>
+                <span class="vysledek nehotovy">--- Kč</span>
               } @else {
-                <span class="vysledek" [class.neuplny]="!radek.dosudJisty"
+                <span class="vysledek" [class.nehotovy]="!radek.dosudJisty"
                   [class.vyhra]="radek.dosudJisty && radek.castkaKc > 0"
                   [class.nula]="radek.dosudJisty && radek.castkaKc === 0">{{ formatujKc(radek.castkaKc) }}</span>
               }
@@ -114,8 +114,12 @@ interface RadekSeznamu {
     .hra { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
     .nazev-skupiny { margin: 1.5rem 0 .5rem; overflow-wrap: anywhere; }
     .nazev-skupiny small { color: var(--barva-text-tlumeny); font-weight: 400; }
-    .vysledek { text-align: right; font-variant-numeric: tabular-nums; }
-    .vysledek.neuplny { color: var(--barva-varovani); }
+    /* Průhledný rámeček mají všechny, aby částky s rámečkem i bez něj končily pod sebou. */
+    .vysledek {
+      justify-self: end; align-self: start; padding: 0 .4rem; border: 1px solid transparent; border-radius: .4rem;
+      text-align: right; font-variant-numeric: tabular-nums;
+    }
+    .vysledek.nehotovy { color: var(--barva-varovani); border-color: var(--barva-varovani); }
     .vysledek.vyhra { color: var(--barva-ok); }
     .vysledek.nula { color: var(--barva-text-tlumeny); }
     /* Pod prvním řádkem už je všechno přes celou šířku. */

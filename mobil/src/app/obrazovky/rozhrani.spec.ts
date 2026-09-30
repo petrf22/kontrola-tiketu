@@ -138,7 +138,7 @@ describe('Správa tiketů', () => {
     expect(filtry.querySelector('summary')!.textContent).toContain('Archiv');
   });
 
-  it('běžící tiket bez výhry ukáže 0 Kč tlumeně, neúplný oranžově', async () => {
+  it('běžící tiket bez výhry ukáže 0 Kč tlumeně, nehotový oranžově', async () => {
     const bezVyhry = { hra: 'eurojackpot', cisla: [2, 3, 5, 6, 7], eurocisla: [1, 2] } as const;
     await stav.ulozTiket({
       ...tiket, id: 'virtualni', sloupce: [bezVyhry],
@@ -153,7 +153,7 @@ describe('Správa tiketů', () => {
       (f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"] ${cast}`) as HTMLElement | null)?.textContent;
     expect(radek('virtualni', '.vysledek.nula')?.trim()).toBe('0 Kč');
     expect(radek('virtualni', '.poznamka')).toContain('Další slosování ještě přijdou');
-    expect(radek('papirovy', '.vysledek.neuplny')?.trim()).toBe('0 Kč');
+    expect(radek('papirovy', '.vysledek.nehotovy')?.trim()).toBe('0 Kč');
     expect(radek('papirovy', '.poznamka')).toContain('Chybí 1 slosování');
   });
 
@@ -216,7 +216,7 @@ describe('Správa tiketů', () => {
       }
       const s = TestBed.createComponent(Seznam);
       await s.whenStable();
-      expect(s.nativeElement.querySelector('.tikety .vysledek').textContent.trim()).toBe('--- Kč');
+      expect(s.nativeElement.querySelector('.tikety .vysledek.nehotovy').textContent.trim()).toBe('--- Kč');
       expect(s.nativeElement.querySelector('.tikety .poznamka').textContent).toContain('Slosování od');
     } finally { vi.useRealTimers(); }
   });

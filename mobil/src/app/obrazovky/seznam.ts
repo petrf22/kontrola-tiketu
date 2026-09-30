@@ -53,7 +53,7 @@ interface RadekSeznamu {
           <li [class.nehotovy]="radek.cekani || !radek.dosudJisty">
             <a [routerLink]="['/tiket', radek.tiket.id]">
               <span class="hra">{{ nazevHry(radek.tiket.hra) }}</span>
-              <!-- Semafor: výsledek, který ještě není konečný (čeká, nebo je neúplný), je oranžově
+              <!-- Semafor: výsledek, který ještě není konečný (čeká, nebo je neúplný), má barvu důrazu
                    i s rámečkem celého tiketu, výhra zeleně, nula tlumeně. Proč se čeká nebo co chybí,
                    říká poznámka dole. -->
               @if (radek.cekani) {
@@ -104,7 +104,7 @@ interface RadekSeznamu {
     .prazdno { color: var(--barva-text-tlumeny); }
     .tikety { list-style: none; margin: 0; padding: 0; }
     .tikety li { border: 1px solid var(--barva-ram); border-radius: .85rem; margin: .75rem 0; padding: .5rem .75rem; }
-    .tikety li.nehotovy { border-color: var(--barva-varovani); }
+    .tikety li.nehotovy { border-color: var(--barva-duraz); }
     .tikety a {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -117,7 +117,7 @@ interface RadekSeznamu {
     .nazev-skupiny { margin: 1.5rem 0 .5rem; overflow-wrap: anywhere; }
     .nazev-skupiny small { color: var(--barva-text-tlumeny); font-weight: 400; }
     .vysledek { text-align: right; font-variant-numeric: tabular-nums; }
-    .vysledek.nehotovy { color: var(--barva-varovani); }
+    .vysledek.nehotovy { color: var(--barva-duraz); }
     .vysledek.vyhra { color: var(--barva-ok); }
     .vysledek.nula { color: var(--barva-text-tlumeny); }
     /* Pod prvním řádkem už je všechno přes celou šířku. */

@@ -126,6 +126,15 @@ function smlouvaUloziste(jmeno: string, vyrob: () => Uloziste): void {
       expect(await u.nactiHashe()).toEqual(new Map([['2026.json', 'sha256:c'], ['2025.json', 'sha256:b']]));
     });
 
+    it('nastavení se uloží pod klíčem a přepíše, neznámý klíč vrací null', async () => {
+      const u = vyrob();
+      expect(await u.nactiNastaveni('filtrSeznamu')).toBeNull();
+      await u.ulozNastaveni('filtrSeznamu', { typ: 'virtualni' });
+      await u.ulozNastaveni('filtrSeznamu', { typ: 'papirove', seskupit: false });
+      expect(await u.nactiNastaveni('filtrSeznamu')).toEqual({ typ: 'papirove', seskupit: false });
+      expect(await u.nactiNastaveni('jiny')).toBeNull();
+    });
+
     it('uložení prázdného seznamu tahů projde', async () => {
       const u = vyrob();
       await expect(u.ulozTahy([])).resolves.toBeUndefined();

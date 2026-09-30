@@ -149,11 +149,57 @@ describe('Správa tiketů', () => {
     });
     const f = TestBed.createComponent(Seznam);
     await f.whenStable();
-    const castka = (id: string) =>
-      (f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"] .castka`) as HTMLElement).textContent;
-    expect(castka('virtualni')).toContain('zatím bez výhry');
-    expect(castka('papirovy')).toContain('Výsledek zatím neúplný');
-    expect(castka('papirovy')).toContain('Chybí 1 slosování');
+    const radek = (id: string, cast: string) =>
+      (f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"] ${cast}`) as HTMLElement | null)?.textContent;
+    expect(radek('virtualni', '.vysledek')).toContain('zatím bez výhry');
+    expect(radek('virtualni', '.poznamka')).toContain('Další slosování ještě přijdou');
+    expect(radek('papirovy', '.vysledek')).toContain('Výsledek zatím neúplný');
+    expect(radek('papirovy', '.poznamka')).toContain('Chybí 1 slosování');
+  });
+
+  it('řádek seznamu: výsledek vedle hry, štítky názvu a virtuálního, úplný tiket bez poznámky', async () => {
+    await stav.ulozTiket({ ...tiket, nazev: 'Práce', kontrola: { od: '2026-09-08', do: '2026-09-08', cenaZaSlosovaniKc: null } });
+    await stav.ulozTiket({ ...tiket, id: 'papirovy', vlozeno: '2026-09-07T12:00:00Z' });
+    const f = TestBed.createComponent(Seznam);
+    await f.whenStable();
+    const radek = (id: string) => f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"]`) as HTMLElement;
+    const stitky = [...radek(tiket.id).querySelectorAll('.stitky .stitek')].map(e => [e.className, e.textContent?.trim()]);
+    expect(stitky).toEqual([['stitek nazev-tiketu', 'Práce'], ['stitek virtualni', 'Virtuální']]);
+    expect(radek(tiket.id).querySelector('.hra')!.textContent?.trim()).toBe('Eurojackpot');
+    expect(radek('papirovy').querySelector('.stitky')).toBeNull();
+    for (const id of [tiket.id, 'papirovy']) {
+      expect(radek(id).querySelector('.poznamka')).toBeNull();
+      expect(radek(id).textContent).not.toContain('Vyhodnoceno');
+    }
+  });
+
+  it('seznam si pamatuje typ, název i seskupení, archiv ne', async () => {
+    await stav.ulozTiket({ ...tiket, nazev: 'Práce', kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null } });
+    const f = TestBed.createComponent(Seznam);
+    await f.whenStable();
+    const typ = f.nativeElement.querySelector('.filtr select') as HTMLSelectElement;
+    typ.value = 'virtualni';
+    typ.dispatchEvent(new Event('change'));
+    const nazev = f.nativeElement.querySelector('select[name=filtr-nazvu]') as HTMLSelectElement;
+    nazev.value = nazev.options[1]!.value;
+    nazev.dispatchEvent(new Event('change'));
+    await klikni(f, 'Podle data');
+    await klikni(f, 'Archiv');
+    const ulozeny = { typ: 'virtualni', nazev: nazev.options[1]!.value, seskupit: false };
+    expect(await TestBed.inject(ULOZISTE).nactiNastaveni('filtrSeznamu')).toEqual(ulozeny);
+
+    stav.filtrSeznamu.set({ typ: 'vsechny', nazev: '*', seskupit: true });
+    await stav.nacti();
+    expect(stav.filtrSeznamu()).toEqual(ulozeny);
+    const znovu = TestBed.createComponent(Seznam);
+    await znovu.whenStable();
+    expect(znovu.nativeElement.querySelector('summary').textContent).toContain('Aktuální · Virtuální · Práce');
+    expect(znovu.nativeElement.querySelectorAll('.tikety li')).toHaveLength(1);
+    expect(znovu.nativeElement.querySelectorAll('.nazev-skupiny')).toHaveLength(0);
+
+    await stav.ulozTiket({ ...stav.tikety()[0]!, nazev: null });
+    await znovu.whenStable();
+    expect(znovu.nativeElement.querySelector('summary').textContent).toBe('Filtr · Aktuální · Virtuální');
   });
 
   it('tiket před slosováním neukazuje výhru ani bilanci, ale že se čeká', async () => {
@@ -170,7 +216,7 @@ describe('Správa tiketů', () => {
       }
       const s = TestBed.createComponent(Seznam);
       await s.whenStable();
-      expect(s.nativeElement.querySelector('.tikety .castka').textContent).toContain('Čeká na slosování');
+      expect(s.nativeElement.querySelector('.tikety .vysledek').textContent).toContain('Čeká na slosování');
     } finally { vi.useRealTimers(); }
   });
 

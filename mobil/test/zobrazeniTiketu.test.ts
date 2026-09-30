@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { vyhodnotTiket, type Tiket } from '@kontrola-tiketu/jadro';
 import { EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
 import { dnesniDatum } from '../src/app/data/format.js';
-import { cekaniNaSlosovani, historieTiketu, neuplneSlosovani, sUpravenouCenou } from '../src/app/data/zobrazeniTiketu.js';
+import { cekaniNaSlosovani, historieTiketu, nactenyFiltrSeznamu, neuplneSlosovani, sUpravenouCenou, VYCHOZI_FILTR_SEZNAMU } from '../src/app/data/zobrazeniTiketu.js';
 
 const tiket: Tiket = {
   id: 'test', hra: 'eurojackpot', sloupce: [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 1], eurocisla: [4, 1] }],
@@ -62,5 +62,18 @@ describe('tiket, který ještě nebyl slosován', () => {
   it('dnešní datum je místní, ne UTC', () => {
     expect(dnesniDatum(new Date(2026, 8, 24, 23, 59))).toBe('2026-09-24');
     expect(dnesniDatum(new Date(2026, 0, 1, 0, 1))).toBe('2026-01-01');
+  });
+});
+
+describe('uložený filtr seznamu', () => {
+  it('platné hodnoty převezme', () => {
+    expect(nactenyFiltrSeznamu({ typ: 'virtualni', nazev: 'prace', seskupit: false }))
+      .toEqual({ typ: 'virtualni', nazev: 'prace', seskupit: false });
+  });
+  it.each([null, 'text', 42, { typ: 'vse', nazev: 7, seskupit: 'ano' }])('nečitelný záznam %j dá výchozí filtr', data => {
+    expect(nactenyFiltrSeznamu(data)).toEqual(VYCHOZI_FILTR_SEZNAMU);
+  });
+  it('chybějící položka dostane výchozí hodnotu, ostatní zůstanou', () => {
+    expect(nactenyFiltrSeznamu({ typ: 'papirove' })).toEqual({ ...VYCHOZI_FILTR_SEZNAMU, typ: 'papirove' });
   });
 });

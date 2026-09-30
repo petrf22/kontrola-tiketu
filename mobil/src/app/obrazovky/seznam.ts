@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { dnesniDatum, formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
-import { cekaniNaSlosovani, type Cekani } from '../data/zobrazeniTiketu.js';
+import { cekaniNaSlosovani, type Cekani, type FiltrSeznamu } from '../data/zobrazeniTiketu.js';
 import { FiltrNazvu } from './filtr-nazvu.js';
 import type { Tiket } from '@kontrola-tiketu/jadro';
 
@@ -31,14 +31,14 @@ interface RadekSeznamu {
         <button type="button" [attr.aria-pressed]="archiv()" (click)="archiv.set(true)">Archiv</button>
       </div>
       <label class="filtr">Typ tiketu
-        <select [value]="typ()" (change)="typ.set($any($event.target).value)">
+        <select [value]="typ()" (change)="zmenTyp($any($event.target).value)">
           <option value="vsechny">Všechny</option><option value="papirove">Papírové</option><option value="virtualni">Virtuální</option>
         </select>
       </label>
-      <app-filtr-nazvu [hodnota]="nazev()" (zmena)="nazev.set($event)" />
+      <app-filtr-nazvu [hodnota]="nazev()" (zmena)="zmenNazev($event)" />
       <div class="prepinace" aria-label="Seskupení tiketů">
-        <button type="button" [attr.aria-pressed]="!seskupit()" (click)="seskupit.set(false)">Podle data</button>
-        <button type="button" [attr.aria-pressed]="seskupit()" (click)="seskupit.set(true)">Podle názvu</button>
+        <button type="button" [attr.aria-pressed]="!seskupit()" (click)="zmenSeskupeni(false)">Podle data</button>
+        <button type="button" [attr.aria-pressed]="seskupit()" (click)="zmenSeskupeni(true)">Podle názvu</button>
       </div>
     </details>
     @if (radky().length === 0) {
@@ -53,10 +53,26 @@ interface RadekSeznamu {
         @for (radek of skupina.polozky; track radek.tiket.id) {
           <li>
             <a [routerLink]="['/tiket', radek.tiket.id]">
-              <span class="hra">
-                {{ radek.tiket.nazev ? radek.tiket.nazev + ' · ' : '' }}{{ nazevHry(radek.tiket.hra) }}
-                @if (radek.tiket.kontrola) { <span class="stitek">virtuální</span> }
+              <span class="hra">{{ nazevHry(radek.tiket.hra) }}</span>
+              <span class="vysledek" [class.nejisty]="!radek.jisty">
+                @if (radek.cekani; as c) {
+                  {{ c.duvod === 'pred-slosovanim' ? 'Čeká na slosování' : 'Výsledky zatím nestažené' }}
+                } @else if (radek.castkaKc > 0) {
+                  Výhra {{ formatujKc(radek.castkaKc) }}
+                } @else if (!radek.dosudJisty) {
+                  Výsledek zatím neúplný
+                } @else if (radek.pokracuje) {
+                  zatím bez výhry
+                } @else {
+                  bez výhry
+                }
               </span>
+              @if (radek.tiket.nazev || radek.tiket.kontrola) {
+                <span class="stitky">
+                  @if (radek.tiket.nazev) { <span class="stitek nazev-tiketu">{{ radek.tiket.nazev }}</span> }
+                  @if (radek.tiket.kontrola) { <span class="stitek virtualni">Virtuální</span> }
+                </span>
+              }
               <span class="detail">
                 {{ radek.tiket.sloupce.length }}&nbsp;sl.
                 @if (radek.tiket.kontrola; as k) {
@@ -67,26 +83,16 @@ interface RadekSeznamu {
                   &middot; {{ radek.tiket.slosovani.pocet }}&nbsp;slos.
                 }
               </span>
-              <span class="castka" [class.nejisty]="!radek.jisty">
-                @if (radek.cekani; as c) {
-                  {{ c.duvod === 'pred-slosovanim' ? 'Čeká na slosování' : 'Výsledky zatím nestažené' }}
-                  <small>{{ c.duvod === 'pred-slosovanim' ? 'Slosování od' : 'Slosování' }} {{ formatujDatum(c.od) }}</small>
-                } @else {
-                  @if (radek.castkaKc > 0) {
-                    Výhra {{ formatujKc(radek.castkaKc) }}
-                  } @else if (!radek.dosudJisty) {
-                    Výsledek zatím neúplný
-                  } @else if (radek.pokracuje) {
-                    zatím bez výhry
-                  } @else {
-                    bez výhry
-                  }
-                  @if (radek.chybi > 0) { <small>Chybí {{ radek.chybi }} slosování</small> }
-                  @else if (!radek.dosudJisty) { <small>Vyhodnocení není konečné</small> }
-                  @else if (radek.pokracuje) { <small>Další slosování ještě přijdou</small> }
-                  @else { <small>Vyhodnoceno</small> }
-                }
-              </span>
+              <!-- Úplně vyhodnocený tiket poznámku nemá: hlásí se jen to, co vyžaduje pozornost. -->
+              @if (radek.cekani; as c) {
+                <span class="poznamka">{{ c.duvod === 'pred-slosovanim' ? 'Slosování od' : 'Slosování' }} {{ formatujDatum(c.od) }}</span>
+              } @else if (radek.chybi > 0) {
+                <span class="poznamka">Chybí {{ radek.chybi }} slosování</span>
+              } @else if (!radek.dosudJisty) {
+                <span class="poznamka">Vyhodnocení není konečné</span>
+              } @else if (radek.pokracuje) {
+                <span class="poznamka">Další slosování ještě přijdou</span>
+              }
             </a>
           </li>
         }
@@ -99,8 +105,6 @@ interface RadekSeznamu {
     .pridat-tiket { padding: .75rem 1rem; border-radius: .75rem; text-decoration: none; }
     .popis-filtru { font-weight: 400; color: var(--barva-text-tlumeny); }
     .filtr { display: flex; align-items: center; gap: .75rem; margin: .75rem 0 0; }
-    .castka small { display: block; font-size: .8rem; color: var(--barva-text-tlumeny); margin-top: .25rem; }
-    @media (max-width: 440px) { .tikety a .castka { grid-column: 1 / -1; grid-row: auto; margin-top: .5rem; } }
     .prazdno { color: var(--barva-text-tlumeny); }
     .tikety { list-style: none; margin: 0; padding: 0; }
     .tikety li { border: 1px solid var(--barva-ram); border-radius: .85rem; margin: .75rem 0; padding: .5rem .75rem; }
@@ -115,31 +119,50 @@ interface RadekSeznamu {
     .hra { font-weight: 600; min-width: 0; overflow-wrap: anywhere; }
     .nazev-skupiny { margin: 1.5rem 0 .5rem; overflow-wrap: anywhere; }
     .nazev-skupiny small { color: var(--barva-text-tlumeny); font-weight: 400; }
+    .vysledek { text-align: right; font-variant-numeric: tabular-nums; }
+    .vysledek.nejisty { color: var(--barva-text-tlumeny); }
+    /* Pod prvním řádkem už je všechno přes celou šířku. */
+    .stitky, .detail, .poznamka { grid-column: 1 / -1; }
+    .stitky { display: flex; flex-wrap: wrap; gap: .3rem; margin: .15rem 0; }
     .stitek {
-      margin-left: 0.3rem; padding: 0 0.4rem; border: 1px solid var(--barva-duraz);
-      border-radius: 999px; color: var(--barva-duraz); font-size: 0.65rem; font-weight: 600;
-      text-transform: uppercase; letter-spacing: 0.05em; vertical-align: middle;
+      min-width: 0; padding: 0 0.45rem; border: 1px solid; border-radius: 999px;
+      font-size: 0.75rem; font-weight: 600; overflow-wrap: anywhere;
     }
-    .detail { grid-column: 1; font-size: 0.8rem; color: var(--barva-text-tlumeny); }
-    /*
-      Sloupec se musí určit výslovně. Mřížka umisťuje nejdřív prvky s pevným řádkem, takže
-      by částka sebrala první sloupec a název hry by skončil vpravo — opačně, než se čte.
-    */
-    .castka {
-      grid-column: 2; grid-row: 1 / span 2;
-      align-self: center; font-variant-numeric: tabular-nums;
+    .nazev-tiketu { color: var(--barva-duraz); }
+    .virtualni {
+      color: var(--barva-vyhrano); font-size: 0.65rem; text-transform: uppercase;
+      letter-spacing: 0.05em; align-self: center;
     }
-    .castka.nejisty { color: var(--barva-text-tlumeny); }
+    .detail, .poznamka { font-size: 0.8rem; color: var(--barva-text-tlumeny); }
   `,
 })
 export class Seznam {
   private readonly stav = inject(Stav);
   private readonly parametry = inject(ActivatedRoute).snapshot.queryParamMap;
   protected readonly archiv = signal(this.parametry.get('archiv') === '1');
-  protected readonly typ = signal('vsechny');
-  /** Klíč z `klicNazvu`; Přehled sem odkazuje u každé skupiny. */
-  protected readonly nazev = signal(this.parametry.get('nazev') ?? '*');
-  protected readonly seskupit = signal(true);
+  protected readonly typ = computed(() => this.stav.filtrSeznamu().typ);
+  protected readonly seskupit = computed(() => this.stav.filtrSeznamu().seskupit);
+  /**
+   * Název z odkazu Přehledu platí jen pro tuto návštěvu; uložený filtr nepřepíše, dokud ho
+   * uživatel sám nezmění.
+   */
+  private readonly nazevZOdkazu = signal(this.parametry.get('nazev'));
+  /** Klíč z `klicNazvu`. Název, který už žádný tiket nemá, se chová jako všechny názvy. */
+  protected readonly nazev = computed(() => {
+    const klic = this.nazevZOdkazu() ?? this.stav.filtrSeznamu().nazev;
+    return klic === '*' || this.stav.skupinyNazvu().some(s => s.klic === klic) ? klic : '*';
+  });
+
+  protected zmenTyp(typ: FiltrSeznamu['typ']): void {
+    void this.stav.ulozFiltrSeznamu({ typ });
+  }
+  protected zmenNazev(nazev: string): void {
+    this.nazevZOdkazu.set(null);
+    void this.stav.ulozFiltrSeznamu({ nazev });
+  }
+  protected zmenSeskupeni(seskupit: boolean): void {
+    void this.stav.ulozFiltrSeznamu({ seskupit });
+  }
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujKc = formatujKc;
@@ -156,7 +179,7 @@ export class Seznam {
   protected readonly popisFiltru = computed(() => {
     const nazev = this.nazev() === '*' ? undefined : this.stav.skupinyNazvu().find(s => s.klic === this.nazev())?.nazev;
     return (this.archiv() ? 'Archiv' : 'Aktuální')
-      + ({ papirove: ' · Papírové', virtualni: ' · Virtuální' }[this.typ()] ?? '')
+      + ({ vsechny: '', papirove: ' · Papírové', virtualni: ' · Virtuální' }[this.typ()])
       + (nazev === undefined ? '' : ` · ${nazev}`);
   });
 

@@ -23,6 +23,9 @@ import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js
 import { stahniVysledky, type KontrolaServeru } from './stahovani.js';
 import { shrnutiStazeni, zpracujStazene } from './vysledkyZeServeru.js';
 import { seskupPodleNazvu, upravNazev } from './nazvyTiketu.js';
+import { nactenyFiltrSeznamu, VYCHOZI_FILTR_SEZNAMU, type FiltrSeznamu } from './zobrazeniTiketu.js';
+
+const KLIC_FILTRU_SEZNAMU = 'filtrSeznamu';
 
 export interface Zprava {
   readonly uspech: boolean;
@@ -41,6 +44,9 @@ export class Stav {
   readonly sazbyEurosance = signal<readonly SazbyEurosance[]>([]);
   readonly ceny = signal<readonly CenikHry[]>([]);
   readonly nacteno = signal(false);
+
+  /** Filtr seznamu tiketů, jak ho uživatel naposledy nastavil. */
+  readonly filtrSeznamu = signal<FiltrSeznamu>(VYCHOZI_FILTR_SEZNAMU);
 
   /** Proč se úložiště nepodařilo otevřít. `null`, když je všechno v pořádku. */
   readonly chybaUloziste = signal<string | null>(null);
@@ -84,19 +90,26 @@ export class Stav {
       return;
     }
 
-    const [tikety, tahy, sazby, sazbyEurosance, ceny] = await Promise.all([
+    const [tikety, tahy, sazby, sazbyEurosance, ceny, filtr] = await Promise.all([
       this.uloziste.nactiTikety(),
       this.uloziste.nactiTahy(),
       this.uloziste.nactiSazby(),
       this.uloziste.nactiSazbyEurosance(),
       this.uloziste.nactiCeny(),
+      this.uloziste.nactiNastaveni(KLIC_FILTRU_SEZNAMU),
     ]);
+    this.filtrSeznamu.set(nactenyFiltrSeznamu(filtr));
     this.tikety.set(tikety);
     this.tahy.set(tahy);
     this.sazby.set(sazby);
     this.sazbyEurosance.set(sazbyEurosance);
     this.ceny.set(ceny);
     this.nacteno.set(true);
+  }
+
+  async ulozFiltrSeznamu(zmena: Partial<FiltrSeznamu>): Promise<void> {
+    this.filtrSeznamu.update(f => ({ ...f, ...zmena }));
+    await this.uloziste.ulozNastaveni(KLIC_FILTRU_SEZNAMU, this.filtrSeznamu());
   }
 
   async ulozTiket(tiket: Tiket): Promise<void> {

@@ -36,3 +36,25 @@ export function cekaniNaSlosovani(tiket: Tiket, vysledek: VysledekTiketu, dnes: 
   const od = tiket.kontrola?.od ?? tiket.slosovani.prvni;
   return { duvod: od >= dnes ? 'pred-slosovanim' : 'chybi-vysledky', od };
 }
+
+/**
+ * Filtr seznamu tiketů, jak si ho aplikace pamatuje. Archiv mezi nimi schválně není — je to
+ * umístění, ne priorita, a po startu v archivu by seznam vypadal prázdný.
+ */
+export interface FiltrSeznamu {
+  readonly typ: 'vsechny' | 'papirove' | 'virtualni';
+  /** Klíč z `klicNazvu`, `'*'` pro všechny názvy. */
+  readonly nazev: string;
+  readonly seskupit: boolean;
+}
+export const VYCHOZI_FILTR_SEZNAMU: FiltrSeznamu = { typ: 'vsechny', nazev: '*', seskupit: true };
+
+/** Uložená data projdou po položkách; co nesedí (starší nebo poškozený záznam), dostane výchozí hodnotu. */
+export function nactenyFiltrSeznamu(data: unknown): FiltrSeznamu {
+  const d = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>;
+  return {
+    typ: d['typ'] === 'papirove' || d['typ'] === 'virtualni' ? d['typ'] : VYCHOZI_FILTR_SEZNAMU.typ,
+    nazev: typeof d['nazev'] === 'string' ? d['nazev'] : VYCHOZI_FILTR_SEZNAMU.nazev,
+    seskupit: typeof d['seskupit'] === 'boolean' ? d['seskupit'] : VYCHOZI_FILTR_SEZNAMU.seskupit,
+  };
+}

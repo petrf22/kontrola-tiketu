@@ -16,6 +16,12 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Změněno
+- Seznam tiketů si pamatuje typ tiketu, název a seskupení z filtru i po zavření aplikace; Aktuální/Archiv začíná vždy na aktuálních (aplikace)
+- Řádek v seznamu tiketů je kratší: výsledek je vpravo vedle názvu hry, název tiketu a „Virtuální“ jsou barevně odlišené štítky pod ním a u úplně vyhodnoceného tiketu už nesvítí „Vyhodnoceno“ — poznámka se ukáže, jen když je na co upozornit (aplikace)
+
 ## [0.7.1] – 2026-09-24
 
 ### Změněno

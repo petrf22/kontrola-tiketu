@@ -52,6 +52,14 @@ export interface Uloziste {
   /** Hashe balíků stažených z backendu (`soubor` → `hash`) — co se znovu stahovat nemusí. */
   nactiHashe(): Promise<Map<string, string>>;
   ulozHash(soubor: string, hash: string): Promise<void>;
+
+  /**
+   * Nastavení aplikace pod klíčem, jako JSON. `null`, když uložené není.
+   *
+   * Patří do šifrovaného úložiště — filtr seznamu obsahuje názvy tiketů.
+   */
+  nactiNastaveni(klic: string): Promise<unknown>;
+  ulozNastaveni(klic: string, hodnota: unknown): Promise<void>;
 }
 
 /**
@@ -68,6 +76,7 @@ export class UlozisteVPameti implements Uloziste {
   private sazbyEurosance: SazbyEurosance[] = [];
   private ceny: CenikHry[] = [];
   private hashe = new Map<string, string>();
+  private nastaveni = new Map<string, string>();
 
   async nactiTikety(): Promise<Tiket[]> {
     return [...this.tikety.values()].sort((a, b) => b.vlozeno.localeCompare(a.vlozeno));
@@ -120,5 +129,15 @@ export class UlozisteVPameti implements Uloziste {
 
   async ulozHash(soubor: string, hash: string): Promise<void> {
     this.hashe.set(soubor, hash);
+  }
+
+  async nactiNastaveni(klic: string): Promise<unknown> {
+    const data = this.nastaveni.get(klic);
+    return data === undefined ? null : JSON.parse(data);
+  }
+
+  async ulozNastaveni(klic: string, hodnota: unknown): Promise<void> {
+    // Přes JSON, aby se volající nemohl spolehnout na sdílený objekt — SQLite ho taky nemá.
+    this.nastaveni.set(klic, JSON.stringify(hodnota));
   }
 }

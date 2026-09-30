@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [0.8.0] – 2026-09-30
 
 ### Změněno
 - Seznam tiketů si pamatuje typ tiketu, název a seskupení z filtru i po zavření aplikace; Aktuální/Archiv začíná vždy na aktuálních (aplikace)

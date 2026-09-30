@@ -451,6 +451,13 @@ doložené herním plánem ani přesným datem, a proto v ceníku nejsou. Aplika
   `ceny`, balíky šly pod dočasným jménem s přejmenováním a manifest poslední. Po HTTPS sedí
   hashe všech šesti balíků. Zbývá: po nejbližším běhu cronu zkontrolovat `var/tik.log`.
 
+- **Historické sazby Extra 6 a Eurošance nasazeny 30. 9. 2026 v 7:55** (commit `dbb3443`).
+  Stejný postup jako u ceníku: server byl na gitu až na `src/Verze.php` (0.4.0, jen User-Agent),
+  nahrály se obě sazby a `Verze.php`, `public/v1` vyrobený ze stažené serverové databáze
+  (`publikuj` ji nezměnil). Balíky se od serverových lišily jen `sazbyExtra6` a `sazbyEurosance`,
+  šly pod dočasným jménem s přejmenováním, manifest poslední. Po HTTPS sedí hashe všech šesti
+  balíků i hlavičky.
+
 - **Doména backendu** (`kontrolatiketu.petrf22.cz`) je natvrdo v aplikaci (adresa API i síťový
   allowlist). Změna domény znamená novou verzi aplikace.
 - **Časy zveřejnění** — viz Rozvrh, změří se provozem.

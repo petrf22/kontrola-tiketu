@@ -155,6 +155,9 @@ describe('Správa tiketů', () => {
     expect(radek('virtualni', '.poznamka')).toContain('Další slosování ještě přijdou');
     expect(radek('papirovy', '.vysledek.nehotovy')?.trim()).toBe('0 Kč');
     expect(radek('papirovy', '.poznamka')).toContain('Chybí 1 slosování');
+    const karta = (id: string) => (f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"]`) as HTMLElement).closest('li')!;
+    expect(karta('papirovy').classList).toContain('nehotovy');
+    expect(karta('virtualni').classList).not.toContain('nehotovy');
   });
 
   it('řádek seznamu: výsledek vedle hry, štítky názvu a virtuálního, úplný tiket bez poznámky', async () => {
@@ -217,6 +220,7 @@ describe('Správa tiketů', () => {
       const s = TestBed.createComponent(Seznam);
       await s.whenStable();
       expect(s.nativeElement.querySelector('.tikety .vysledek.nehotovy').textContent.trim()).toBe('--- Kč');
+      expect(s.nativeElement.querySelector('.tikety li').classList).toContain('nehotovy');
       expect(s.nativeElement.querySelector('.tikety .poznamka').textContent).toContain('Slosování od');
     } finally { vi.useRealTimers(); }
   });

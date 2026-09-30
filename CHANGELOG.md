@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [0.8.1] – 2026-09-30
+
+### Změněno
+- Seznam tiketů ukazuje u každého tiketu jen částku: výhru zeleně, „0 Kč“ tlumeně a tiket, který čeká na slosování nebo ještě nemá všechna slosování vyhodnocená, s dosavadní částkou nebo „--- Kč“ v barevném rámečku (aplikace)
+
 ## [0.8.0] – 2026-09-30
 
 ### Změněno

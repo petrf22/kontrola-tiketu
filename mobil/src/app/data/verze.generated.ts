@@ -13,10 +13,22 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.8.0';
+export const VERZE = '0.8.1';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.8.1',
+    datum: '2026-09-30',
+    sekce: [
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'Seznam tiketů ukazuje u každého tiketu jen částku: výhru zeleně, „0 Kč“ tlumeně a tiket, který čeká na slosování nebo ještě nemá všechna slosování vyhodnocená, s dosavadní částkou nebo „--- Kč“ v barevném rámečku',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.8.0',
     datum: '2026-09-30',

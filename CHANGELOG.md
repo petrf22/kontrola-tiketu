@@ -21,6 +21,8 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ### Změněno
 - Seznam tiketů si pamatuje typ tiketu, název a seskupení z filtru i po zavření aplikace; Aktuální/Archiv začíná vždy na aktuálních (aplikace)
 - Řádek v seznamu tiketů je kratší: výsledek je vpravo vedle názvu hry, název tiketu a „Virtuální“ jsou barevně odlišené štítky pod ním a u úplně vyhodnoceného tiketu už nesvítí „Vyhodnoceno“ — poznámka se ukáže, jen když je na co upozornit (aplikace)
+- Výhry v Extra 6 a Eurošanci se spočítají i u slosování před zářím 2025 — dřív u nich stálo „chybí sazby“ a tiket se tvářil jako nedovyhodnocený; u Extra 6 před 29. 3. 2024 platí tehdejší vyšší částky a sousední číslo nevyhrává (aplikace)
+- Sazby Extra 6 od 10. 10. 2014 ve dvou obdobích a Eurošance od 16. 6. 2013, dohledané v herních plánech (backend)
 
 ## [0.7.1] – 2026-09-24
 

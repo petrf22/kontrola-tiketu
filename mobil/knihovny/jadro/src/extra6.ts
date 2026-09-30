@@ -18,8 +18,8 @@ export type VyhradaExtra6 =
   /** Sazby pro datum tahu nejsou k dispozici. */
   | 'chybi-sazby'
   /**
-   * První pořadí se při více než dvou výhrách dělí: výhra je podíl 2 000 000 Kč a počtu výher
-   * (herní plán, bod 25 g). Počet výher v Extra 6 listina neuvádí, takže offline se to
+   * První pořadí se při více než dvou výhrách dělí: výhra je podíl dvojnásobku pevné výhry
+   * a počtu výher (herní plán, bod 25 g; do 28. 3. 2024 bod 24 f). Počet výher v Extra 6 listina neuvádí, takže offline se to
    * spolehlivě spočítat nedá a uvedená částka je horní odhad.
    */
   | 'delene-prvni-poradi';
@@ -63,9 +63,15 @@ export function vyhodnotExtra6(
     return { poradi, vyseVyhryKc: null, vyhrada: 'chybi-sazby' };
   }
 
+  const nasobek = platne.nasobky[poradi];
+  // Pořadí, které tehdy herní plán neznal (sousední číslo před 29. 3. 2024), nevyhrává.
+  if (nasobek === null) {
+    return { poradi: null, vyseVyhryKc: null, vyhrada: null };
+  }
+
   return {
     poradi,
-    vyseVyhryKc: platne.nasobky[poradi] * platne.sazkaKc,
+    vyseVyhryKc: nasobek * platne.sazkaKc,
     vyhrada: poradi === 'sestecisli' ? 'delene-prvni-poradi' : null,
   };
 }

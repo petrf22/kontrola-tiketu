@@ -375,6 +375,20 @@ násobky v plánu jsou zaokrouhlené) — jediný zdroj pravdy o sazbách. Backe
 každému balíku jako `sazbyExtra6` a `sazbyEurosance`, aplikace je odtud dostává. Po změně sazeb:
 upravit, nasadit, `php bin/vyherka publikuj`.
 
+Stav 30. 9. 2026 (zdroje jsou u každého záznamu v `zdroj`):
+
+| Hra | Od slosování | Výhry od koncového čísla po nejvyšší pořadí | Sousední číslo |
+|---|---|---|---|
+| Extra 6 | 2014-10-10 (start v ČR) | 120 / 200 / 2 000 / 20 000 / 200 000 / 2 000 000 Kč | nevyhrává (`null`) |
+| Extra 6 | 2024-03-29 | 60 / 100 / 1 000 / 10 000 / 100 000 / 1 000 000 Kč | 60 Kč |
+| Eurošance | 2013-06-16 (první plán s Eurošancí) | 50 / 200 / 2 000 / 20 000 / 500 000 Kč | — |
+
+Datum 29. 3. 2024 je doložené jen pro sousední číslo (Centrum podpory Sazky). Plán z 16. 2. 2024,
+který platil mezi plány ze 6. 12. 2023 (staré částky) a 17. 7. 2024 (nové), se dohledat
+nepodařilo, takže nové částky se berou od stejného slosování. Násobek `null` znamená pořadí,
+které herní plán v tom období nezná — aplikace do 0.7.1 z něj spočítá výhru 0 Kč, novější ho
+nevyhodnotí jako výhru.
+
 ### Ceník sázek
 
 `config/ceny.json` drží cenu sloupce a doplňkové hry (Šance, Extra 6, Eurošance) s datem

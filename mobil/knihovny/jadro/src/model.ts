@@ -247,7 +247,11 @@ export interface Tiket {
 export interface SazbyExtra6 {
   readonly platnostOd: Datum;
   readonly sazkaKc: number;
-  readonly nasobky: Readonly<Record<PoradiKoncoveCislice, number>>;
+  /**
+   * `null` znamená, že pořadí v tomto období herní plán nezná — shoda v něm nevyhrává.
+   * Tak je to se sousedním číslem před 29. 3. 2024.
+   */
+  readonly nasobky: Readonly<Record<PoradiKoncoveCislice, number | null>>;
   /** Zdroj, ze kterého byly sazby opsány — kvůli dohledatelnosti. */
   readonly zdroj: string;
 }

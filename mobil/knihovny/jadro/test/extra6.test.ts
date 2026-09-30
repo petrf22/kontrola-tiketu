@@ -38,7 +38,7 @@ describe('sazby Extra 6 z balíku výsledků', () => {
   it('násobky dávají částky uvedené v herním plánu', () => {
     const sazby = vyberSazby(SAZBY, '2026-09-08');
     expect(sazby).not.toBeNull();
-    const castka = (klic: PoradiKoncoveCislice) => sazby!.nasobky[klic] * sazby!.sazkaKc;
+    const castka = (klic: PoradiKoncoveCislice) => sazby!.nasobky[klic]! * sazby!.sazkaKc;
     expect(castka('sestecisli')).toBe(1_000_000);
     expect(castka('peticisli')).toBe(100_000);
     expect(castka('ctyrcisli')).toBe(10_000);
@@ -46,6 +46,25 @@ describe('sazby Extra 6 z balíku výsledků', () => {
     expect(castka('dvojcisli')).toBe(100);
     expect(castka('koncove-cislo')).toBe(60);
     expect(castka('sousedni-cislo')).toBe(60);
+  });
+
+  it('před 29. 3. 2024 platí starší částky a sousední číslo nevyhrává', () => {
+    // Herní plán z 6. 12. 2023, EUROJACKPOT bod 24; stejně plán z 3. 10. 2014, Extra 6 bod 11.
+    const sazby = vyberSazby(SAZBY, '2024-03-26');
+    expect(sazby?.platnostOd).toBe('2014-10-10');
+    const castka = (klic: PoradiKoncoveCislice) => sazby!.nasobky[klic]! * sazby!.sazkaKc;
+    expect(castka('sestecisli')).toBe(2_000_000);
+    expect(castka('peticisli')).toBe(200_000);
+    expect(castka('ctyrcisli')).toBe(20_000);
+    expect(castka('trojcisli')).toBe(2_000);
+    expect(castka('dvojcisli')).toBe(200);
+    expect(castka('koncove-cislo')).toBe(120);
+    expect(sazby!.nasobky['sousedni-cislo']).toBeNull();
+    expect(vyberSazby(SAZBY, '2024-03-29')?.platnostOd).toBe('2024-03-29');
+  });
+
+  it('první slosování v ČR už sazby má', () => {
+    expect(vyberSazby(SAZBY, '2014-10-10')).not.toBeNull();
   });
 });
 
@@ -121,6 +140,15 @@ describe('vyhodnotExtra6', () => {
     expect(v.poradi).toBe('sestecisli');
     expect(v.vyseVyhryKc).toBeNull();
     expect(v.vyhrada).toBe('chybi-sazby');
+  });
+
+  it('tah před 29. 3. 2024 počítá podle starších sazeb a sousední číslo nevyhrává', () => {
+    const tah = { ...EJ_2026_09_08, datum: '2024-03-26' };
+    expect(vyhodnotExtra6('000009', tah, SAZBY)).toEqual({ poradi: 'koncove-cislo', vyseVyhryKc: 120, vyhrada: null });
+    expect(vyhodnotExtra6('000799', tah, SAZBY)).toEqual({ poradi: 'trojcisli', vyseVyhryKc: 2_000, vyhrada: null });
+    expect(vyhodnotExtra6('000008', tah, SAZBY)).toEqual({ poradi: null, vyseVyhryKc: null, vyhrada: null });
+    // Od 29. 3. 2024 sousední číslo vyhrává.
+    expect(vyhodnotExtra6('000008', { ...tah, datum: '2024-03-29' }, SAZBY).vyseVyhryKc).toBe(60);
   });
 
   it('respektuje vedoucí nulu ve vylosovaném šestičíslí', () => {

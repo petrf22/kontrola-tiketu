@@ -420,7 +420,8 @@ z 3. 10. 2014. V roce 2024 k ní jen přibylo sousední číslo.
    mít částky natvrdo v kódu, takže se jednorázově vytáhnou z herního plánu
    (`static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf`)
    do verzovaného datového souboru `config/sazby-extra6.json` s polem `platnostOd`. Kód sazby nezná,
-   jen je čte. Šance tenhle problém nemá.
+   jen je čte. Šance tenhle problém nemá. Historie od roku 2014 doplněná 30. 9. 2026 — viz
+   `docs/backend.md`, „Sazby Extra 6 a Eurošance“.
 2. **Přesná hranice archivu Sportky.** Ověřeno: 1994 ano, 1993 ne. Uvnitř roku 1993 nedohledáno —
    nepodstatné, backfill prostě začne prvním týdnem, který vrátí data.
 3. **Chování číslování týdnů mezi 1994 a 1998.** Posun ověřen u 1994, nepřítomnost posunu u 1998.

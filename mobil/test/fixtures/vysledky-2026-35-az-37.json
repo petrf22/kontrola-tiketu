@@ -8,7 +8,21 @@
   },
   "sazbyExtra6": [
     {
-      "platnostOd": "2025-09-05",
+      "platnostOd": "2014-10-10",
+      "sazkaKc": 40,
+      "nasobky": {
+        "sestecisli": 50000,
+        "peticisli": 5000,
+        "ctyrcisli": 500,
+        "trojcisli": 50,
+        "dvojcisli": 5,
+        "koncove-cislo": 3,
+        "sousedni-cislo": null
+      },
+      "zdroj": "Herní plán číselné loterie EUROJACKPOT účinný od 3. 10. 2014, Extra 6 bod 11 (https://web.archive.org/web/20141013225010/http://www.sazka.cz/userdata/files/herni-plany/hp-eurojackpot-ok.pdf; 10. 10. 2014 bylo první slosování v ČR). Stejné částky uvádějí plány loterií SAZKA z 8. 4. 2020, 8. 2. 2021, 7. 3. 2022, 8. 2. 2023, 21. 7. 2023, 12. 10. 2023 i 6. 12. 2023 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/herni-plan-sazka-6_12_2023-sazka.pdf, EUROJACKPOT bod 24). Sousední číslo tehdy nevyhrávalo — proto null."
+    },
+    {
+      "platnostOd": "2024-03-29",
       "sazkaKc": 40,
       "nasobky": {
         "sestecisli": 25000,
@@ -19,12 +33,12 @@
         "koncove-cislo": 1.5,
         "sousedni-cislo": 1.5
       },
-      "zdroj": "https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf (bod 25; datum platnosti odvozeno z názvu souboru, v textu plánu uvedeno není)"
+      "zdroj": "Herní plán loterií SAZKA účinný od 17. 7. 2024, EUROJACKPOT bod 25 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-od-17-7-24-komplet-sazka.pdf); stejné násobky uvádí i plán z 5. 9. 2025 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf). Od slosování 29. 3. 2024 vyhrává i sousední číslo (Centrum podpory Sazky, „Jak zjistit výhru v doplňkové hře Extra 6“, https://web.archive.org/web/20240420124223/https://www.sazka.cz/centrum-podpory/loterie-a-hry/loterie/eurojackpot/jak-zjistit-vyhru-v-doplnkove-hre-extra-6). Plán z 16. 2. 2024, který mezi 6. 12. 2023 a 17. 7. 2024 platil, se dohledat nepodařilo; nové částky se proto berou od téhož slosování jako sousední číslo."
     }
   ],
   "sazbyEurosance": [
     {
-      "platnostOd": "2025-09-05",
+      "platnostOd": "2013-06-16",
       "sazkaKc": 30,
       "vyhryKc": {
         "peticisli": 500000,
@@ -33,7 +47,7 @@
         "dvojcisli": 200,
         "koncove-cislo": 50
       },
-      "zdroj": "https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf (oddíl Euromiliony, body 10, 11 a 16; datum platnosti odvozeno z názvu souboru, v textu plánu uvedeno není)"
+      "zdroj": "Herní plán číselných loterií a sázkových her účinný od 16. 6. 2013, Eurošance bod 11 — první plán s Eurošancí (https://web.archive.org/web/20130626222528/http://www.sazka.cz/userdata/files/herni-plany/113559-herni-plan-cis.-lot.-a-sazk.-her-2013-01.pdf). Stejné částky uvádějí plány z 8. 4. 2020, 6. 12. 2023, 17. 7. 2024 i 5. 9. 2025 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf, oddíl Euromiliony, body 10, 11 a 16)."
     }
   ],
   "ceny": [

@@ -10,8 +10,7 @@ import type { Tiket } from '@kontrola-tiketu/jadro';
 interface RadekSeznamu {
   readonly tiket: Tiket;
   readonly castkaKc: number;
-  readonly jisty: boolean;
-  /** Všechna proběhlá slosování jsou spočítaná — na rozdíl od `jisty` nevadí, že tiket běží dál. */
+  /** Všechna proběhlá slosování jsou spočítaná; nevadí, že tiket běží dál. */
   readonly dosudJisty: boolean;
   readonly chybi: number;
   readonly pokracuje: boolean;
@@ -54,19 +53,15 @@ interface RadekSeznamu {
           <li>
             <a [routerLink]="['/tiket', radek.tiket.id]">
               <span class="hra">{{ nazevHry(radek.tiket.hra) }}</span>
-              <span class="vysledek" [class.nejisty]="!radek.jisty">
-                @if (radek.cekani; as c) {
-                  {{ c.duvod === 'pred-slosovanim' ? 'Čeká na slosování' : 'Výsledky zatím nestažené' }}
-                } @else if (radek.castkaKc > 0) {
-                  Výhra {{ formatujKc(radek.castkaKc) }}
-                } @else if (!radek.dosudJisty) {
-                  Výsledek zatím neúplný
-                } @else if (radek.pokracuje) {
-                  zatím bez výhry
-                } @else {
-                  bez výhry
-                }
-              </span>
+              <!-- Semafor: čekající tiket je v běžném textu, neúplný oranžově, výhra zeleně, nula tlumeně.
+                   Proč se čeká nebo co chybí, říká poznámka dole. -->
+              @if (radek.cekani) {
+                <span class="vysledek">--- Kč</span>
+              } @else {
+                <span class="vysledek" [class.neuplny]="!radek.dosudJisty"
+                  [class.vyhra]="radek.dosudJisty && radek.castkaKc > 0"
+                  [class.nula]="radek.dosudJisty && radek.castkaKc === 0">{{ formatujKc(radek.castkaKc) }}</span>
+              }
               @if (radek.tiket.nazev || radek.tiket.kontrola) {
                 <span class="stitky">
                   @if (radek.tiket.nazev) { <span class="stitek nazev-tiketu">{{ radek.tiket.nazev }}</span> }
@@ -120,7 +115,9 @@ interface RadekSeznamu {
     .nazev-skupiny { margin: 1.5rem 0 .5rem; overflow-wrap: anywhere; }
     .nazev-skupiny small { color: var(--barva-text-tlumeny); font-weight: 400; }
     .vysledek { text-align: right; font-variant-numeric: tabular-nums; }
-    .vysledek.nejisty { color: var(--barva-text-tlumeny); }
+    .vysledek.neuplny { color: var(--barva-varovani); }
+    .vysledek.vyhra { color: var(--barva-ok); }
+    .vysledek.nula { color: var(--barva-text-tlumeny); }
     /* Pod prvním řádkem už je všechno přes celou šířku. */
     .stitky, .detail, .poznamka { grid-column: 1 / -1; }
     .stitky { display: flex; flex-wrap: wrap; gap: .3rem; margin: .15rem 0; }
@@ -192,7 +189,6 @@ export class Seznam {
       return {
         tiket,
         castkaKc: vysledek.celkemKc,
-        jisty: vysledek.soucetJisty,
         dosudJisty: vysledek.chybejicichSlosovani === 0 && vysledek.slosovani.every(s => s.nejistychVyher === 0),
         chybi: vysledek.chybejicichSlosovani,
         pokracuje: vysledek.pokracuje,

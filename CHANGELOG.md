@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Přidáno
+- Výsledky losování ukazují vylosovaná čísla všech her i s tabulkami výher, včetně Extra 6, Šance a Eurošance; tahy jdou filtrovat podle hry a dohledat podle data (aplikace)
+
 ## [0.8.2] – 2026-10-01
 
 ### Změněno

@@ -70,14 +70,14 @@ interface RadekSeznamu {
                 </span>
               }
               <span class="detail">
-                {{ radek.tiket.sloupce.length }}&nbsp;sl.
                 @if (radek.tiket.kontrola; as k) {
-                  &middot; od {{ formatujDatum(k.od) }}
+                  od {{ formatujDatum(k.od) }}
                   &middot; {{ k.do === null ? 'bez konce' : 'do ' + formatujDatum(k.do) }}
                 } @else {
-                  &middot; od {{ formatujDatum(radek.tiket.slosovani.prvni) }}
+                  od {{ formatujDatum(radek.tiket.slosovani.prvni) }}
                   &middot; {{ radek.tiket.slosovani.pocet }}&nbsp;slos.
                 }
+                &middot; {{ radek.tiket.sloupce.length }}&nbsp;sl.
               </span>
               <!-- Úplně vyhodnocený tiket poznámku nemá: hlásí se jen to, co vyžaduje pozornost. -->
               @if (radek.cekani; as c) {

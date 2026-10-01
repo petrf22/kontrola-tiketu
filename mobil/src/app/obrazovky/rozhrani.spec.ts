@@ -13,6 +13,7 @@ import { sUpravenouCenou } from '../data/zobrazeniTiketu';
 import { prectiTiket } from '@kontrola-tiketu/ocr';
 import { tiketEJ } from '../../../knihovny/ocr/test/pomocnici';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken';
+import { formatujDatum } from '../data/format';
 
 const tiket: Tiket = {
   id: 'test', hra: 'eurojackpot', sloupce: [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 1], eurocisla: [4, 1] }],
@@ -170,6 +171,10 @@ describe('Správa tiketů', () => {
     expect(stitky).toEqual([['stitek nazev-tiketu', 'Práce'], ['stitek virtualni', 'Virtuální']]);
     expect(radek(tiket.id).querySelector('.hra')!.textContent?.trim()).toBe('Eurojackpot');
     expect(radek('papirovy').querySelector('.stitky')).toBeNull();
+    // Nejdřív datum, pak slosování, sloupce až na konci.
+    const detail = (id: string) => radek(id).querySelector('.detail')!.textContent!.replace(/\s+/g, ' ').trim();
+    expect(detail('papirovy')).toBe(`od ${formatujDatum('2026-09-08')} · 1 slos. · 1 sl.`);
+    expect(detail(tiket.id)).toBe(`od ${formatujDatum('2026-09-08')} · do ${formatujDatum('2026-09-08')} · 1 sl.`);
     for (const id of [tiket.id, 'papirovy']) {
       expect(radek(id).querySelector('.poznamka')).toBeNull();
       expect(radek(id).textContent).not.toContain('Vyhodnoceno');

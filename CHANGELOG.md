@@ -16,6 +16,14 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [0.8.2] – 2026-10-01
+
+### Změněno
+- V seznamu tiketů je u každého tiketu napřed datum, pak počet slosování a až nakonec počet sloupců (aplikace)
+
+### Opraveno
+- Systémové gesto nebo tlačítko „zpět“ vrací na předchozí obrazovku, místo aby aplikaci zavřelo; z úvodního seznamu tiketů ji zavře jako dřív (aplikace)
+
 ## [0.8.1] – 2026-09-30
 
 ### Změněno

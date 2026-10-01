@@ -13,10 +13,28 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.8.1';
+export const VERZE = '0.8.2';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.8.2',
+    datum: '2026-10-01',
+    sekce: [
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'V seznamu tiketů je u každého tiketu napřed datum, pak počet slosování a až nakonec počet sloupců',
+        ],
+      },
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Systémové gesto nebo tlačítko „zpět“ vrací na předchozí obrazovku, místo aby aplikaci zavřelo; z úvodního seznamu tiketů ji zavře jako dřív',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.8.1',
     datum: '2026-09-30',

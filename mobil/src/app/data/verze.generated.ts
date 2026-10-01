@@ -13,10 +13,22 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.8.2';
+export const VERZE = '0.9.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.9.0',
+    datum: '2026-10-01',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Výsledky losování ukazují vylosovaná čísla všech her i s tabulkami výher, včetně Extra 6, Šance a Eurošance; tahy jdou filtrovat podle hry a dohledat podle data',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.8.2',
     datum: '2026-10-01',

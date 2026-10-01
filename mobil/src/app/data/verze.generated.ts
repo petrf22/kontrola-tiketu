@@ -13,10 +13,22 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.9.0';
+export const VERZE = '0.9.1';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.9.1',
+    datum: '2026-10-01',
+    sekce: [
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'Výsledky losování mají dvě záložky: Přehled s vylosovanými čísly a výhrami a Správa se stahováním, stavem serveru a importem ze souboru',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.9.0',
     datum: '2026-10-01',

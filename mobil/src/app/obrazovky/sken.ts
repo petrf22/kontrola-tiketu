@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, type OnDestroy } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   BarcodeFormat,
@@ -56,7 +56,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
   `,
   host: { '[class.skenuje]': 'skenuje()' },
 })
-export class Sken {
+export class Sken implements OnDestroy {
   private readonly router = inject(Router);
   private readonly naskenovany = inject(NaskenovanyTiket);
 
@@ -87,6 +87,11 @@ export class Sken {
       document.body.classList.remove('skenuje');
       this.chyba.set(potiz instanceof Error ? potiz.message : String(potiz));
     }
+  }
+
+  /** Systémové „zpět“ odejde z obrazovky i uprostřed skenu — kamera nesmí běžet dál. */
+  ngOnDestroy(): void {
+    if (this.skenuje()) void this.zastav();
   }
 
   protected async zastav(): Promise<void> {

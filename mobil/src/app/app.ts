@@ -1,6 +1,8 @@
 import { Component, computed, inject } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { toSignal } from '@angular/core/rxjs-interop';
+import { App as AplikaceCapacitor } from '@capacitor/app';
+import { Capacitor } from '@capacitor/core';
 import { filter, map } from 'rxjs';
 import { formatujDatum, formatujDatumCas, nazevHry } from './data/format.js';
 import type { StavHry } from './data/stahovani.js';
@@ -44,5 +46,14 @@ export class App {
     // Po otevření se výsledky rovnou stáhnou — uživatel chce vidět, jestli už kontrola
     // proběhla, ne hledat tlačítko. Bez sítě se nic nestane, jen zůstanou dosavadní.
     void this.stav.nacti().then(() => this.stav.stahniVysledky());
+
+    // Systémové „zpět“ vrací po historii obrazovek; na první obrazovce aplikaci zavře.
+    // Bez posluchače by Android zavřel aplikaci odkudkoliv.
+    if (Capacitor.isNativePlatform()) {
+      void AplikaceCapacitor.addListener('backButton', ({ canGoBack }) => {
+        if (canGoBack) history.back();
+        else void AplikaceCapacitor.exitApp();
+      });
+    }
   }
 }

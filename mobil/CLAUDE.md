@@ -143,6 +143,9 @@ jsou ověřené na rozlišitelnost pro barvoslepé; hnědá a zelená aplikace t
 
 Pluginy: `@capacitor-mlkit/barcode-scanning` a `@capacitor-mlkit/text-recognition`.
 
+`@capacitor/app` je tu jen kvůli systémovému „zpět“ (`app.ts`): bez posluchače `backButton`
+Android zavře aplikaci z kterékoliv obrazovky. Žádné oprávnění nepřidává.
+
 ## Sestavení pro Play
 
 Release build se podepisuje vlastním klíčem, když jsou v `~/.gradle/gradle.properties`

@@ -356,4 +356,25 @@ describe('Výsledky losování', () => {
     expect(nadpisy(f)).toHaveLength(25);
     expect([...f.nativeElement.querySelectorAll('button')].some((b: HTMLButtonElement) => b.textContent?.includes('Načíst'))).toBe(false);
   });
+
+  it('karta Správa má stahování a import, Přehled tahy', async () => {
+    const f = await obrazovka([EJ_2026_09_08]);
+    const text = () => (f.nativeElement as HTMLElement).textContent ?? '';
+    expect(text()).not.toContain('Importovat ze souboru');
+    await klikni(f, 'Správa');
+    expect(nadpisy(f)).toEqual([]);
+    expect(text()).toContain('Stáhnout výsledky');
+    expect(text()).toContain('Importovat ze souboru');
+    expect(text()).toContain(`Uložené výsledky do ${formatujDatum('2026-09-08')}`);
+    await klikni(f, 'Přehled');
+    expect(nadpisy(f)).toHaveLength(1);
+  });
+
+  it('bez tahů nabídne Přehled rovnou stažení', async () => {
+    const f = await obrazovka([]);
+    const stahni = vi.spyOn(TestBed.inject(Stav), 'stahniVysledky').mockResolvedValue({ uspech: true, zprava: '' });
+    expect((f.nativeElement as HTMLElement).textContent).toContain('Zatím nejsou stažené žádné výsledky.');
+    await klikni(f, 'Stáhnout výsledky');
+    expect(stahni).toHaveBeenCalledOnce();
+  });
 });

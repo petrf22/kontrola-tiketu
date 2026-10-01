@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Změněno
+- Výsledky losování mají dvě záložky: Přehled s vylosovanými čísly a výhrami a Správa se stahováním, stavem serveru a importem ze souboru (aplikace)
+
 ## [0.9.0] – 2026-10-01
 
 ### Přidáno

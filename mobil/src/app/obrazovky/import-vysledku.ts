@@ -2,48 +2,54 @@ import { Component, inject, signal } from '@angular/core';
 import { formatujDatum, formatujDatumCas } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { RouterLink } from '@angular/router';
+import { Tahy } from './tahy.js';
 
 @Component({
   selector: 'app-import-vysledku',
-  imports: [RouterLink],
+  imports: [RouterLink, Tahy],
   template: `
     <a class="zpet" routerLink="/dalsi">← Další</a>
     <h2>Výsledky losování</h2>
-    <p class="tlumene">{{ stav.stahuje() ? 'Probíhá aktualizace…' : stav.vysledkyDo() ? 'Uložené výsledky do ' + formatujDatum(stav.vysledkyDo()!) : 'Zatím nejsou stažené žádné výsledky.' }}</p>
-    <section>
+    <div class="stav">
+      <p class="tlumene">{{ stav.stahuje() ? 'Probíhá aktualizace…' : stav.vysledkyDo() ? 'Uložené výsledky do ' + formatujDatum(stav.vysledkyDo()!) : 'Zatím nejsou stažené žádné výsledky.' }}</p>
       <button type="button" class="stahnout" [disabled]="stav.stahuje()" (click)="stahni()">
         {{ stav.stahuje() ? 'Stahuji…' : 'Stáhnout výsledky' }}
       </button>
+    </div>
+    @if (stav.posledniStazeni(); as z) {
+      <p class="zprava" [class.chyba]="!z.uspech">{{ z.zprava }}</p>
+    }
 
-      @if (stav.posledniStazeni(); as z) {
-        <p class="zprava" [class.chyba]="!z.uspech">{{ z.zprava }}</p>
-      }
+    @if (stav.tahy().length > 0) { <app-tahy /> }
 
-      @if (stav.kontrolaServeru(); as k) {
-        <dl class="kontrola">
-          @if (k.eurojackpot; as ej) {
-            <dt>Eurojackpot</dt>
-            <dd>poslední tah {{ formatujDatum(ej.posledniTah) }}{{ ej.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
-          }
-          @if (k.sportka; as sp) {
-            <dt>Sportka</dt>
-            <dd>poslední tah {{ formatujDatum(sp.posledniTah) }}{{ sp.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
-          }
-          @if (k.euromiliony; as em) {
-            <dt>Euromiliony</dt>
-            <dd>poslední tah {{ formatujDatum(em.posledniTah) }}{{ em.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
-          }
-          @if (k.posledniDotaz) {
-            <dt>Server kontroloval</dt>
-            <dd>{{ formatujDatumCas(k.posledniDotaz) }}</dd>
-          }
-        </dl>
-      }
-
-      @if (stav.tahy().length > 0) {
-        <p class="souhrn">V aplikaci je {{ stav.tahy().length }} tahů, poslední z {{ formatujDatum(stav.vysledkyDo()!) }}.</p>
-      }
-    </section>
+    @if (stav.kontrolaServeru() || stav.tahy().length > 0) {
+      <details class="stav-serveru">
+        <summary>Stav serveru</summary>
+        @if (stav.kontrolaServeru(); as k) {
+          <dl class="kontrola">
+            @if (k.eurojackpot; as ej) {
+              <dt>Eurojackpot</dt>
+              <dd>poslední tah {{ formatujDatum(ej.posledniTah) }}{{ ej.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
+            }
+            @if (k.sportka; as sp) {
+              <dt>Sportka</dt>
+              <dd>poslední tah {{ formatujDatum(sp.posledniTah) }}{{ sp.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
+            }
+            @if (k.euromiliony; as em) {
+              <dt>Euromiliony</dt>
+              <dd>poslední tah {{ formatujDatum(em.posledniTah) }}{{ em.uplny ? '' : ' — tabulka výher zatím není' }}</dd>
+            }
+            @if (k.posledniDotaz) {
+              <dt>Server kontroloval</dt>
+              <dd>{{ formatujDatumCas(k.posledniDotaz) }}</dd>
+            }
+          </dl>
+        }
+        @if (stav.tahy().length > 0) {
+          <p class="souhrn">V aplikaci je {{ stav.tahy().length }} tahů, poslední z {{ formatujDatum(stav.vysledkyDo()!) }}.</p>
+        }
+      </details>
+    }
 
     <details class="vysvetleni">
       <summary>Soukromí při stahování</summary>
@@ -75,12 +81,14 @@ import { RouterLink } from '@angular/router';
     </details>
   `,
   styles: `
+    .stav { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; }
+    .stav p { margin: 0; }
     .stahnout { font-size: 1rem; padding: 0.6rem 1.1rem; }
     .kontrola { display: grid; grid-template-columns: auto 1fr; gap: 0.2rem 0.75rem; margin: 1rem 0; font-size: 0.9rem; }
     .kontrola dt { color: var(--barva-text-tlumeny); }
     .kontrola dd { margin: 0; }
     h2 { font-size: 1rem; margin: 1.75rem 0 0.5rem; }
-    .vysvetleni, .zaloha { font-size: 0.85rem; color: var(--barva-text-tlumeny); }
+    .stav-serveru, .vysvetleni, .zaloha { font-size: 0.85rem; color: var(--barva-text-tlumeny); }
     code { word-break: break-all; }
     .vyber { display: block; margin: 0.75rem 0; }
     .zprava { padding: 0.6rem 0.75rem; background: var(--barva-plocha); border-left: 3px solid var(--barva-ok); color: var(--barva-text); }

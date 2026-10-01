@@ -21,7 +21,7 @@ export class PridatTiket {}
   template: `
     <h2>Další</h2>
     <div class="nabidka">
-      <a routerLink="/import">Výsledky losování <small>Aktualizace výsledků a import ze souboru.</small></a>
+      <a routerLink="/import">Výsledky losování <small>Vylosovaná čísla a výhry, aktualizace a import ze souboru.</small></a>
       <a routerLink="/o-aplikaci">O aplikaci <small>Soukromí, verze a informace o aplikaci.</small></a>
     </div>
   `,

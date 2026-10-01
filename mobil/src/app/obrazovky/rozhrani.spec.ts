@@ -1,7 +1,10 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { souhrnBilance, type Tiket, type VysledekSlosovani } from '@kontrola-tiketu/jadro';
-import { EJ_2026_09_08 } from '../../../knihovny/jadro/test/fixtures/eurojackpot';
+import { souhrnBilance, type Tah, type Tiket, type VysledekSlosovani } from '@kontrola-tiketu/jadro';
+import { EJ_2026_09_04, EJ_2026_09_08 } from '../../../knihovny/jadro/test/fixtures/eurojackpot';
+import { SP_2026_09_06 } from '../../../knihovny/jadro/test/fixtures/sportka';
+import { EM_2026_09_08 } from '../../../knihovny/jadro/test/fixtures/euromiliony';
+import { ImportVysledku } from './import-vysledku';
 import { Detail } from './detail';
 import { Seznam } from './seznam';
 import { NovyTiket } from './novy-tiket';
@@ -307,5 +310,50 @@ describe('Správa tiketů', () => {
     pole.value = '47 14 27 34 1'; pole.dispatchEvent(new Event('input', { bubbles: true }));
     await klikni(f, 'Zkontrolovat tiket');
     expect(stav.tikety().find(t => t.id === '12345678901234567890')?.sloupce[0]?.cisla).toEqual([47, 14, 27, 34, 1]);
+  });
+});
+
+describe('Výsledky losování', () => {
+  const nadpisy = (f: ComponentFixture<ImportVysledku>) =>
+    [...(f.nativeElement as HTMLElement).querySelectorAll('.tah .hlavicka > span')].map(el => el.textContent?.trim());
+
+  async function obrazovka(tahy: readonly Tah[]) {
+    TestBed.configureTestingModule({ providers: [provideRouter([]), { provide: ULOZISTE, useClass: UlozisteVPameti }] });
+    TestBed.inject(Stav).tahy.set(tahy);
+    const f = TestBed.createComponent(ImportVysledku);
+    await f.whenStable();
+    return f;
+  }
+
+  it('ukáže nejnovější tahy, filtr hry a data je zúží', async () => {
+    const f = await obrazovka([EJ_2026_09_04, EJ_2026_09_08, SP_2026_09_06, EM_2026_09_08]);
+    expect(nadpisy(f)).toEqual([
+      `Eurojackpot · úterý ${formatujDatum('2026-09-08')}`,
+      `Euromiliony · úterý ${formatujDatum('2026-09-08')}`,
+      `Sportka · neděle ${formatujDatum('2026-09-06')}`,
+      `Eurojackpot · pátek ${formatujDatum('2026-09-04')}`,
+    ]);
+    expect(f.nativeElement.querySelector('.tah summary').textContent).toContain('Extra 6');
+
+    await klikni(f, 'Eurojackpot');
+    expect(nadpisy(f)).toHaveLength(2);
+    const datum = f.nativeElement.querySelector('input[type=date]') as HTMLInputElement;
+    datum.value = '2026-09-07'; datum.dispatchEvent(new Event('change'));
+    await f.whenStable();
+    expect(nadpisy(f)).toEqual([`Eurojackpot · pátek ${formatujDatum('2026-09-04')}`]);
+    await klikni(f, 'Nejnovější');
+    expect(nadpisy(f)).toHaveLength(2);
+  });
+
+  it('po rozbalení je tabulka výher, starší tahy přibývají po dvaceti', async () => {
+    const tahy = Array.from({ length: 25 }, (_, i) => ({ ...EJ_2026_09_08, datum: `2026-0${i < 9 ? 1 : 2}-${String((i % 9) + 10)}` }));
+    const f = await obrazovka(tahy);
+    expect(nadpisy(f)).toHaveLength(20);
+    const tabulka = f.nativeElement.querySelector('.tah table') as HTMLTableElement;
+    expect(tabulka.caption?.textContent).toBe('Eurojackpot');
+    expect(tabulka.tBodies[0]!.rows).toHaveLength(EJ_2026_09_08.poradi.length);
+    await klikni(f, 'Načíst dalších 20');
+    expect(nadpisy(f)).toHaveLength(25);
+    expect([...f.nativeElement.querySelectorAll('button')].some((b: HTMLButtonElement) => b.textContent?.includes('Načíst'))).toBe(false);
   });
 });

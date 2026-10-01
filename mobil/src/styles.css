@@ -83,6 +83,10 @@ input { max-width: 100%; }
 button:disabled { opacity: .6; cursor: default; }
 :focus-visible { outline: 3px solid var(--barva-duraz); outline-offset: 3px; }
 .tlumene { color: var(--barva-text-tlumeny); }
+/* Vylosovaná a vsazená čísla jako dlaždice — detail tiketu i výsledky losování. */
+.kulicky { display: flex; gap: .25rem; }
+.kulicky.druhe-osudi { padding-left: .5rem; border-left: 1px solid var(--barva-ram); }
+.kulicka { min-width: 1.9rem; padding: .15rem .3rem; border-radius: 4px; background: var(--barva-plocha); text-align: center; font-variant-numeric: tabular-nums; font-size: .9rem; }
 .zpet { display: inline-flex; align-items: center; }
 .hlavni { background: var(--barva-duraz); color: var(--barva-pozadi); }
 .nabidka { display: grid; gap: .75rem; }

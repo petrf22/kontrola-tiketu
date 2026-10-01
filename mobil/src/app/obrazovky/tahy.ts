@@ -39,8 +39,8 @@ const POCET = new Intl.NumberFormat('cs-CZ');
           @for (o of z.osudi; track $index) {
             <span class="osudi">
               @if (o.nadpis) { <span class="nadpis">{{ o.nadpis }}</span> }
-              <span class="cisla">@for (c of o.cisla; track $index) { <span class="cislo">{{ c }}</span> }</span>
-              <span class="cisla euro" [attr.aria-label]="o.nazevDruhych">@for (c of o.druhe; track $index) { <span class="cislo">{{ c }}</span> }</span>
+              <span class="kulicky">@for (c of o.cisla; track $index) { <span class="kulicka">{{ c }}</span> }</span>
+              <span class="kulicky druhe-osudi" [attr.aria-label]="o.nazevDruhych">@for (c of o.druhe; track $index) { <span class="kulicka">{{ c }}</span> }</span>
             </span>
           }
           @if (z.doplnkova; as d) {
@@ -103,13 +103,7 @@ const POCET = new Intl.NumberFormat('cs-CZ');
     .nadpis { min-width: 3rem; }
     .doplnkova { display: block; margin-top: 0.4rem; }
     .doplnkova strong { color: var(--barva-text); font-variant-numeric: tabular-nums; letter-spacing: 0.05em; }
-    .cisla { display: flex; flex-wrap: wrap; gap: 0.25rem; }
-    .cisla.euro { padding-left: 0.5rem; border-left: 1px solid var(--barva-ram); }
-    .cislo {
-      min-width: 1.9rem; padding: 0.15rem 0.3rem; border-radius: 4px;
-      background: var(--barva-plocha); text-align: center;
-      font-variant-numeric: tabular-nums; font-size: 0.9rem;
-    }
+    .kulicky { flex-wrap: wrap; }
     .poznamka { margin: 0.4rem 0; }
     table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; }
     caption { text-align: left; font-weight: 600; padding-bottom: 0.25rem; }

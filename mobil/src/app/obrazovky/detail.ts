@@ -205,12 +205,12 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             @for (sloupec of t.sloupce; track $index) {
               <li>
                 <span class="sloupec-cislo" [attr.aria-label]="'Sloupec ' + ($index + 1)">{{ $index + 1 }}</span>
-                <span class="cisla">
-                  @for (c of sloupec.cisla; track $index) { <span class="cislo">{{ c }}</span> }
+                <span class="kulicky">
+                  @for (c of sloupec.cisla; track $index) { <span class="kulicka">{{ c }}</span> }
                 </span>
                 @if (druheOsudi(sloupec).length > 0) {
-                  <span class="cisla euro">
-                    @for (c of druheOsudi(sloupec); track $index) { <span class="cislo">{{ c }}</span> }
+                  <span class="kulicky druhe-osudi">
+                    @for (c of druheOsudi(sloupec); track $index) { <span class="kulicka">{{ c }}</span> }
                   </span>
                 }
               </li>
@@ -257,15 +257,15 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           <ol class="sloupce">
             @for (radek of sloupceKZobrazeni(slosovani); track radek.index) {
               <li>
-                <span class="cisla">
+                <span class="kulicky">
                   @for (c of radek.cisla; track $index) {
-                    <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
+                    <span class="kulicka" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
                   }
                 </span>
                 @if (radek.druheOsudi.length > 0) {
-                  <span class="cisla euro">
+                  <span class="kulicky druhe-osudi">
                     @for (c of radek.druheOsudi; track $index) {
-                      <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
+                      <span class="kulicka" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
                     }
                   </span>
                 }
@@ -277,9 +277,9 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           @if (doplnkovaKZobrazeni(slosovani); as d) {
             <div class="doplnkova">
               <span class="nazev">{{ d.nazev }}</span>
-              <span class="cisla">
+              <span class="kulicky">
                 @for (c of d.tvoje; track $index) {
-                  <span class="cislo" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
+                  <span class="kulicka" [class.shoda]="c.shoda">{{ c.hodnota }}</span>
                 }
               </span>
               @if (d.vylosovane) {
@@ -440,17 +440,10 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem;
       padding: 0.3rem 0; border-bottom: 1px solid var(--barva-ram);
     }
-    .cisla { display: flex; gap: 0.25rem; }
-    .cisla.euro { padding-left: 0.5rem; border-left: 1px solid var(--barva-ram); }
-    .cislo {
-      min-width: 1.9rem; padding: 0.15rem 0.3rem; border-radius: 4px;
-      background: var(--barva-plocha); text-align: center;
-      font-variant-numeric: tabular-nums; font-size: 0.9rem;
-    }
-    .cislo.shoda { background: var(--barva-duraz); color: var(--barva-pozadi); font-weight: 600; }
+    .kulicka.shoda { background: var(--barva-duraz); color: var(--barva-pozadi); font-weight: 600; }
     /* Číslo sloupce nesmí vypadat jako vsazené číslo: menší, tlumené, bez dlaždice, za čarou. */
     .vsazene li { flex-wrap: nowrap; align-items: flex-start; }
-    .vsazene .cisla { flex-wrap: wrap; }
+    .vsazene .kulicky { flex-wrap: wrap; }
     .sloupec-cislo {
       flex: none; min-width: 1.4rem; padding: 0.2rem 0.5rem 0.2rem 0;
       border-right: 1px solid var(--barva-ram);

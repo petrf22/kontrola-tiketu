@@ -41,6 +41,7 @@ export interface Osudi {
   /** Tak, jak padala. */
   readonly vPoradiLosovani: readonly number[];
   readonly druhe: readonly number[];
+  readonly druheVPoradiLosovani: readonly number[];
   /** `euročísla`, `druhé osudí`, `dodatkové`. */
   readonly nazevDruhych: string;
 }
@@ -77,7 +78,7 @@ export interface ZobrazenyTah {
 const vzestupne = (cisla: readonly number[]) => [...cisla].sort((a, b) => a - b);
 
 function osudi(nadpis: string | null, cisla: readonly number[], druhe: readonly number[], nazevDruhych: string): Osudi {
-  return { nadpis, cisla: vzestupne(cisla), vPoradiLosovani: cisla, druhe: vzestupne(druhe), nazevDruhych };
+  return { nadpis, cisla: vzestupne(cisla), vPoradiLosovani: cisla, druhe: vzestupne(druhe), druheVPoradiLosovani: druhe, nazevDruhych };
 }
 
 function radky(poradi: readonly Poradi[]): RadekVyher[] {

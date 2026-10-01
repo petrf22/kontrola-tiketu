@@ -39,7 +39,7 @@ describe('výběr tahů k prohlížení', () => {
 describe('zobrazení tahu', () => {
   it('Eurojackpot: čísla vzestupně i v pořadí losování, tabulka z listiny a Extra 6 ze sazeb', () => {
     const z = zobrazTah(tah('eurojackpot', '2026-09-08'), sazbyExtra6, sazbyEurosance);
-    expect(z.osudi).toEqual([{ nadpis: null, cisla: [14, 27, 34, 36, 47], vPoradiLosovani: [47, 14, 27, 34, 36], druhe: [3, 4], nazevDruhych: 'euročísla' }]);
+    expect(z.osudi).toEqual([{ nadpis: null, cisla: [14, 27, 34, 36, 47], vPoradiLosovani: [47, 14, 27, 34, 36], druhe: [3, 4], druheVPoradiLosovani: [4, 3], nazevDruhych: 'euročísla' }]);
     expect(z.doplnkova).toEqual({ nazev: 'Extra 6', cislice: '912799' });
     expect(z.jackpot).toEqual({ nazev: 'Jackpot', castkaKc: 968000000 });
 
@@ -79,7 +79,7 @@ describe('zobrazení tahu', () => {
 
   it('Euromiliony: druhé osudí a Eurošance z pevných částek', () => {
     const z = zobrazTah(tah('euromiliony', '2026-09-01'), sazbyExtra6, sazbyEurosance);
-    expect(z.osudi[0]).toEqual({ nadpis: null, cisla: [5, 16, 17, 21, 28, 30, 33], vPoradiLosovani: [17, 5, 28, 21, 16, 30, 33], druhe: [4], nazevDruhych: 'druhé osudí' });
+    expect(z.osudi[0]).toEqual({ nadpis: null, cisla: [5, 16, 17, 21, 28, 30, 33], vPoradiLosovani: [17, 5, 28, 21, 16, 30, 33], druhe: [4], druheVPoradiLosovani: [4], nazevDruhych: 'druhé osudí' });
     expect(z.jackpot).toEqual({ nazev: 'Jackpot', castkaKc: 89200000 });
     expect(z.tabulky[0]!.radky[3]).toEqual({ popis: '6', vzor: null, pocetVyher: 4, castkaKc: 6141 });
     expect(z.tabulky[1]!.radky.map(r => [r.popis, r.vzor, r.castkaKc])).toEqual([

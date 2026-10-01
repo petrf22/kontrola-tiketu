@@ -50,7 +50,7 @@ const POCET = new Intl.NumberFormat('cs-CZ');
         </summary>
 
         @for (o of z.osudi; track $index) {
-          <p class="poznamka">{{ o.nadpis ? o.nadpis + ': ' : '' }}V pořadí losování {{ o.vPoradiLosovani.join(', ') }} · {{ o.nazevDruhych }} {{ o.druhe.join(', ') }}</p>
+          <p class="poznamka">{{ o.nadpis ? o.nadpis + ': ' : '' }}V pořadí losování {{ o.vPoradiLosovani.join(', ') }} · {{ o.nazevDruhych }} {{ o.druheVPoradiLosovani.join(', ') }}</p>
         }
         <p class="poznamka">
           Vsazeno {{ formatujKc(z.vsazenoKc) }}@if (z.naVyhryKc !== null) { · na výhry {{ formatujKc(z.naVyhryKc) }} }
@@ -91,7 +91,11 @@ const POCET = new Intl.NumberFormat('cs-CZ');
   styles: `
     .datum { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin: 0.75rem 0 1rem; }
     .datum label { display: flex; align-items: center; gap: 0.75rem; }
-    .tah summary { font-weight: 400; }
+    /* Obsah summary jsou bloky, výchozí šipka by zůstala na samostatném řádku. */
+    .tah > summary { font-weight: 400; list-style: none; }
+    .tah > summary::-webkit-details-marker { display: none; }
+    .hlavicka > span::before { content: '▸ '; }
+    .tah[open] .hlavicka > span::before { content: '▾ '; }
     .hlavicka { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 1rem; font-weight: 600; }
     .hlavicka small { font-weight: 400; color: var(--barva-text-tlumeny); }
     .osudi { display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.5rem; margin-top: 0.4rem; }

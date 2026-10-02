@@ -8,8 +8,8 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 581 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
-npm run test:angular -- --watch=false   # 34 testů obrazovek (seznam, detail, formulář, výsledky)
+npm test             # vitest, 584 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm run test:angular -- --watch=false   # 35 testů obrazovek (seznam, detail, formulář, výsledky)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -31,7 +31,8 @@ knihovny/ocr/src/      radky.ts (párování podle rámečků), cisla.ts, tiket.
 src/app/data/          import.ts, stahovani.ts, uloziste.ts, stav.ts, tokeny.ts, kontrola.ts,
                        zobrazeniTahu.ts (prohlížení vylosovaných čísel a výher)
 src/app/obrazovky/     seznam.ts, prehled.ts + kolac.ts, novy-tiket.ts, sken.ts, sken-cisel.ts,
-                       detail.ts, import-vysledku.ts + tahy.ts, o-aplikaci.ts
+                       detail.ts, import-vysledku.ts + tahy.ts, vyhry-tahu.ts (tabulky výher
+                       sdílené Výsledky losování a detailem), o-aplikaci.ts
 test/                  testy aplikace; fixtures/ má ukázkový balík od backendu
 android/               nativní projekt, zatvrzený manifest
 docs/                  vydani.md (podpis, Play, postup vydání), ocr-a-carovy-kod.md,

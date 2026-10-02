@@ -268,6 +268,19 @@ describe('Správa tiketů', () => {
     expect(f.nativeElement.querySelectorAll('.historie-radek')).toHaveLength(20);
   });
 
+  it('vsazená čísla jsou rozbalená, tabulka výher u slosování až po kliknutí', async () => {
+    const f = await detail();
+    expect((f.nativeElement.querySelector('.obsah-tiketu') as HTMLDetailsElement).open).toBe(true);
+    const vyhry = f.nativeElement.querySelector('.historie-radek .tabulka-vyher') as HTMLDetailsElement;
+    expect(vyhry.open).toBe(false);
+    expect(vyhry.querySelector('summary')!.textContent!.trim()).toBe('Tabulka výher');
+    const vylosovane = [...vyhry.querySelectorAll('.osudi .kulicka')].map(e => Number(e.textContent));
+    expect(vylosovane).toEqual([...EJ_2026_09_08.cisla].sort((a, b) => a - b).concat([...EJ_2026_09_08.eurocisla].sort((a, b) => a - b)));
+    const tabulka = vyhry.querySelector('table') as HTMLTableElement;
+    expect(tabulka.caption?.textContent).toBe('Eurojackpot');
+    expect(tabulka.tBodies[0]!.rows).toHaveLength(EJ_2026_09_08.poradi.length);
+  });
+
   it('mazání vyžaduje otevření a potvrzení dialogu', async () => {
     const f = await detail();
     const dialog = f.nativeElement.querySelector('dialog') as HTMLDialogElement;

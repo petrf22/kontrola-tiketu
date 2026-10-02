@@ -37,6 +37,8 @@ import {
 } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { NazevTiketu } from './nazev-tiketu.js';
+import { VyhryTahu } from './vyhry-tahu.js';
+import { zobrazTah, type ZobrazenyTah } from '../data/zobrazeniTahu.js';
 import { cekaniNaSlosovani, historieTiketu, neuplneSlosovani, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
@@ -67,7 +69,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
 
 @Component({
   selector: 'app-detail',
-  imports: [NgTemplateOutlet, RouterLink, NazevTiketu],
+  imports: [NgTemplateOutlet, RouterLink, NazevTiketu, VyhryTahu],
   template: `
     @if (tiket(); as t) {
       <div class="akce-tiketu">
@@ -199,7 +201,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           }
         }
 
-        <details class="obsah-tiketu">
+        <details class="obsah-tiketu" open>
           <summary>Vsazená čísla · {{ pocetSloupcu(t.sloupce.length) }}</summary>
           <ol class="sloupce vsazene">
             @for (sloupec of t.sloupce; track $index) {
@@ -307,6 +309,13 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
                 </li>
               }
             </ul>
+          }
+
+          @if (tahySlosovani().get(slosovani.datum); as z) {
+            <details class="tabulka-vyher">
+              <summary>Tabulka výher</summary>
+              <app-vyhry-tahu [tah]="z" [cisla]="true" />
+            </details>
           }
         </section>
       </ng-template>
@@ -464,6 +473,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       padding: 0.35rem 0; border-bottom: 1px solid var(--barva-ram);
     }
     .castka { font-variant-numeric: tabular-nums; }
+    .tabulka-vyher { margin-top: .75rem; }
     .vyhrada { grid-column: 1 / -1; color: var(--barva-text-tlumeny); font-size: 0.75rem; }
     .poznamka { font-size: 0.8rem; color: var(--barva-text-tlumeny); }
     .serie { font-family: ui-monospace, monospace; letter-spacing: 0.04em; }
@@ -549,6 +559,16 @@ export class Detail {
   protected readonly historie = computed(() => historieTiketu(this.vysledek()?.slosovani ?? [], this.filtrHistorie()));
   protected readonly zobrazenaSlosovani = computed(() => this.historie().slice(0, this.limitHistorie()));
   protected readonly dalsiStrana = (n: number) => n + 20;
+  /** Vylosovaná čísla a tabulky výher jen pro zobrazená slosování, podle data. */
+  protected readonly tahySlosovani = computed(() => {
+    const hra = this.tiket()?.hra;
+    const tahy = new Map<string, ZobrazenyTah>();
+    for (const s of this.zobrazenaSlosovani()) {
+      const tah = this.stav.tahy().find((t) => t.datum === s.datum && t.hra === hra);
+      if (tah !== undefined) tahy.set(s.datum, zobrazTah(tah, this.stav.sazby(), this.stav.sazbyEurosance()));
+    }
+    return tahy;
+  });
   protected readonly neuplne = neuplneSlosovani;
   protected readonly druheOsudi = druheOsudiSloupce;
   protected zmenFiltr(filtr: FiltrHistorie): void {

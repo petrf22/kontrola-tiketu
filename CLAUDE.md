@@ -37,8 +37,8 @@ Ověřené příkazy:
 
 ```bash
 cd backend && composer test && composer phpstan      # PHPUnit 96 testů, PHPStan level max
-cd mobil && npm test && npm run typecheck            # vitest 581 testů, tsc strict
-cd mobil && npm run test:angular -- --watch=false    # obrazovky v prohlížeči, 34 testů
+cd mobil && npm test && npm run typecheck            # vitest 584 testů, tsc strict
+cd mobil && npm run test:angular -- --watch=false    # obrazovky v prohlížeči, 35 testů
 node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 25 testů
 node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí projít bez změny souborů
 ```

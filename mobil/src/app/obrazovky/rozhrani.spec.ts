@@ -180,7 +180,7 @@ describe('Správa tiketů', () => {
     expect(detail(tiket.id)).toBe(`${formatujDatum('2026-09-08')} · 1 sl.`);
     await stav.ulozTiket({ ...tiket, id: 'bez-konce', vlozeno: '2026-09-06T12:00:00Z', kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null } });
     await f.whenStable();
-    expect(detail('bez-konce')).toBe(`${formatujDatum('2026-09-08')} + … · 1 sl.`);
+    expect(detail('bez-konce')).toBe(`${formatujDatum('2026-09-08')} – … · 1 sl.`);
     for (const id of [tiket.id, 'papirovy']) {
       expect(radek(id).querySelector('.poznamka')).toBeNull();
       expect(radek(id).textContent).not.toContain('Vyhodnoceno');

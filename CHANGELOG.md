@@ -19,7 +19,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ## [Nezveřejněno]
 
 ### Změněno
-- V seznamu tiketů je termín bez „od“ a „do“: jedno slosování jen datem, víc slosování rozsahem „8. 9. 2026 – 15. 9. 2026“ a virtuální tiket bez konce „8. 9. 2026 + …“ (aplikace)
+- V seznamu tiketů je termín bez „od“ a „do“: jedno slosování jen datem, víc slosování rozsahem „8. 9. 2026 – 15. 9. 2026“ a virtuální tiket bez konce „8. 9. 2026 – …“ (aplikace)
 - V detailu tiketu jsou vsazená čísla rozbalená hned po otevření (aplikace)
 
 ### Přidáno

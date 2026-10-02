@@ -93,6 +93,6 @@ describe('termín tiketu v seznamu', () => {
     const virtualni = (od: string, doData: string | null) => ({ ...tiket, kontrola: { od, do: doData, cenaZaSlosovaniKc: null } });
     expect(popisTerminu(virtualni('2026-09-01', '2026-09-01'), [])).toBe(d('2026-09-01'));
     expect(popisTerminu(virtualni('2026-09-01', '2026-09-30'), [])).toBe(`${d('2026-09-01')} – ${d('2026-09-30')}`);
-    expect(popisTerminu(virtualni('2026-09-01', null), [])).toBe(`${d('2026-09-01')} + …`);
+    expect(popisTerminu(virtualni('2026-09-01', null), [])).toBe(`${d('2026-09-01')} – …`);
   });
 });

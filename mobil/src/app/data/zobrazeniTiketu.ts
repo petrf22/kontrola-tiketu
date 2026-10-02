@@ -40,7 +40,7 @@ export function cekaniNaSlosovani(tiket: Tiket, vysledek: VysledekTiketu, dnes: 
 
 /**
  * Termín tiketu pro seznam: jedno slosování jen datem, víc slosování rozsahem `od – do`,
- * virtuální tiket bez konce `od + …`. Konec papírového tiketu se dopočítá z tahů a rozvrhu,
+ * virtuální tiket bez konce `od – …`. Konec papírového tiketu se dopočítá z tahů a rozvrhu,
  * takže sedí i u slosování, která teprve přijdou.
  */
 export function popisTerminu(tiket: Tiket, tahy: readonly Tah[]): string {
@@ -49,7 +49,7 @@ export function popisTerminu(tiket: Tiket, tahy: readonly Tah[]): string {
   const doData = k !== undefined ? k.do
     : tiket.slosovani.pocet <= 1 ? od
     : datumPoslednihoSlosovani(tiket.hra, tiket.slosovani, tahy);
-  if (doData === null) return `${formatujDatum(od)} + …`;
+  if (doData === null) return `${formatujDatum(od)} – …`;
   return doData === od ? formatujDatum(od) : `${formatujDatum(od)} – ${formatujDatum(doData)}`;
 }
 

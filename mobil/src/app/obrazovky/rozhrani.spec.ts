@@ -268,9 +268,9 @@ describe('Správa tiketů', () => {
     expect(f.nativeElement.querySelectorAll('.historie-radek')).toHaveLength(20);
   });
 
-  it('vsazená čísla jsou rozbalená, tabulka výher u slosování až po kliknutí', async () => {
+  it('vsazená čísla i tabulka výher u slosování se ukážou až po kliknutí', async () => {
     const f = await detail();
-    expect((f.nativeElement.querySelector('.obsah-tiketu') as HTMLDetailsElement).open).toBe(true);
+    expect((f.nativeElement.querySelector('.obsah-tiketu') as HTMLDetailsElement).open).toBe(false);
     const vyhry = f.nativeElement.querySelector('.historie-radek .tabulka-vyher') as HTMLDetailsElement;
     expect(vyhry.open).toBe(false);
     expect(vyhry.querySelector('summary')!.textContent!.trim()).toBe('Tabulka výher');

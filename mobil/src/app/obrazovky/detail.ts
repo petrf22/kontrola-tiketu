@@ -201,7 +201,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           }
         }
 
-        <details class="obsah-tiketu" open>
+        <details class="obsah-tiketu">
           <summary>Vsazená čísla · {{ pocetSloupcu(t.sloupce.length) }}</summary>
           <ol class="sloupce vsazene">
             @for (sloupec of t.sloupce; track $index) {

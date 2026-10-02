@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { vyhodnotTiket, type Tiket } from '@kontrola-tiketu/jadro';
 import { EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
-import { dnesniDatum } from '../src/app/data/format.js';
-import { cekaniNaSlosovani, historieTiketu, nactenyFiltrSeznamu, neuplneSlosovani, sUpravenouCenou, VYCHOZI_FILTR_SEZNAMU } from '../src/app/data/zobrazeniTiketu.js';
+import { dnesniDatum, formatujDatum } from '../src/app/data/format.js';
+import { cekaniNaSlosovani, historieTiketu, nactenyFiltrSeznamu, neuplneSlosovani, popisTerminu, sUpravenouCenou, VYCHOZI_FILTR_SEZNAMU } from '../src/app/data/zobrazeniTiketu.js';
 
 const tiket: Tiket = {
   id: 'test', hra: 'eurojackpot', sloupce: [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 1], eurocisla: [4, 1] }],
@@ -75,5 +75,24 @@ describe('uložený filtr seznamu', () => {
   });
   it('chybějící položka dostane výchozí hodnotu, ostatní zůstanou', () => {
     expect(nactenyFiltrSeznamu({ typ: 'papirove' })).toEqual({ ...VYCHOZI_FILTR_SEZNAMU, typ: 'papirove' });
+  });
+});
+
+describe('termín tiketu v seznamu', () => {
+  const d = formatujDatum;
+  it('jedno slosování jen datem', () => {
+    expect(popisTerminu(tiket, [])).toBe(d('2026-09-08'));
+  });
+  it('papír na víc slosování dopočítá konec z rozvrhu i ze známých tahů', () => {
+    // Eurojackpot losuje v úterý a v pátek: 8., 11. a 15. 9.
+    const tri = { ...tiket, slosovani: { ...tiket.slosovani, pocet: 3 } };
+    expect(popisTerminu(tri, [])).toBe(`${d('2026-09-08')} – ${d('2026-09-15')}`);
+    expect(popisTerminu(tri, [EJ_2026_09_08])).toBe(`${d('2026-09-08')} – ${d('2026-09-15')}`);
+  });
+  it('virtuální tiket: stejný den, rozsah a bez konce', () => {
+    const virtualni = (od: string, doData: string | null) => ({ ...tiket, kontrola: { od, do: doData, cenaZaSlosovaniKc: null } });
+    expect(popisTerminu(virtualni('2026-09-01', '2026-09-01'), [])).toBe(d('2026-09-01'));
+    expect(popisTerminu(virtualni('2026-09-01', '2026-09-30'), [])).toBe(`${d('2026-09-01')} – ${d('2026-09-30')}`);
+    expect(popisTerminu(virtualni('2026-09-01', null), [])).toBe(`${d('2026-09-01')} + …`);
   });
 });

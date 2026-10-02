@@ -3,12 +3,13 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { dnesniDatum, formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
-import { cekaniNaSlosovani, type Cekani, type FiltrSeznamu } from '../data/zobrazeniTiketu.js';
+import { cekaniNaSlosovani, popisTerminu, type Cekani, type FiltrSeznamu } from '../data/zobrazeniTiketu.js';
 import { FiltrNazvu } from './filtr-nazvu.js';
 import type { Tiket } from '@kontrola-tiketu/jadro';
 
 interface RadekSeznamu {
   readonly tiket: Tiket;
+  readonly termin: string;
   readonly castkaKc: number;
   /** Všechna proběhlá slosování jsou spočítaná; nevadí, že tiket běží dál. */
   readonly dosudJisty: boolean;
@@ -70,13 +71,8 @@ interface RadekSeznamu {
                 </span>
               }
               <span class="detail">
-                @if (radek.tiket.kontrola; as k) {
-                  od {{ formatujDatum(k.od) }}
-                  &middot; {{ k.do === null ? 'bez konce' : 'do ' + formatujDatum(k.do) }}
-                } @else {
-                  od {{ formatujDatum(radek.tiket.slosovani.prvni) }}
-                  &middot; {{ radek.tiket.slosovani.pocet }}&nbsp;slos.
-                }
+                {{ radek.termin }}
+                @if (!radek.tiket.kontrola) { &middot; {{ radek.tiket.slosovani.pocet }}&nbsp;slos. }
                 &middot; {{ radek.tiket.sloupce.length }}&nbsp;sl.
               </span>
               <!-- Úplně vyhodnocený tiket poznámku nemá: hlásí se jen to, co vyžaduje pozornost. -->
@@ -190,6 +186,7 @@ export class Seznam {
       const vysledek = this.stav.vysledky().get(tiket.id) ?? this.stav.vyhodnot(tiket);
       return {
         tiket,
+        termin: popisTerminu(tiket, this.stav.tahy()),
         castkaKc: vysledek.celkemKc,
         dosudJisty: vysledek.chybejicichSlosovani === 0 && vysledek.slosovani.every(s => s.nejistychVyher === 0),
         chybi: vysledek.chybejicichSlosovani,

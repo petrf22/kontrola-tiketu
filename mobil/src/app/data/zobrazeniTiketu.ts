@@ -1,4 +1,5 @@
-import type { Datum, Tiket, VysledekSlosovani, VysledekTiketu } from '@kontrola-tiketu/jadro';
+import { datumPoslednihoSlosovani, type Datum, type Tah, type Tiket, type VysledekSlosovani, type VysledekTiketu } from '@kontrola-tiketu/jadro';
+import { formatujDatum } from './format.js';
 
 export type FiltrHistorie = 'vsechna' | 'vyherni' | 'neuplna';
 export function neuplneSlosovani(s: VysledekSlosovani): boolean {
@@ -35,6 +36,21 @@ export function cekaniNaSlosovani(tiket: Tiket, vysledek: VysledekTiketu, dnes: 
   if (vysledek.slosovani.length > 0) return null;
   const od = tiket.kontrola?.od ?? tiket.slosovani.prvni;
   return { duvod: od >= dnes ? 'pred-slosovanim' : 'chybi-vysledky', od };
+}
+
+/**
+ * Termín tiketu pro seznam: jedno slosování jen datem, víc slosování rozsahem `od – do`,
+ * virtuální tiket bez konce `od + …`. Konec papírového tiketu se dopočítá z tahů a rozvrhu,
+ * takže sedí i u slosování, která teprve přijdou.
+ */
+export function popisTerminu(tiket: Tiket, tahy: readonly Tah[]): string {
+  const k = tiket.kontrola;
+  const od = k?.od ?? tiket.slosovani.prvni;
+  const doData = k !== undefined ? k.do
+    : tiket.slosovani.pocet <= 1 ? od
+    : datumPoslednihoSlosovani(tiket.hra, tiket.slosovani, tahy);
+  if (doData === null) return `${formatujDatum(od)} + …`;
+  return doData === od ? formatujDatum(od) : `${formatujDatum(od)} – ${formatujDatum(doData)}`;
 }
 
 /**

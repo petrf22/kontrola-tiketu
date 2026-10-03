@@ -24,6 +24,7 @@ import {
   type Papir,
 } from '../data/kontrola.js';
 import {
+  dnesniDatum,
   formatujDatum,
   formatujKc,
   HRY,
@@ -37,6 +38,7 @@ import {
   popisRozsahuKontroly,
   type PoleSloupce,
 } from '../data/format.js';
+import { DocasnyTiket } from '../data/docasnyTiket.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { Stav } from '../data/stav.js';
 import { NazevTiketu } from './nazev-tiketu.js';
@@ -123,7 +125,9 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
     <a class="zpet" routerLink="/pridat">← Přidat tiket</a>
     <h2>{{ rozpoznanoZeSnimku ? 'Potvrdit údaje z fotky' : 'Zadat tiket' }}</h2>
     <form (submit)="uloz($event)" novalidate>
-      <app-nazev-tiketu [hodnota]="nazevPole()" (zmena)="nazev.set($event)" />
+      @if (!jenKontrola()) {
+        <app-nazev-tiketu [hodnota]="nazevPole()" (zmena)="nazev.set($event)" />
+      }
       <fieldset>
         <legend>Hra</legend>
         @for (h of hry; track h) {
@@ -288,7 +292,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         <p class="napoveda">Spočítáno podle ceníku: {{ popisRozpisuCeny(hra(), rozpis) }}.</p>
       }
 
-      <details [open]="virtualni()">
+      <details [open]="virtualni() || jenKontrola()">
         <summary>Rozsah kontroly{{ virtualni() ? ' · virtuální tiket' : '' }}</summary>
       <fieldset class="rozsah">
         <legend>Rozsah kontroly</legend>
@@ -324,7 +328,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
             Tiket bude <strong>virtuální</strong> — kontroluje se {{ popisRozsahuKontroly({ od: odKontroly(), do: doKontroly() }) }},
             podle vybraných dnů slosování, ne podle toho, na kolik slosování platí papír.
             @if (doKontroly() === null) {
-              S každým dalším staženým losováním se zkontroluje znovu.
+              {{ jenKontrola() ? 'Zkontroluje se do posledního staženého losování.' : 'S každým dalším staženým losováním se zkontroluje znovu.' }}
             }
             Stažené výsledky zatím pokrývají {{ pocetSlosovani(pokryto()) }}.
             @if (cenaZaSlosovaniKc() !== null) {
@@ -338,15 +342,19 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
           </p>
         } @else {
           <p class="napoveda">
-            Předvyplněno podle tiketu. Změň začátek, nebo smaž konec, a tiket se bude kontrolovat
-            i na další slosování — hodí se, když sázíš pořád stejná čísla.
+            @if (jenKontrola()) {
+              Předvyplněno podle tiketu. Změň Od a Do a čísla se zkontrolují za celé období.
+            } @else {
+              Předvyplněno podle tiketu. Změň začátek, nebo smaž konec, a tiket se bude kontrolovat
+              i na další slosování — hodí se, když sázíš pořád stejná čísla.
+            }
           </p>
         }
       </fieldset>
 
       </details>
 
-      @if (prekryv().length > 0) {
+      @if (!jenKontrola() && prekryv().length > 0) {
         <p class="upozorneni">
           Stejnou sázku už má uložený tiket na {{ pocetSlosovani(prekryv().length) }}
           ({{ prekryv().map(formatujDatum).join(', ') }}). Výhry i vsazené částky těch slosování
@@ -358,11 +366,57 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         Tlačítko se jmenuje podle toho, proč ho uživatel mačká, ne podle toho, co dělá uvnitř.
         Uložení je vedlejší efekt, důvod je zjistit, jestli tiket vyhrál.
       -->
+      <!--
+        Cizí tiket jde zkontrolovat, aniž by se uložil. Výchozí je uložení — tak aplikace
+        slouží nejčastěji a tiket se pak zkontroluje i po dalších losováních.
+      -->
+      <fieldset>
+        <legend>Po kontrole</legend>
+        <label><input type="radio" name="ulozeni" [checked]="!jenKontrola()" (change)="jenKontrola.set(false)" />
+          Uložit mezi mé tikety</label>
+        <label><input type="radio" name="ulozeni" [checked]="jenKontrola()" (change)="jenKontrola.set(true)" />
+          Pouze kontrola bez uložení</label>
+      </fieldset>
+
+      @if (jenKontrola() && stavKontroly(); as k) {
+        @switch (k.druh) {
+          @case ('neslosovano') {
+            <p class="upozorneni nelze-zkontrolovat" tabindex="-1">
+              Tiket ještě nebyl slosován ({{ virtualni() ? 'kontrola začíná' : 'první slosování je' }}
+              {{ formatujDatum(k.od) }}). Kontrola bez uložení nemá co vyhodnotit a tiket se po ní
+              zapomene. Ulož ho mezi své tikety — zkontroluje se po slosování.
+            </p>
+          }
+          @case ('chybi-vysledky') {
+            <p class="upozorneni nelze-zkontrolovat" tabindex="-1">
+              Výsledky slosování od {{ formatujDatum(k.od) }} v aplikaci zatím nejsou, takže není
+              s čím porovnat. <a routerLink="/import">Aktualizovat výsledky</a>.
+            </p>
+          }
+          @case ('castecne') {
+            <p class="upozorneni">
+              Zkontroluje se {{ k.zkontroluje }} z {{ pocetSlosovani(k.celkem) }}. Zbývající ještě
+              neproběhla nebo nejsou stažená a po zapomenutí tiketu se už nezkontrolují.
+            </p>
+          }
+          @case ('do-posledniho') {
+            <p class="upozorneni">
+              Zkontroluje se do posledního staženého losování ({{ formatujDatum(k.posledni) }}).
+              Pozdější slosování se po zapomenutí tiketu už nezkontrolují.
+            </p>
+          }
+        }
+      }
+
       @if (chybaUlozeni(); as chyba) { <p role="alert" class="chyba-akce">{{ chyba }}</p> }
       <button type="submit" class="ulozit" [disabled]="uklada()">
         Zkontrolovat tiket
       </button>
-      <p class="pod-tlacitkem">Tiket se zároveň uloží do seznamu, ať ho můžeš zkontrolovat i po dalších losováních.</p>
+      @if (jenKontrola()) {
+        <p class="pod-tlacitkem">Tiket se neuloží. Po odchodu z výsledku se čísla zapomenou.</p>
+      } @else {
+        <p class="pod-tlacitkem">Tiket se zároveň uloží do seznamu, ať ho můžeš zkontrolovat i po dalších losováních.</p>
+      }
     </form>
   `,
   styles: `
@@ -436,6 +490,10 @@ export class NovyTiket {
   protected readonly uklada = signal(false);
   protected readonly chybaUlozeni = signal<string | null>(null);
   private readonly router = inject(Router);
+  private readonly docasny = inject(DocasnyTiket);
+
+  /** Zvolil uživatel „Pouze kontrola bez uložení“? */
+  protected readonly jenKontrola = signal(false);
 
   /**
    * Sériové číslo z naskenovaného čárového kódu, pokud uživatel přišel ze skenu.
@@ -604,8 +662,28 @@ export class NovyTiket {
   );
   protected readonly virtualni = computed(() => this.kontrola() !== null);
 
+  private readonly vyber = computed(() => vyberSlosovani(this.navrh(), this.stav.tahy()));
   /** Kolik slosování z rozsahu už mají stažené výsledky. */
-  protected readonly pokryto = computed(() => vyberSlosovani(this.navrh(), this.stav.tahy()).pouzite.length);
+  protected readonly pokryto = computed(() => this.vyber().pouzite.length);
+
+  /**
+   * Co kontrola bez uložení stihne. Tiket se po ní zapomene, takže slosování, která ještě
+   * nemají výsledky, už nikdy nezkontroluje — bez jediného je kontrola k ničemu.
+   */
+  protected readonly stavKontroly = computed(() => {
+    const { pouzite, chybi } = this.vyber();
+    if (pouzite.length === 0) {
+      const od = this.odKontroly();
+      return { druh: od >= dnesniDatum() ? 'neslosovano' : 'chybi-vysledky', od } as const;
+    }
+    if (!this.virtualni()) {
+      return chybi > 0 ? ({ druh: 'castecne', zkontroluje: pouzite.length, celkem: this.pocet() } as const) : null;
+    }
+    const hra = this.hra();
+    const posledni = this.stav.tahy().reduce((max, t) => (t.hra === hra && t.datum > max ? t.datum : max), '');
+    const doData = this.doKontroly();
+    return doData === null || doData > posledni ? ({ druh: 'do-posledniho', posledni } as const) : null;
+  });
 
   /** Slosování, na která už stejnou sázku kontroluje jiný uložený tiket. */
   protected readonly prekryv = computed(() => {
@@ -787,6 +865,18 @@ export class NovyTiket {
       return;
     }
     const tiket = this.navrh();
+    if (this.jenKontrola()) {
+      if (this.pokryto() === 0) {
+        requestAnimationFrame(() =>
+          this.element.nativeElement.querySelector<HTMLElement>('.nelze-zkontrolovat')?.focus());
+        return;
+      }
+      // Tiket zůstane jen v paměti; `replaceUrl`, ať „zpět“ z výsledku nevede do formuláře.
+      this.docasny.uloz(tiket);
+      this.naskenovany.zapomen();
+      await this.router.navigate(['/kontrola'], { replaceUrl: true });
+      return;
+    }
     this.uklada.set(true);
     this.chybaUlozeni.set(null);
     try {

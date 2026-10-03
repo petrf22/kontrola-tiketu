@@ -13,10 +13,30 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.9.1';
+export const VERZE = '0.10.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.10.0',
+    datum: '2026-10-03',
+    sekce: [
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'V seznamu tiketů je termín bez „od“ a „do“: jedno slosování jen datem, víc slosování rozsahem „8. 9. 2026 – 15. 9. 2026“ a virtuální tiket bez konce „8. 9. 2026 – …“',
+        ],
+      },
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Tiket jde zkontrolovat bez uložení: nad tlačítkem Zkontrolovat tiket je volba „Uložit mezi mé tikety“ (výchozí) nebo „Pouze kontrola bez uložení“; tiket se pak drží jen v paměti a odchodem z výsledku se zapomene, jde ho ale ještě uložit; kontrola se neprovede, dokud tiket nebyl slosován, a jde i za období od–do',
+          'V nabídce Přidat tiket je pod Vyfotit tiket volba Vložit z obrázku — tiket se přečte z fotky nebo skenu vybraného v galerii stejně jako po vyfocení; aplikace přitom nepotřebuje přístup ke galerii',
+          'U každého slosování v historii tiketu jde rozbalit „Tabulka výher“ s vylosovanými čísly a výhrami toho tahu, stejně jako ve Výsledcích losování',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.9.1',
     datum: '2026-10-01',

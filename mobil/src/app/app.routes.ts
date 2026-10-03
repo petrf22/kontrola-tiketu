@@ -40,6 +40,12 @@ export const routes: Routes = [
     title: 'Vyhodnocení tiketu',
   },
   {
+    path: 'kontrola',
+    loadComponent: () => import('./obrazovky/detail.js').then((m) => m.Detail),
+    data: { docasny: true },
+    title: 'Kontrola bez uložení',
+  },
+  {
     path: 'import',
     loadComponent: () => import('./obrazovky/import-vysledku.js').then((m) => m.ImportVysledku),
     title: 'Výsledky losování',

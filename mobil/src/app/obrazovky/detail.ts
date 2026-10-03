@@ -1,5 +1,5 @@
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, ElementRef, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   platnyCenik,
@@ -35,6 +35,7 @@ import {
   popisRozpisuCeny,
   popisRozsahuKontroly,
 } from '../data/format.js';
+import { DocasnyTiket } from '../data/docasnyTiket.js';
 import { Stav } from '../data/stav.js';
 import { NazevTiketu } from './nazev-tiketu.js';
 import { VyhryTahu } from './vyhry-tahu.js';
@@ -72,6 +73,9 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
   imports: [NgTemplateOutlet, RouterLink, NazevTiketu, VyhryTahu],
   template: `
     @if (tiket(); as t) {
+      @if (docasny()) {
+        <a class="zpet" routerLink="/pridat">← Přidat tiket</a>
+      } @else {
       <div class="akce-tiketu">
         <a routerLink="/" [queryParams]="t.archivovany ? {archiv: '1'} : {}">← {{ t.archivovany ? 'Archiv' : 'Tikety' }}</a>
         <details class="nabidka-akci" (click)="zavriAkce($event)">
@@ -91,7 +95,15 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           </div>
         </details>
       </div>
-      <h2>{{ t.nazev ? t.nazev + ' · ' : '' }}{{ nazevHry(t.hra) }} @if (t.kontrola) { <span class="stitek">virtuální</span> }</h2>
+      }
+      <h2>{{ t.nazev ? t.nazev + ' · ' : '' }}{{ nazevHry(t.hra) }} @if (t.kontrola) { <span class="stitek">virtuální</span> }
+        @if (docasny()) { <span class="stitek">bez uložení</span> }</h2>
+      @if (docasny()) {
+        <div class="zapomenuti" role="status">
+          <p>Tiket není uložený. Odchodem z této obrazovky se tiket i vsazená čísla odstraní.</p>
+          <button type="button" [disabled]="uklada()" (click)="ulozDocasny()">Přesto uložit mezi mé tikety</button>
+        </div>
+      }
       @if (t.archivovany) {
         <p class="info">V archivu. Tiket se dál započítává do bilance.
           @if (t.kontrola?.do === null) { Průběžná kontrola pokračuje. }
@@ -399,6 +411,9 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           <button type="button" autofocus (click)="ponechat()">Ponechat</button>
         </div>
       </dialog>
+    } @else if (docasny()) {
+      <a class="zpet" routerLink="/pridat">← Přidat tiket</a>
+      <p>Tiket z kontroly bez uložení už byl zapomenut.</p>
     } @else {
       <p>Tiket nenalezen.</p>
     }
@@ -494,15 +509,28 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     .potvrzeni::backdrop { background: #0008; }
     .potvrzeni p { margin: 0; }
     .potvrzeni div { display: flex; justify-content: flex-end; gap: 0.5rem; }
+    .zapomenuti {
+      display: grid; gap: 0.5rem; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
+      border-left: 3px solid var(--barva-chyba); font-size: 0.85rem; line-height: 1.5;
+    }
+    .zapomenuti p { margin: 0; }
+    .zapomenuti button { justify-self: start; }
   `,
 })
 export class Detail {
-  readonly id = input.required<string>();
+  readonly id = input('');
+  /** Tiket zadaný jen ke kontrole (trasa `/kontrola`): drží ho `DocasnyTiket`, ne úložiště. */
+  readonly docasny = input(false);
 
   protected readonly stav = inject(Stav);
   private readonly router = inject(Router);
+  private readonly docasnyTiket = inject(DocasnyTiket);
 
-  protected readonly tiket = computed(() => this.stav.tikety().find((t) => t.id === this.id()));
+  protected readonly tiket = computed(() =>
+    this.docasny()
+      ? (this.docasnyTiket.tiket() ?? undefined)
+      : this.stav.tikety().find((t) => t.id === this.id()),
+  );
 
   /**
    * Potvrzení mazání. HTML `<dialog>` je modál uvnitř webview: neblokuje ho jako `window.confirm`
@@ -542,9 +570,11 @@ export class Detail {
     return tah === undefined ? '' : ` (${nazevDne(tah.den)})`;
   }
 
-  protected readonly vysledek = computed<VysledekTiketu | null>(
-    () => this.stav.vysledky().get(this.id()) ?? null,
-  );
+  protected readonly vysledek = computed<VysledekTiketu | null>(() => {
+    if (!this.docasny()) return this.stav.vysledky().get(this.id()) ?? null;
+    const t = this.tiket();
+    return t === undefined ? null : this.stav.vyhodnot(t);
+  });
 
   /** Tiket bez jediného vyhodnoceného slosování — místo nulové výhry a záporné bilance se čeká. */
   protected readonly cekani = computed(() => {
@@ -552,7 +582,8 @@ export class Detail {
     return t === undefined || v === null ? null : cekaniNaSlosovani(t, v, dnesniDatum());
   });
 
-  protected readonly prekryvyTiketu = computed(() => this.stav.prekryvy().get(this.id()) ?? []);
+  // Neuložený tiket se do přehledu nezapočítá, takže se ani nic nezapočte dvakrát.
+  protected readonly prekryvyTiketu = computed(() => (this.docasny() ? [] : (this.stav.prekryvy().get(this.id()) ?? [])));
 
   protected readonly filtrHistorie = linkedSignal<FiltrHistorie>(() => { this.id(); return 'vsechna'; });
   protected readonly limitHistorie = linkedSignal(() => { this.id(); return 20; });
@@ -619,6 +650,20 @@ export class Detail {
       this.zpravaAkce.set(null);
       this.chybaAkce.set(null);
     });
+    // Odchodem z výsledku — zpět, spodní nabídkou i odkazem — se tiket jen ke kontrole zapomene.
+    inject(DestroyRef).onDestroy(() => {
+      if (this.docasny()) this.docasnyTiket.zapomen();
+    });
+  }
+
+  /** Uživatel si to rozmyslel: tiket z kontroly uloží a přejde na jeho běžný detail. */
+  protected async ulozDocasny(): Promise<void> {
+    const t = this.tiket();
+    if (!t) return;
+    if (await this.provedAkci(() => this.stav.ulozTiket(t))) {
+      this.docasnyTiket.zapomen();
+      await this.router.navigate(['/tiket', t.id], { replaceUrl: true });
+    }
   }
 
   protected zavriAkce(e: Event): void {

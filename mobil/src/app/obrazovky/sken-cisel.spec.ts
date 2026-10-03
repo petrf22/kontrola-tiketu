@@ -1,12 +1,13 @@
 import type { WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { RouterTestingHarness } from '@angular/router/testing';
 import { provideRouter, Router } from '@angular/router';
 import { Capacitor } from '@capacitor/core';
 import { prectiTiket } from '@kontrola-tiketu/ocr';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { tiketEJ } from '../../../knihovny/ocr/test/pomocnici';
 import type { VysledekSnimku } from '../data/snimekTiketu';
-import { zavislostiCapacitor } from '../data/snimekTiketu-capacitor';
+import { overKopiiVCache, zavislostiCapacitor, zavislostiGalerie } from '../data/snimekTiketu-capacitor';
 import { SkenCisel } from './sken-cisel';
 
 describe('Přímé focení tiketu', () => {
@@ -60,5 +61,40 @@ describe('Přímé focení tiketu', () => {
     expect(poriz).not.toHaveBeenCalled();
     expect((f.nativeElement as HTMLElement).querySelector('a[href="/tiket/novy"]')?.textContent)
       .toContain('Zadat čísla ručně');
+  });
+});
+
+describe('Vložení tiketu z obrázku', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  async function otevri(): Promise<HTMLElement> {
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'z-obrazku', component: SkenCisel, data: { zdroj: 'galerie' } }])],
+    });
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/z-obrazku', SkenCisel);
+    return harness.routeNativeElement!;
+  }
+
+  it('na telefonu otevře výběr obrázku místo fotoaparátu a po zrušení dovolí vybrat jiný', async () => {
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+    const fotak = vi.spyOn(zavislostiCapacitor, 'poriz');
+    const vyber = vi.spyOn(zavislostiGalerie, 'poriz').mockRejectedValue(new Error('Výběr zrušen.'));
+    const el = await otevri();
+    expect(vyber).toHaveBeenCalledTimes(1);
+    expect(fotak).not.toHaveBeenCalled();
+    expect(el.querySelector('h2')?.textContent).toBe('Vložit z obrázku');
+    await expect.poll(() => el.textContent).toContain('Výběr zrušen.');
+    const tlacitko = el.querySelector('button')!;
+    expect(tlacitko.textContent?.trim()).toBe('Vybrat jiný obrázek');
+    tlacitko.click();
+    await expect.poll(() => vyber.mock.calls.length).toBe(2);
+  });
+
+  it('úklid smí smazat jen kopii v cache aplikace, nikdy originál', () => {
+    expect(overKopiiVCache('file:///data/user/0/cz.app/cache/IMG_1.jpg.123.jpeg'))
+      .toBe('file:///data/user/0/cz.app/cache/IMG_1.jpg.123.jpeg');
+    expect(() => overKopiiVCache('file:///storage/emulated/0/DCIM/IMG_1.jpg')).toThrow();
+    expect(() => overKopiiVCache('content://media/external/images/1')).toThrow();
   });
 });

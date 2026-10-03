@@ -29,6 +29,12 @@ export const routes: Routes = [
     title: 'Vyfotit tiket',
   },
   {
+    path: 'z-obrazku',
+    loadComponent: () => import('./obrazovky/sken-cisel.js').then((m) => m.SkenCisel),
+    data: { zdroj: 'galerie' },
+    title: 'Vložit z obrázku',
+  },
+  {
     path: 'tiket/:id',
     loadComponent: () => import('./obrazovky/detail.js').then((m) => m.Detail),
     title: 'Vyhodnocení tiketu',

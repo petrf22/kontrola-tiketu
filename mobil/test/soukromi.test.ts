@@ -197,10 +197,19 @@ describe('snímek tiketu se neukládá natrvalo', () => {
     expect(napojeni).not.toMatch(/saveToGallery:\s*true/);
   });
 
-  it('bere snímek z kamery, ne z galerie', () => {
+  it('focení bere snímek z kamery, galerie je jen u „Vložit z obrázku“', () => {
     const napojeni = cti('src/app/data/snimekTiketu-capacitor.ts');
-    expect(napojeni).toMatch(/CameraSource\.Camera/);
-    expect(napojeni).not.toMatch(/CameraSource\.(Photos|Prompt)/);
+    const [kamera = '', galerie = ''] = napojeni.split('export const zavislostiGalerie');
+    expect(kamera).toMatch(/CameraSource\.Camera/);
+    expect(kamera).not.toMatch(/CameraSource\.(Photos|Prompt)/);
+    expect(galerie).toMatch(/CameraSource\.Photos/);
+    expect(napojeni).not.toMatch(/CameraSource\.Prompt/);
+  });
+
+  it('z galerie se zpracuje jen kopie v cache, aby úklid nesmazal originál', () => {
+    const napojeni = cti('src/app/data/snimekTiketu-capacitor.ts');
+    const galerie = napojeni.split('export const zavislostiGalerie')[1] ?? '';
+    expect(galerie).toMatch(/return overKopiiVCache\(foto\.path\)/);
   });
 
   it('úklid dočasného souboru je ve finally, ne na šťastné cestě', () => {

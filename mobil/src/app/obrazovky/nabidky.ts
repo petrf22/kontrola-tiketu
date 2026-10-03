@@ -9,6 +9,7 @@ import { RouterLink } from '@angular/router';
     <p class="tlumene">Vyber, jak chceš zadat údaje z tiketu.</p>
     <div class="nabidka">
       <a class="hlavni" routerLink="/sken-cisel">Vyfotit tiket <small>Celý tiket i s kódem dole, rovně a bez odlesku. Údaje pak zkontroluješ.</small></a>
+      <a routerLink="/z-obrazku">Vložit z obrázku <small>Vybereš fotku nebo sken tiketu z galerie. Údaje pak zkontroluješ.</small></a>
       <a routerLink="/tiket/novy">Zadat ručně <small>Plnohodnotné zadání papírového i virtuálního tiketu.</small></a>
       <a routerLink="/sken">Naskenovat samotný kód <small>Načte označení tiketu. Vsazená čísla pak doplníš.</small></a>
     </div>

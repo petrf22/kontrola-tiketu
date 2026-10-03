@@ -55,3 +55,40 @@ export const zavislostiCapacitor: Zavislosti = {
     await Filesystem.deleteFile({ path: cesta });
   },
 };
+
+/**
+ * Totéž, jen snímek nepochází z kamery, ale uživatel ho vybere z galerie.
+ *
+ * Plugin jde přes systémový Photo Picker, takže aplikace nepotřebuje přístup ke galerii
+ * a vidí jen vybraný obrázek. Vrátí cestu ke **kopii** v privátní cache aplikace — tu pak
+ * `ukliď` smaže a originál v galerii zůstane, kde byl.
+ */
+export const zavislostiGalerie: Zavislosti = {
+  ...zavislostiCapacitor,
+  poriz: async () => {
+    const foto = await Camera.getPhoto({
+      source: CameraSource.Photos,
+      resultType: CameraResultType.Uri,
+      correctOrientation: true,
+      quality: 90,
+    });
+    if (foto.path === undefined) {
+      throw new Error('Obrázek se nepodařilo načíst.');
+    }
+    return overKopiiVCache(foto.path);
+  },
+};
+
+/**
+ * Pojistka, že úklid nesmaže uživatelův originál.
+ *
+ * Plugin dnes výběr z galerie vždy zkopíruje do cache aplikace. Kdyby ale někdy vrátil
+ * cestu k původnímu souboru, `nactiTiketZeSnimku` by ji po rozpoznání smazal. Chyba tady
+ * padá ještě před rozpoznáním, takže se v tom případě nesmaže nic.
+ */
+export function overKopiiVCache(cesta: string): string {
+  if (!cesta.startsWith('file://') || !cesta.includes('/cache/')) {
+    throw new Error('Obrázek se nepodařilo načíst.');
+  }
+  return cesta;
+}

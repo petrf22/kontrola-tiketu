@@ -28,6 +28,10 @@ Všechny níže uvedené údaje se zpracovávají **výhradně na vašem zaříz
 | Sériové číslo tiketu | z čárového kódu na tiketu | šifrovaná databáze; slouží k rozpoznání už zadaného tiketu |
 | Výsledky losování | stažené ze serveru výsledků, nebo ze souboru, který sami naimportujete | šifrovaná databáze |
 
+Tiket, u kterého zvolíte **Pouze kontrola bez uložení**, se do databáze nezapisuje vůbec:
+drží se jen v paměti aplikace a zmizí, jakmile obrazovku s výsledkem opustíte nebo aplikaci
+zavřete.
+
 Databáze je šifrovaná (SQLCipher) a klíč k ní je uložený v Android Keystore, tedy v hardwarově
 chráněném úložišti telefonu.
 

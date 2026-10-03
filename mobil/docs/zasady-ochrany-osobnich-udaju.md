@@ -41,6 +41,10 @@ Fotoaparát se používá ke dvěma věcem: k načtení čísel z tiketu a k na�
   jiné aplikace nevidí, zpracuje se přímo v telefonu a **smaže se hned potom** — i v případě,
   že se rozpoznání nepovede nebo skončí chybou.
 - Snímek se **nikdy nedostane do galerie** a nikam se neodesílá.
+- Tiket můžete místo focení **vložit z obrázku** v galerii. Výběr probíhá v systémovém
+  výběru fotek, takže aplikace nemá přístup ke galerii a vidí jen obrázek, který vyberete.
+  Pracuje s jeho dočasnou kopií v privátní cache, kterou po rozpoznání smaže; původní
+  obrázek nechá beze změny.
 
 Rozpoznávání textu i čárového kódu běží na zařízení (ML Kit, on-device). Nic se kvůli němu
 neposílá na server.

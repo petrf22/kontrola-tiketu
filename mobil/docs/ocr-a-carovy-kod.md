@@ -33,6 +33,14 @@ reálných tiketech Eurojackpotu; tikety všech tří her jsou ověřené na fot
 > `Filesystem.deleteFile` v 19:13:35,1). Do cloudové zálohy se nedostane
 > (`allowBackup="false"` a pravidla bez výjimek), do galerie ani do MediaStore taky ne
 > (`saveToGallery: false` a odpověď pluginu potvrzuje `"saved": false`).
+>
+> **Vložit z obrázku (3. 10. 2026).** Druhý zdroj snímku: uživatel vybere obrázek tiketu
+> z galerie (`zavislostiGalerie` v `src/app/data/snimekTiketu-capacitor.ts`). `Camera.getPhoto`
+> se `source: Photos` jde přes systémový Photo Picker (`PickVisualMedia`), takže aplikace
+> nepotřebuje `READ_MEDIA_IMAGES` a vidí jen vybraný obrázek. Plugin ho dekóduje a zapíše
+> **kopii do cache aplikace** — tu pak stejný postup s `finally` smaže; originál zůstane.
+> Kdyby plugin někdy vrátil cestu mimo cache, `overKopiiVCache` vyhodí chybu ještě před
+> rozpoznáním, takže úklid nesmaže uživatelův soubor. Na zařízení zatím neověřené.
 
 ### Původní rozpor
 

@@ -192,6 +192,11 @@ Přepisy s vymyšlenými čísly jsou v `knihovny/ocr/test/tiketyZFotek.ts`.
 Nad hlavičkou mají **všechny tři** reklamu `EXTRA ŠANCE NA VÝHRU S ALLWYN KLUBEM.` a `NAVÍC
 JOKER NÁSOBÍ VÝHRY NA KOLE ŠTĚSTÍ.` Starý nekotvený vzor Šance na ni seděl.
 
+- **Doplňková hra:** kód je vytištěný vždy, jestli se vsadila, říká až `ANO`/`NE` na konci
+  řádku (`prectiDoplnkovouHru`, 4. 10. 2026). U `NE` se kód nevyplní, jinak by se vyhodnocoval
+  a hlásil falešné výhry. Když se `ANO`/`NE` nepřečte, kód se vyplní a formulář upozorní, ať ho
+  uživatel u `NE` smaže — umazat je snazší než dopisovat. Tiket s `NE` zatím nikdo nevyfotil,
+  podoba je podle popisu uživatele.
 - **Hlavička** má rozsah dat a v závorce dny, na které tiket platí — Sportka `6 (ST,PA,NE)`
   od 16. do 27. 9. vychází přesně na šest slosování. Euromiliony závorku netisknou, proto se
   počet slosování čte za popiskem `SLOSOVÁNÍ`, ne před závorkou.

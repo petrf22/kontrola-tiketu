@@ -19,6 +19,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ## [Nezveřejněno]
 
 ### Opraveno
+- Kód Extra 6, Šance ani Eurošance se z fotky nevyplní, když je na tiketu za ním NE — nevsazená doplňková hra se tak nevyhodnocuje ani nepočítá do ceny; když se ANO/NE přečíst nepodaří, formulář kód vyplní a upozorní, ať ho uživatel u NE smaže (aplikace)
 - U Sportky ukazuje detail slosování shody každého tahu zvlášť (1. tah, 2. tah) — dřív sloučil čísla padlá v obou tazích, takže sloupec se třemi čísly v jednom tahu a dvěma jinými ve druhém vypadal jako pět shod; vypočtené výhry to neovlivnilo (aplikace)
 - Tentýž tiket se nedá uložit dvakrát: tiket se stejnými sloupci na stejné slosování (třeba druhý sken, když první nepřečetl čárový kód) se neuloží a aplikace nabídne „Nahradit uložený tiket“; platí i pro virtuální tikety, kód doplňkové hry nerozhoduje; duplicity uložené dřív jsou v seznamu označené a detail vyzve jednu z nich smazat (aplikace)
 - Cena spočítaná z ceníku se při uložení tiketu už neukládá napevno — počítá se vždy z aktuálního počtu sloupců a slosování; uložená je jen cena z papíru nebo ručně zadaná (aplikace)

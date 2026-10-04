@@ -1,0 +1,2093 @@
+{
+  "verzeFormatu": 2,
+  "vygenerovano": "2026-10-03T19:00:37.000Z",
+  "zdroj": "https://www.allwyn.cz/system/vyherka",
+  "obdobi": {
+    "od": "2026-38",
+    "do": "2026-40"
+  },
+  "sazbyExtra6": [
+    {
+      "platnostOd": "2014-10-10",
+      "sazkaKc": 40,
+      "nasobky": {
+        "sestecisli": 50000,
+        "peticisli": 5000,
+        "ctyrcisli": 500,
+        "trojcisli": 50,
+        "dvojcisli": 5,
+        "koncove-cislo": 3,
+        "sousedni-cislo": null
+      },
+      "zdroj": "Herní plán číselné loterie EUROJACKPOT účinný od 3. 10. 2014, Extra 6 bod 11 (https://web.archive.org/web/20141013225010/http://www.sazka.cz/userdata/files/herni-plany/hp-eurojackpot-ok.pdf; 10. 10. 2014 bylo první slosování v ČR). Stejné částky uvádějí plány loterií SAZKA z 8. 4. 2020, 8. 2. 2021, 7. 3. 2022, 8. 2. 2023, 21. 7. 2023, 12. 10. 2023 i 6. 12. 2023 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/herni-plan-sazka-6_12_2023-sazka.pdf, EUROJACKPOT bod 24). Sousední číslo tehdy nevyhrávalo — proto null."
+    },
+    {
+      "platnostOd": "2024-03-29",
+      "sazkaKc": 40,
+      "nasobky": {
+        "sestecisli": 25000,
+        "peticisli": 2500,
+        "ctyrcisli": 250,
+        "trojcisli": 25,
+        "dvojcisli": 2.5,
+        "koncove-cislo": 1.5,
+        "sousedni-cislo": 1.5
+      },
+      "zdroj": "Herní plán loterií SAZKA účinný od 17. 7. 2024, EUROJACKPOT bod 25 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-od-17-7-24-komplet-sazka.pdf); stejné násobky uvádí i plán z 5. 9. 2025 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf). Od slosování 29. 3. 2024 vyhrává i sousední číslo (Centrum podpory Sazky, „Jak zjistit výhru v doplňkové hře Extra 6“, https://web.archive.org/web/20240420124223/https://www.sazka.cz/centrum-podpory/loterie-a-hry/loterie/eurojackpot/jak-zjistit-vyhru-v-doplnkove-hre-extra-6). Plán z 16. 2. 2024, který mezi 6. 12. 2023 a 17. 7. 2024 platil, se dohledat nepodařilo; nové částky se proto berou od téhož slosování jako sousední číslo."
+    }
+  ],
+  "sazbyEurosance": [
+    {
+      "platnostOd": "2013-06-16",
+      "sazkaKc": 30,
+      "vyhryKc": {
+        "peticisli": 500000,
+        "ctyrcisli": 20000,
+        "trojcisli": 2000,
+        "dvojcisli": 200,
+        "koncove-cislo": 50
+      },
+      "zdroj": "Herní plán číselných loterií a sázkových her účinný od 16. 6. 2013, Eurošance bod 11 — první plán s Eurošancí (https://web.archive.org/web/20130626222528/http://www.sazka.cz/userdata/files/herni-plany/113559-herni-plan-cis.-lot.-a-sazk.-her-2013-01.pdf). Stejné částky uvádějí plány z 8. 4. 2020, 6. 12. 2023, 17. 7. 2024 i 5. 9. 2025 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-sazka-5-9-25-sazka.pdf, oddíl Euromiliony, body 10, 11 a 16)."
+    }
+  ],
+  "ceny": [
+    {
+      "hra": "sportka",
+      "platnostOd": "2012-05-23",
+      "sloupecKc": 16,
+      "doplnkovaHraKc": 10,
+      "zdroj": "Herní plán číselných loterií a sázkových her SAZKA, účinný od 23. 5. 2012: Sportka bod 11, Šance bod 7 (https://web.archive.org/web/20120602021322/http://www.sazka.cz/userdata/files/herni-plany/hp-ciselnych-loterii-a-sazkovych-her.pdf). Nejstarší dohledaný plán, cena platila už dřív."
+    },
+    {
+      "hra": "sportka",
+      "platnostOd": "2014-05-21",
+      "sloupecKc": 20,
+      "doplnkovaHraKc": 20,
+      "zdroj": "Herní plán číselných loterií, účinný od 19. 5. 2014: Sportka bod 11, Šance bod 7 (https://web.archive.org/web/20140630105116/http://www.sazka.cz/userdata/files/herni-plany/herni-plan-ciselnych-loterii-uprava-sportka-2014.pdf). První slosování za novou cenu byla středa 21. 5. 2014 (21. týden). Zdražení z 16 na 20 Kč po deseti letech."
+    },
+    {
+      "hra": "sportka",
+      "platnostOd": "2024-10-02",
+      "sloupecKc": 30,
+      "doplnkovaHraKc": 30,
+      "zdroj": "Herní plán loterií SAZKA ze 17. 7. 2024: Sportka ve verzi 2, bod 14; bod 21 verze 1 říká, že poslední slosování za starých pravidel je 29. 9. 2024 a první podle nových 2. 10. 2024 (https://static.sazka.cz/kentico-media/sazka/media/content/herni-plany/hp-loterie-17-07-24b-sazka.pdf). Zdražení z 20 na 30 Kč spolu s novou podobou Sportky."
+    },
+    {
+      "hra": "eurojackpot",
+      "platnostOd": "2014-10-10",
+      "sloupecKc": 60,
+      "doplnkovaHraKc": 40,
+      "zdroj": "Herní plán číselné loterie EUROJACKPOT, účinný od 3. 10. 2014: bod 9, Extra 6 bod 7 (https://web.archive.org/web/20141013225010/http://www.sazka.cz/userdata/files/herni-plany/hp-eurojackpot-ok.pdf). 10. 10. 2014 bylo první slosování v ČR. Stejné ceny uvádějí plány z 30. 4. 2015, 9. 9. 2019 i všechny od 16. 2. 2024 do 24. 8. 2026."
+    },
+    {
+      "hra": "euromiliony",
+      "platnostOd": "2012-05-23",
+      "sloupecKc": 30,
+      "doplnkovaHraKc": null,
+      "zdroj": "Herní plán číselných loterií a sázkových her SAZKA, účinný od 23. 5. 2012: Euromiliony bod 7 (https://web.archive.org/web/20120602021322/http://www.sazka.cz/userdata/files/herni-plany/hp-ciselnych-loterii-a-sazkovych-her.pdf). Nejstarší dohledaný plán, cena platila už dřív. Eurošanci tento plán ani plán z 1. 4. 2013 neznají."
+    },
+    {
+      "hra": "euromiliony",
+      "platnostOd": "2013-06-16",
+      "sloupecKc": 30,
+      "doplnkovaHraKc": 30,
+      "zdroj": "Herní plán číselných loterií a sázkových her, účinný od 16. 6. 2013: Euromiliony bod 8, Eurošance bod 7 (https://web.archive.org/web/20130626222528/http://www.sazka.cz/userdata/files/herni-plany/113559-herni-plan-cis.-lot.-a-sazk.-her-2013-01.pdf). Stejné ceny uvádějí plány z 13. 5. 2015, 9. 9. 2019 i všechny od 16. 2. 2024 do 24. 8. 2026."
+    }
+  ],
+  "tahy": [
+    {
+      "hra": "eurojackpot",
+      "datum": "2026-09-15",
+      "den": "ut",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 38
+      },
+      "vsazenoKc": 28386840,
+      "naVyhryKc": 12774078,
+      "cisla": [
+        42,
+        6,
+        27,
+        10,
+        5
+      ],
+      "eurocisla": [
+        1,
+        8
+      ],
+      "extra6": "777530",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "5+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "5+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 18057239
+        },
+        {
+          "klic": "III",
+          "popis": "5+0",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 5091720
+        },
+        {
+          "klic": "IV",
+          "popis": "4+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 146063
+        },
+        {
+          "klic": "V",
+          "popis": "4+1",
+          "pocetVyher": 8,
+          "vyseVyhryKc": 8265
+        },
+        {
+          "klic": "VI",
+          "popis": "3+2",
+          "pocetVyher": 44,
+          "vyseVyhryKc": 3604
+        },
+        {
+          "klic": "VII",
+          "popis": "4+0",
+          "pocetVyher": 29,
+          "vyseVyhryKc": 2739
+        },
+        {
+          "klic": "VIII",
+          "popis": "2+2",
+          "pocetVyher": 520,
+          "vyseVyhryKc": 614
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 705,
+          "vyseVyhryKc": 471
+        },
+        {
+          "klic": "X",
+          "popis": "3+0",
+          "pocetVyher": 1471,
+          "vyseVyhryKc": 386
+        },
+        {
+          "klic": "XI",
+          "popis": "1+2",
+          "pocetVyher": 2387,
+          "vyseVyhryKc": 320
+        },
+        {
+          "klic": "XII",
+          "popis": "2+1",
+          "pocetVyher": 9753,
+          "vyseVyhryKc": 235
+        }
+      ],
+      "jackpotKc": 1433000000
+    },
+    {
+      "hra": "euromiliony",
+      "datum": "2026-09-15",
+      "den": "ut",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 38
+      },
+      "vsazenoKc": 1128330,
+      "naVyhryKc": 93943818,
+      "cisla": [
+        24,
+        2,
+        35,
+        23,
+        18,
+        29,
+        12
+      ],
+      "druheOsudi": 1,
+      "eurosance": "06875",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "7+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "7",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "III",
+          "popis": "6+1",
+          "pocetVyher": 1,
+          "vyseVyhryKc": 23977
+        },
+        {
+          "klic": "IV",
+          "popis": "6",
+          "pocetVyher": 1,
+          "vyseVyhryKc": 23977
+        },
+        {
+          "klic": "V",
+          "popis": "5+1",
+          "pocetVyher": 8,
+          "vyseVyhryKc": 3173
+        },
+        {
+          "klic": "VI",
+          "popis": "5",
+          "pocetVyher": 55,
+          "vyseVyhryKc": 564
+        },
+        {
+          "klic": "VII",
+          "popis": "4+1",
+          "pocetVyher": 118,
+          "vyseVyhryKc": 334
+        },
+        {
+          "klic": "VIII",
+          "popis": "4",
+          "pocetVyher": 533,
+          "vyseVyhryKc": 142
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 722,
+          "vyseVyhryKc": 113
+        },
+        {
+          "klic": "X",
+          "popis": "2+1",
+          "pocetVyher": 2173,
+          "vyseVyhryKc": 63
+        }
+      ],
+      "prevodHlavniCastKc": 89389868,
+      "jackpotKc": 89500000
+    },
+    {
+      "hra": "sportka",
+      "datum": "2026-09-16",
+      "den": "st",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 38
+      },
+      "vsazenoKc": 39955950,
+      "naVyhryKc": 286197908,
+      "tahy": [
+        {
+          "poradiTahu": 1,
+          "cisla": [
+            45,
+            4,
+            12,
+            13,
+            24,
+            15
+          ],
+          "dodatkove": 14,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 29,
+              "vyseVyhryKc": 24111
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1322,
+              "vyseVyhryKc": 906
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 24874,
+              "vyseVyhryKc": 223
+            }
+          ],
+          "prevod1PoradiKc": 15288738,
+          "jackpot1PoradiKc": 17300000,
+          "prevod2PoradiKc": 499449,
+          "jackpot2PoradiKc": 1000000
+        },
+        {
+          "poradiTahu": 2,
+          "cisla": [
+            20,
+            8,
+            2,
+            1,
+            30,
+            43
+          ],
+          "dodatkove": 23,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 1,
+              "vyseVyhryKc": 1000000
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 22,
+              "vyseVyhryKc": 31783
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1295,
+              "vyseVyhryKc": 925
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 23175,
+              "vyseVyhryKc": 239
+            }
+          ],
+          "prevod1PoradiKc": 3933922,
+          "jackpot1PoradiKc": 5900000,
+          "prevod2PoradiKc": 0,
+          "jackpot2PoradiKc": 500000
+        }
+      ],
+      "sance": {
+        "datum": "2026-09-16",
+        "cislice": "423898",
+        "vsazenoKc": 5246010,
+        "poradi": [
+          {
+            "klic": "sestecisli",
+            "popis": "šestičíslí",
+            "vzor": "423898",
+            "pocetVyher": 1,
+            "vyseVyhryKc": 1000000
+          },
+          {
+            "klic": "peticisli",
+            "popis": "pětičíslí",
+            "vzor": "23898",
+            "pocetVyher": 1,
+            "vyseVyhryKc": 100000
+          },
+          {
+            "klic": "ctyrcisli",
+            "popis": "čtyřčíslí",
+            "vzor": "3898",
+            "pocetVyher": 16,
+            "vyseVyhryKc": 10000
+          },
+          {
+            "klic": "trojcisli",
+            "popis": "trojčíslí",
+            "vzor": "898",
+            "pocetVyher": 166,
+            "vyseVyhryKc": 1000
+          },
+          {
+            "klic": "dvojcisli",
+            "popis": "dvojčíslí",
+            "vzor": "98",
+            "pocetVyher": 1574,
+            "vyseVyhryKc": 100
+          },
+          {
+            "klic": "koncove-cislo",
+            "popis": "koncové číslo",
+            "vzor": "8",
+            "pocetVyher": 15591,
+            "vyseVyhryKc": 50
+          },
+          {
+            "klic": "sousedni-cislo",
+            "popis": "koncové číslo +/- 1",
+            "vzor": null,
+            "pocetVyher": 35655,
+            "vyseVyhryKc": 30
+          }
+        ]
+      },
+      "prevodBonusKc": 250000000,
+      "superJackpotKc": 267000000
+    },
+    {
+      "hra": "eurojackpot",
+      "datum": "2026-09-18",
+      "den": "pa",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 38
+      },
+      "vsazenoKc": 25972380,
+      "naVyhryKc": 11687571,
+      "cisla": [
+        25,
+        33,
+        30,
+        4,
+        32
+      ],
+      "eurocisla": [
+        4,
+        5
+      ],
+      "extra6": "665736",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "5+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "5+1",
+          "pocetVyher": 1,
+          "vyseVyhryKc": 17124708
+        },
+        {
+          "klic": "III",
+          "popis": "5+0",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 5794521
+        },
+        {
+          "klic": "IV",
+          "popis": "4+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 101680
+        },
+        {
+          "klic": "V",
+          "popis": "4+1",
+          "pocetVyher": 16,
+          "vyseVyhryKc": 8027
+        },
+        {
+          "klic": "VI",
+          "popis": "3+2",
+          "pocetVyher": 27,
+          "vyseVyhryKc": 3969
+        },
+        {
+          "klic": "VII",
+          "popis": "4+0",
+          "pocetVyher": 14,
+          "vyseVyhryKc": 3487
+        },
+        {
+          "klic": "VIII",
+          "popis": "2+2",
+          "pocetVyher": 432,
+          "vyseVyhryKc": 608
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 665,
+          "vyseVyhryKc": 489
+        },
+        {
+          "klic": "X",
+          "popis": "3+0",
+          "pocetVyher": 1282,
+          "vyseVyhryKc": 467
+        },
+        {
+          "klic": "XI",
+          "popis": "1+2",
+          "pocetVyher": 2298,
+          "vyseVyhryKc": 301
+        },
+        {
+          "klic": "XII",
+          "popis": "2+1",
+          "pocetVyher": 9141,
+          "vyseVyhryKc": 226
+        }
+      ],
+      "jackpotKc": 1655000000
+    },
+    {
+      "hra": "sportka",
+      "datum": "2026-09-18",
+      "den": "pa",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 38
+      },
+      "vsazenoKc": 65564250,
+      "naVyhryKc": 302504234,
+      "tahy": [
+        {
+          "poradiTahu": 1,
+          "cisla": [
+            22,
+            35,
+            28,
+            39,
+            15,
+            12
+          ],
+          "dodatkove": 16,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 2,
+              "vyseVyhryKc": 659501
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 33,
+              "vyseVyhryKc": 34768
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 2079,
+              "vyseVyhryKc": 946
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 37931,
+              "vyseVyhryKc": 240
+            }
+          ],
+          "prevod1PoradiKc": 18239129,
+          "jackpot1PoradiKc": 20200000,
+          "prevod2PoradiKc": 0,
+          "jackpot2PoradiKc": 500000
+        },
+        {
+          "poradiTahu": 2,
+          "cisla": [
+            24,
+            39,
+            37,
+            45,
+            1,
+            40
+          ],
+          "dodatkove": 32,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 29,
+              "vyseVyhryKc": 39564
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1963,
+              "vyseVyhryKc": 1002
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 35986,
+              "vyseVyhryKc": 253
+            }
+          ],
+          "prevod1PoradiKc": 6884313,
+          "jackpot1PoradiKc": 8900000,
+          "prevod2PoradiKc": 819553,
+          "jackpot2PoradiKc": 1000000
+        }
+      ],
+      "sance": {
+        "datum": "2026-09-18",
+        "cislice": "418134",
+        "vsazenoKc": 8337150,
+        "poradi": [
+          {
+            "klic": "sestecisli",
+            "popis": "šestičíslí",
+            "vzor": "418134",
+            "pocetVyher": 0,
+            "vyseVyhryKc": 0
+          },
+          {
+            "klic": "peticisli",
+            "popis": "pětičíslí",
+            "vzor": "18134",
+            "pocetVyher": 3,
+            "vyseVyhryKc": 100000
+          },
+          {
+            "klic": "ctyrcisli",
+            "popis": "čtyřčíslí",
+            "vzor": "8134",
+            "pocetVyher": 30,
+            "vyseVyhryKc": 10000
+          },
+          {
+            "klic": "trojcisli",
+            "popis": "trojčíslí",
+            "vzor": "134",
+            "pocetVyher": 275,
+            "vyseVyhryKc": 1000
+          },
+          {
+            "klic": "dvojcisli",
+            "popis": "dvojčíslí",
+            "vzor": "34",
+            "pocetVyher": 2588,
+            "vyseVyhryKc": 100
+          },
+          {
+            "klic": "koncove-cislo",
+            "popis": "koncové číslo",
+            "vzor": "4",
+            "pocetVyher": 25279,
+            "vyseVyhryKc": 50
+          },
+          {
+            "klic": "sousedni-cislo",
+            "popis": "koncové číslo +/- 1",
+            "vzor": null,
+            "pocetVyher": 56550,
+            "vyseVyhryKc": 30
+          }
+        ]
+      },
+      "prevodBonusKc": 250000000,
+      "superJackpotKc": 270000000
+    },
+    {
+      "hra": "euromiliony",
+      "datum": "2026-09-19",
+      "den": "so",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 38
+      },
+      "vsazenoKc": 1524510,
+      "naVyhryKc": 94247401,
+      "cisla": [
+        26,
+        5,
+        4,
+        8,
+        16,
+        12,
+        32
+      ],
+      "druheOsudi": 3,
+      "eurosance": "43973",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "7+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "7",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "III",
+          "popis": "6+1",
+          "pocetVyher": 1,
+          "vyseVyhryKc": 30490
+        },
+        {
+          "klic": "IV",
+          "popis": "6",
+          "pocetVyher": 2,
+          "vyseVyhryKc": 17150
+        },
+        {
+          "klic": "V",
+          "popis": "5+1",
+          "pocetVyher": 15,
+          "vyseVyhryKc": 2286
+        },
+        {
+          "klic": "VI",
+          "popis": "5",
+          "pocetVyher": 44,
+          "vyseVyhryKc": 952
+        },
+        {
+          "klic": "VII",
+          "popis": "4+1",
+          "pocetVyher": 183,
+          "vyseVyhryKc": 291
+        },
+        {
+          "klic": "VIII",
+          "popis": "4",
+          "pocetVyher": 718,
+          "vyseVyhryKc": 143
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 1301,
+          "vyseVyhryKc": 84
+        },
+        {
+          "klic": "X",
+          "popis": "2+1",
+          "pocetVyher": 3531,
+          "vyseVyhryKc": 52
+        }
+      ],
+      "prevodHlavniCastKc": 89503448,
+      "jackpotKc": 89700000
+    },
+    {
+      "hra": "sportka",
+      "datum": "2026-09-20",
+      "den": "ne",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 38
+      },
+      "vsazenoKc": 47159100,
+      "naVyhryKc": 299522545,
+      "tahy": [
+        {
+          "poradiTahu": 1,
+          "cisla": [
+            15,
+            22,
+            10,
+            4,
+            20,
+            42
+          ],
+          "dodatkove": 36,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 23,
+              "vyseVyhryKc": 35881
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1563,
+              "vyseVyhryKc": 905
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 28738,
+              "vyseVyhryKc": 228
+            }
+          ],
+          "prevod1PoradiKc": 20361288,
+          "jackpot1PoradiKc": 22000000,
+          "prevod2PoradiKc": 589488,
+          "jackpot2PoradiKc": 1000000
+        },
+        {
+          "poradiTahu": 2,
+          "cisla": [
+            48,
+            4,
+            9,
+            13,
+            47,
+            25
+          ],
+          "dodatkove": 31,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 38,
+              "vyseVyhryKc": 21718
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1530,
+              "vyseVyhryKc": 924
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 29026,
+              "vyseVyhryKc": 225
+            }
+          ],
+          "prevod1PoradiKc": 9006472,
+          "jackpot1PoradiKc": 10600000,
+          "prevod2PoradiKc": 1409041,
+          "jackpot2PoradiKc": 1000000
+        }
+      ],
+      "sance": {
+        "datum": "2026-09-20",
+        "cislice": "107668",
+        "vsazenoKc": 6141120,
+        "poradi": [
+          {
+            "klic": "sestecisli",
+            "popis": "šestičíslí",
+            "vzor": "107668",
+            "pocetVyher": 0,
+            "vyseVyhryKc": 0
+          },
+          {
+            "klic": "peticisli",
+            "popis": "pětičíslí",
+            "vzor": "07668",
+            "pocetVyher": 5,
+            "vyseVyhryKc": 100000
+          },
+          {
+            "klic": "ctyrcisli",
+            "popis": "čtyřčíslí",
+            "vzor": "7668",
+            "pocetVyher": 23,
+            "vyseVyhryKc": 10000
+          },
+          {
+            "klic": "trojcisli",
+            "popis": "trojčíslí",
+            "vzor": "668",
+            "pocetVyher": 172,
+            "vyseVyhryKc": 1000
+          },
+          {
+            "klic": "dvojcisli",
+            "popis": "dvojčíslí",
+            "vzor": "68",
+            "pocetVyher": 1763,
+            "vyseVyhryKc": 100
+          },
+          {
+            "klic": "koncove-cislo",
+            "popis": "koncové číslo",
+            "vzor": "8",
+            "pocetVyher": 18220,
+            "vyseVyhryKc": 50
+          },
+          {
+            "klic": "sousedni-cislo",
+            "popis": "koncové číslo +/- 1",
+            "vzor": null,
+            "pocetVyher": 42147,
+            "vyseVyhryKc": 30
+          }
+        ]
+      },
+      "prevodBonusKc": 250000000,
+      "superJackpotKc": 272000000
+    },
+    {
+      "hra": "eurojackpot",
+      "datum": "2026-09-22",
+      "den": "ut",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 39
+      },
+      "vsazenoKc": 36637440,
+      "naVyhryKc": 16486848,
+      "cisla": [
+        33,
+        46,
+        23,
+        47,
+        17
+      ],
+      "eurocisla": [
+        4,
+        5
+      ],
+      "extra6": "608871",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "5+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "5+1",
+          "pocetVyher": 1,
+          "vyseVyhryKc": 10585909
+        },
+        {
+          "klic": "III",
+          "popis": "5+0",
+          "pocetVyher": 2,
+          "vyseVyhryKc": 4775968
+        },
+        {
+          "klic": "IV",
+          "popis": "4+2",
+          "pocetVyher": 2,
+          "vyseVyhryKc": 127061
+        },
+        {
+          "klic": "V",
+          "popis": "4+1",
+          "pocetVyher": 22,
+          "vyseVyhryKc": 7281
+        },
+        {
+          "klic": "VI",
+          "popis": "3+2",
+          "pocetVyher": 28,
+          "vyseVyhryKc": 3634
+        },
+        {
+          "klic": "VII",
+          "popis": "4+0",
+          "pocetVyher": 42,
+          "vyseVyhryKc": 2777
+        },
+        {
+          "klic": "VIII",
+          "popis": "2+2",
+          "pocetVyher": 625,
+          "vyseVyhryKc": 620
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 929,
+          "vyseVyhryKc": 428
+        },
+        {
+          "klic": "X",
+          "popis": "3+0",
+          "pocetVyher": 1939,
+          "vyseVyhryKc": 408
+        },
+        {
+          "klic": "XI",
+          "popis": "1+2",
+          "pocetVyher": 3273,
+          "vyseVyhryKc": 309
+        },
+        {
+          "klic": "XII",
+          "popis": "2+1",
+          "pocetVyher": 12758,
+          "vyseVyhryKc": 221
+        }
+      ],
+      "jackpotKc": 1948000000
+    },
+    {
+      "hra": "euromiliony",
+      "datum": "2026-09-22",
+      "den": "ut",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 39
+      },
+      "vsazenoKc": 1104450,
+      "naVyhryKc": 94181441,
+      "cisla": [
+        18,
+        8,
+        28,
+        14,
+        12,
+        30,
+        11
+      ],
+      "druheOsudi": 2,
+      "eurosance": "95747",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "7+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "7",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "III",
+          "popis": "6+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "IV",
+          "popis": "6",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "V",
+          "popis": "5+1",
+          "pocetVyher": 10,
+          "vyseVyhryKc": 2485
+        },
+        {
+          "klic": "VI",
+          "popis": "5",
+          "pocetVyher": 25,
+          "vyseVyhryKc": 1214
+        },
+        {
+          "klic": "VII",
+          "popis": "4+1",
+          "pocetVyher": 137,
+          "vyseVyhryKc": 282
+        },
+        {
+          "klic": "VIII",
+          "popis": "4",
+          "pocetVyher": 480,
+          "vyseVyhryKc": 155
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 904,
+          "vyseVyhryKc": 88
+        },
+        {
+          "klic": "X",
+          "popis": "2+1",
+          "pocetVyher": 2358,
+          "vyseVyhryKc": 57
+        }
+      ],
+      "prevodHlavniCastKc": 89584252,
+      "jackpotKc": 89700000
+    },
+    {
+      "hra": "sportka",
+      "datum": "2026-09-23",
+      "den": "st",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 39
+      },
+      "vsazenoKc": 39403560,
+      "naVyhryKc": 301068069,
+      "tahy": [
+        {
+          "poradiTahu": 1,
+          "cisla": [
+            20,
+            33,
+            1,
+            29,
+            30,
+            49
+          ],
+          "dodatkove": 32,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 1,
+              "vyseVyhryKc": 1000000
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 30,
+              "vyseVyhryKc": 22985
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1224,
+              "vyseVyhryKc": 965
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 22030,
+              "vyseVyhryKc": 248
+            }
+          ],
+          "prevod1PoradiKc": 22134448,
+          "jackpot1PoradiKc": 24400000,
+          "prevod2PoradiKc": 0,
+          "jackpot2PoradiKc": 600000
+        },
+        {
+          "poradiTahu": 2,
+          "cisla": [
+            24,
+            20,
+            28,
+            31,
+            9,
+            48
+          ],
+          "dodatkove": 49,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 1,
+              "vyseVyhryKc": 1000000
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 19,
+              "vyseVyhryKc": 36292
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1138,
+              "vyseVyhryKc": 1038
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 22935,
+              "vyseVyhryKc": 238
+            }
+          ],
+          "prevod1PoradiKc": 10779632,
+          "jackpot1PoradiKc": 13000000,
+          "prevod2PoradiKc": 0,
+          "jackpot2PoradiKc": 600000
+        }
+      ],
+      "sance": {
+        "datum": "2026-09-23",
+        "cislice": "619922",
+        "vsazenoKc": 5110740,
+        "poradi": [
+          {
+            "klic": "sestecisli",
+            "popis": "šestičíslí",
+            "vzor": "619922",
+            "pocetVyher": 0,
+            "vyseVyhryKc": 0
+          },
+          {
+            "klic": "peticisli",
+            "popis": "pětičíslí",
+            "vzor": "19922",
+            "pocetVyher": 4,
+            "vyseVyhryKc": 100000
+          },
+          {
+            "klic": "ctyrcisli",
+            "popis": "čtyřčíslí",
+            "vzor": "9922",
+            "pocetVyher": 13,
+            "vyseVyhryKc": 10000
+          },
+          {
+            "klic": "trojcisli",
+            "popis": "trojčíslí",
+            "vzor": "922",
+            "pocetVyher": 161,
+            "vyseVyhryKc": 1000
+          },
+          {
+            "klic": "dvojcisli",
+            "popis": "dvojčíslí",
+            "vzor": "22",
+            "pocetVyher": 1557,
+            "vyseVyhryKc": 100
+          },
+          {
+            "klic": "koncove-cislo",
+            "popis": "koncové číslo",
+            "vzor": "2",
+            "pocetVyher": 15126,
+            "vyseVyhryKc": 50
+          },
+          {
+            "klic": "sousedni-cislo",
+            "popis": "koncové číslo +/- 1",
+            "vzor": null,
+            "pocetVyher": 33907,
+            "vyseVyhryKc": 30
+          }
+        ]
+      },
+      "prevodBonusKc": 250000000,
+      "superJackpotKc": 274000000
+    },
+    {
+      "hra": "eurojackpot",
+      "datum": "2026-09-25",
+      "den": "pa",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 39
+      },
+      "vsazenoKc": 33971640,
+      "naVyhryKc": 15287238,
+      "cisla": [
+        2,
+        29,
+        7,
+        10,
+        30
+      ],
+      "eurocisla": [
+        10,
+        5
+      ],
+      "extra6": "685064",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "5+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "5+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 15289852
+        },
+        {
+          "klic": "III",
+          "popis": "5+0",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 2653156
+        },
+        {
+          "klic": "IV",
+          "popis": "4+2",
+          "pocetVyher": 3,
+          "vyseVyhryKc": 75855
+        },
+        {
+          "klic": "V",
+          "popis": "4+1",
+          "pocetVyher": 21,
+          "vyseVyhryKc": 6265
+        },
+        {
+          "klic": "VI",
+          "popis": "3+2",
+          "pocetVyher": 30,
+          "vyseVyhryKc": 3262
+        },
+        {
+          "klic": "VII",
+          "popis": "4+0",
+          "pocetVyher": 53,
+          "vyseVyhryKc": 2369
+        },
+        {
+          "klic": "VIII",
+          "popis": "2+2",
+          "pocetVyher": 558,
+          "vyseVyhryKc": 535
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 895,
+          "vyseVyhryKc": 433
+        },
+        {
+          "klic": "X",
+          "popis": "3+0",
+          "pocetVyher": 2001,
+          "vyseVyhryKc": 372
+        },
+        {
+          "klic": "XI",
+          "popis": "1+2",
+          "pocetVyher": 3234,
+          "vyseVyhryKc": 287
+        },
+        {
+          "klic": "XII",
+          "popis": "2+1",
+          "pocetVyher": 11771,
+          "vyseVyhryKc": 226
+        }
+      ],
+      "jackpotKc": 2216000000
+    },
+    {
+      "hra": "sportka",
+      "datum": "2026-09-25",
+      "den": "pa",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 39
+      },
+      "vsazenoKc": 46235580,
+      "naVyhryKc": 306031870,
+      "tahy": [
+        {
+          "poradiTahu": 1,
+          "cisla": [
+            16,
+            11,
+            42,
+            26,
+            15,
+            19
+          ],
+          "dodatkove": 33,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 32,
+              "vyseVyhryKc": 25285
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1422,
+              "vyseVyhryKc": 975
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 27551,
+              "vyseVyhryKc": 233
+            }
+          ],
+          "prevod1PoradiKc": 24215049,
+          "jackpot1PoradiKc": 26400000,
+          "prevod2PoradiKc": 577944,
+          "jackpot2PoradiKc": 1000000
+        },
+        {
+          "poradiTahu": 2,
+          "cisla": [
+            44,
+            13,
+            45,
+            22,
+            18,
+            23
+          ],
+          "dodatkove": 40,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 34,
+              "vyseVyhryKc": 23797
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1555,
+              "vyseVyhryKc": 892
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 27794,
+              "vyseVyhryKc": 231
+            }
+          ],
+          "prevod1PoradiKc": 12860233,
+          "jackpot1PoradiKc": 15000000,
+          "prevod2PoradiKc": 577944,
+          "jackpot2PoradiKc": 1000000
+        }
+      ],
+      "sance": {
+        "datum": "2026-09-25",
+        "cislice": "615462",
+        "vsazenoKc": 6022050,
+        "poradi": [
+          {
+            "klic": "sestecisli",
+            "popis": "šestičíslí",
+            "vzor": "615462",
+            "pocetVyher": 1,
+            "vyseVyhryKc": 1000000
+          },
+          {
+            "klic": "peticisli",
+            "popis": "pětičíslí",
+            "vzor": "15462",
+            "pocetVyher": 1,
+            "vyseVyhryKc": 100000
+          },
+          {
+            "klic": "ctyrcisli",
+            "popis": "čtyřčíslí",
+            "vzor": "5462",
+            "pocetVyher": 23,
+            "vyseVyhryKc": 10000
+          },
+          {
+            "klic": "trojcisli",
+            "popis": "trojčíslí",
+            "vzor": "462",
+            "pocetVyher": 199,
+            "vyseVyhryKc": 1000
+          },
+          {
+            "klic": "dvojcisli",
+            "popis": "dvojčíslí",
+            "vzor": "62",
+            "pocetVyher": 1807,
+            "vyseVyhryKc": 100
+          },
+          {
+            "klic": "koncove-cislo",
+            "popis": "koncové číslo",
+            "vzor": "2",
+            "pocetVyher": 17844,
+            "vyseVyhryKc": 50
+          },
+          {
+            "klic": "sousedni-cislo",
+            "popis": "koncové číslo +/- 1",
+            "vzor": null,
+            "pocetVyher": 40090,
+            "vyseVyhryKc": 30
+          }
+        ]
+      },
+      "prevodBonusKc": 250000000,
+      "superJackpotKc": 276000000
+    },
+    {
+      "hra": "euromiliony",
+      "datum": "2026-09-26",
+      "den": "so",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 39
+      },
+      "vsazenoKc": 1514220,
+      "naVyhryKc": 94536158,
+      "cisla": [
+        9,
+        23,
+        31,
+        33,
+        12,
+        24,
+        29
+      ],
+      "druheOsudi": 5,
+      "eurosance": "89789",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "7+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "7",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "III",
+          "popis": "6+1",
+          "pocetVyher": 2,
+          "vyseVyhryKc": 26186
+        },
+        {
+          "klic": "IV",
+          "popis": "6",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "V",
+          "popis": "5+1",
+          "pocetVyher": 11,
+          "vyseVyhryKc": 3097
+        },
+        {
+          "klic": "VI",
+          "popis": "5",
+          "pocetVyher": 49,
+          "vyseVyhryKc": 849
+        },
+        {
+          "klic": "VII",
+          "popis": "4+1",
+          "pocetVyher": 162,
+          "vyseVyhryKc": 327
+        },
+        {
+          "klic": "VIII",
+          "popis": "4",
+          "pocetVyher": 731,
+          "vyseVyhryKc": 139
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 1126,
+          "vyseVyhryKc": 97
+        },
+        {
+          "klic": "X",
+          "popis": "2+1",
+          "pocetVyher": 3069,
+          "vyseVyhryKc": 60
+        }
+      ],
+      "prevodHlavniCastKc": 89695341,
+      "jackpotKc": 89900000
+    },
+    {
+      "hra": "sportka",
+      "datum": "2026-09-27",
+      "den": "ne",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 39
+      },
+      "vsazenoKc": 43925640,
+      "naVyhryKc": 310193990,
+      "tahy": [
+        {
+          "poradiTahu": 1,
+          "cisla": [
+            33,
+            31,
+            1,
+            47,
+            45,
+            6
+          ],
+          "dodatkove": 19,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 20,
+              "vyseVyhryKc": 38434
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1289,
+              "vyseVyhryKc": 1022
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 24749,
+              "vyseVyhryKc": 246
+            }
+          ],
+          "prevod1PoradiKc": 26191702,
+          "jackpot1PoradiKc": 28000000,
+          "prevod2PoradiKc": 1127014,
+          "jackpot2PoradiKc": 1000000
+        },
+        {
+          "poradiTahu": 2,
+          "cisla": [
+            2,
+            12,
+            21,
+            17,
+            22,
+            9
+          ],
+          "dodatkove": 35,
+          "poradi": [
+            {
+              "klic": "bonus",
+              "popis": "Bonus",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "I",
+              "popis": "6",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "II",
+              "popis": "5+dodatkové",
+              "pocetVyher": 0,
+              "vyseVyhryKc": 0
+            },
+            {
+              "klic": "III",
+              "popis": "5",
+              "pocetVyher": 32,
+              "vyseVyhryKc": 24021
+            },
+            {
+              "klic": "IV",
+              "popis": "4",
+              "pocetVyher": 1923,
+              "vyseVyhryKc": 685
+            },
+            {
+              "klic": "V",
+              "popis": "3",
+              "pocetVyher": 29990,
+              "vyseVyhryKc": 203
+            }
+          ],
+          "prevod1PoradiKc": 14836886,
+          "jackpot1PoradiKc": 16600000,
+          "prevod2PoradiKc": 1127014,
+          "jackpot2PoradiKc": 1000000
+        }
+      ],
+      "sance": {
+        "datum": "2026-09-27",
+        "cislice": "780019",
+        "vsazenoKc": 5867010,
+        "poradi": [
+          {
+            "klic": "sestecisli",
+            "popis": "šestičíslí",
+            "vzor": "780019",
+            "pocetVyher": 0,
+            "vyseVyhryKc": 0
+          },
+          {
+            "klic": "peticisli",
+            "popis": "pětičíslí",
+            "vzor": "80019",
+            "pocetVyher": 2,
+            "vyseVyhryKc": 100000
+          },
+          {
+            "klic": "ctyrcisli",
+            "popis": "čtyřčíslí",
+            "vzor": "0019",
+            "pocetVyher": 16,
+            "vyseVyhryKc": 10000
+          },
+          {
+            "klic": "trojcisli",
+            "popis": "trojčíslí",
+            "vzor": "019",
+            "pocetVyher": 159,
+            "vyseVyhryKc": 1000
+          },
+          {
+            "klic": "dvojcisli",
+            "popis": "dvojčíslí",
+            "vzor": "19",
+            "pocetVyher": 1668,
+            "vyseVyhryKc": 100
+          },
+          {
+            "klic": "koncove-cislo",
+            "popis": "koncové číslo",
+            "vzor": "9",
+            "pocetVyher": 17538,
+            "vyseVyhryKc": 50
+          },
+          {
+            "klic": "sousedni-cislo",
+            "popis": "koncové číslo +/- 1",
+            "vzor": null,
+            "pocetVyher": 37625,
+            "vyseVyhryKc": 30
+          }
+        ]
+      },
+      "prevodBonusKc": 250000000,
+      "superJackpotKc": 278000000
+    },
+    {
+      "hra": "eurojackpot",
+      "datum": "2026-09-29",
+      "den": "ut",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 40
+      },
+      "vsazenoKc": 27913500,
+      "naVyhryKc": 12561075,
+      "cisla": [
+        21,
+        43,
+        48,
+        36,
+        30
+      ],
+      "eurocisla": [
+        1,
+        5
+      ],
+      "extra6": "317540",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "5+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "5+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 27847866
+        },
+        {
+          "klic": "III",
+          "popis": "5+0",
+          "pocetVyher": 2,
+          "vyseVyhryKc": 3489977
+        },
+        {
+          "klic": "IV",
+          "popis": "4+2",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 126364
+        },
+        {
+          "klic": "V",
+          "popis": "4+1",
+          "pocetVyher": 15,
+          "vyseVyhryKc": 8611
+        },
+        {
+          "klic": "VI",
+          "popis": "3+2",
+          "pocetVyher": 32,
+          "vyseVyhryKc": 4590
+        },
+        {
+          "klic": "VII",
+          "popis": "4+0",
+          "pocetVyher": 39,
+          "vyseVyhryKc": 3046
+        },
+        {
+          "klic": "VIII",
+          "popis": "2+2",
+          "pocetVyher": 409,
+          "vyseVyhryKc": 739
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 567,
+          "vyseVyhryKc": 566
+        },
+        {
+          "klic": "X",
+          "popis": "3+0",
+          "pocetVyher": 1317,
+          "vyseVyhryKc": 459
+        },
+        {
+          "klic": "XI",
+          "popis": "1+2",
+          "pocetVyher": 2312,
+          "vyseVyhryKc": 351
+        },
+        {
+          "klic": "XII",
+          "popis": "2+1",
+          "pocetVyher": 8738,
+          "vyseVyhryKc": 271
+        }
+      ],
+      "jackpotKc": 2588000000
+    },
+    {
+      "hra": "euromiliony",
+      "datum": "2026-09-29",
+      "den": "ut",
+      "sazkovyTyden": {
+        "rok": 2026,
+        "tyden": 40
+      },
+      "vsazenoKc": 1012890,
+      "naVyhryKc": 94438846,
+      "cisla": [
+        5,
+        16,
+        4,
+        24,
+        3,
+        30,
+        34
+      ],
+      "druheOsudi": 4,
+      "eurosance": "31779",
+      "poradi": [
+        {
+          "klic": "I",
+          "popis": "7+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "II",
+          "popis": "7",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "III",
+          "popis": "6+1",
+          "pocetVyher": 0,
+          "vyseVyhryKc": 0
+        },
+        {
+          "klic": "IV",
+          "popis": "6",
+          "pocetVyher": 2,
+          "vyseVyhryKc": 40854
+        },
+        {
+          "klic": "V",
+          "popis": "5+1",
+          "pocetVyher": 8,
+          "vyseVyhryKc": 2848
+        },
+        {
+          "klic": "VI",
+          "popis": "5",
+          "pocetVyher": 16,
+          "vyseVyhryKc": 1740
+        },
+        {
+          "klic": "VII",
+          "popis": "4+1",
+          "pocetVyher": 107,
+          "vyseVyhryKc": 331
+        },
+        {
+          "klic": "VIII",
+          "popis": "4",
+          "pocetVyher": 359,
+          "vyseVyhryKc": 190
+        },
+        {
+          "klic": "IX",
+          "popis": "3+1",
+          "pocetVyher": 689,
+          "vyseVyhryKc": 106
+        },
+        {
+          "klic": "X",
+          "popis": "2+1",
+          "pocetVyher": 2116,
+          "vyseVyhryKc": 58
+        }
+      ],
+      "prevodHlavniCastKc": 89769845,
+      "jackpotKc": 89900000
+    }
+  ]
+}

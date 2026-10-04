@@ -14,3 +14,8 @@ Aplikace nečte nic mimo `mobil/`, proto má vlastní kopii. Je to smlouva o for
 testy v `test/tok.test.ts` a `test/stahovani.test.ts` ověřují, že aplikace rozumí tomu, co
 backend publikuje. Kdyby byl soubor psaný ručně, testoval by jen sám sebe. Když backend změní
 formát (`verzeFormatu`), kopie se tady vymění.
+
+`vysledky-2026-38-az-40.json` je výřez z balíku `2026.json`, jak ho 3. 10. 2026 publikoval
+server výsledků (hash sedí na manifest): jen tahy od 15. do 29. 9. 2026, sazby a ceník
+beze změny. Slouží `test/tiketyUzivatele.test.ts` — skutečné tikety uživatele s výhrou, kterou
+potvrdila prodejna.

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   cenaTiketuPodleCeniku,
   platnyCenik,
+  pocetSlosovaniPodleCeny,
   rozpisCenyTiketu,
   vkladNaSlosovani,
   vsazenoPodleCeniku,
@@ -112,6 +113,31 @@ describe('cena papírového tiketu', () => {
 
   it('bez ceníku cenu nezná', () => {
     expect(rozpisCenyTiketu(sazka({ hra: 'sportka', sloupce: [SP_SLOUPEC] }), [])).toBeNull();
+  });
+});
+
+describe('pocetSlosovaniPodleCeny', () => {
+  // Sportka ze 14. 9. 2026: tři sloupce se Šancí na šest slosování za vytištěných 720 Kč.
+  const sportka = sazka({
+    hra: 'sportka',
+    sloupce: Array(3).fill(SP_SLOUPEC),
+    kodDoplnkoveHry: '123456',
+    slosovani: { prvni: '2026-09-16', pocet: 6, dny: null },
+  });
+
+  it('cena, která sedí na počet slosování z tiketu, nic nenavrhne', () => {
+    expect(pocetSlosovaniPodleCeny(sportka, 720, CENY)).toBeNull();
+  });
+
+  it('špatně přečtený počet slosování prozradí cena z papíru', () => {
+    const jedno = { ...sportka, slosovani: { ...sportka.slosovani, pocet: 1 } };
+    expect(rozpisCenyTiketu(jedno, CENY)?.celkemKc).toBe(120);
+    expect(pocetSlosovaniPodleCeny(jedno, 720, CENY)).toBe(6);
+  });
+
+  it('cena, která na celý počet slosování nevychází, nic nenavrhne', () => {
+    expect(pocetSlosovaniPodleCeny(sportka, 700, CENY)).toBeNull();
+    expect(pocetSlosovaniPodleCeny(sportka, 720, [])).toBeNull();
   });
 });
 

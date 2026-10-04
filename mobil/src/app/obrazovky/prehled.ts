@@ -104,7 +104,7 @@ function uTiketu(pocet: number): string {
         @if (tiketuSPrekryvem() > 0) {
           <li>
             {{ pocetTiketu(tiketuSPrekryvem()) }} se stejnou sázkou na stejná slosování — ta se
-            započítají dvakrát. Podrobnosti jsou v detailu tiketu.
+            započítají dvakrát. Duplicitní tikety jsou v seznamu označené, jeden z dvojice smaž.
           </li>
         }
         <li>Vyhodnocení je neoficiální. Závazná je vždy kontrola na terminálu Allwyn.</li>

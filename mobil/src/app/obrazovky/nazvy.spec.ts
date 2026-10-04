@@ -74,8 +74,12 @@ describe('Pojmenování a skupiny tiketů', () => {
       slosovani: { ...tiket.slosovani, prvni: EM_2026_09_01.datum },
     };
     await stav.ulozTiket(em);
-    await stav.ulozTiket({ ...em, id: 'kolega', nazev: 'kolega' });
-    await stav.ulozTiket({ ...tiket, id: 'stary', nazev: null });
+    // Duplicity z doby před kontrolou při ukládání — dnes by je Stav odmítl, tak jdou rovnou
+    // do úložiště, jako by v databázi zůstaly ze starší verze.
+    const uloziste = TestBed.inject(ULOZISTE);
+    await uloziste.ulozTiket({ ...em, id: 'kolega', nazev: 'kolega', archivovany: false });
+    await uloziste.ulozTiket({ ...tiket, id: 'stary', nazev: null, archivovany: false });
+    await stav.nacti();
   }
 
   it('název přežije načtení a sken, lze ho přejmenovat i odstranit bez změny bilance', async () => {
@@ -153,7 +157,8 @@ describe('Pojmenování a skupiny tiketů', () => {
 
   it('přehled odkazuje na tikety skupiny a seznam z odkazu převezme filtr', async () => {
     await pridejSkupiny();
-    await stav.ulozTiket({ ...tiket, id: 'stary-archiv', nazev: 'loni', archivovany: true });
+    await TestBed.inject(ULOZISTE).ulozTiket({ ...tiket, id: 'stary-archiv', nazev: 'loni', archivovany: true });
+    await stav.nacti();
     const f = TestBed.createComponent(Prehled);
     await f.whenStable();
     const odkazy = new Map([...(f.nativeElement as HTMLElement).querySelectorAll('.skupiny-nazvu section')]

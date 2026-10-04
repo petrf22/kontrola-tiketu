@@ -149,7 +149,8 @@ describe('Správa tiketů', () => {
       kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null },
     });
     await stav.ulozTiket({
-      ...tiket, id: 'papirovy', sloupce: [bezVyhry], slosovani: { ...tiket.slosovani, pocet: 2 },
+      // Jiný sloupec: stejné sloupce na stejné slosování by byly duplicita a neuložily by se.
+      ...tiket, id: 'papirovy', sloupce: [{ ...bezVyhry, cisla: [2, 3, 5, 6, 8] }], slosovani: { ...tiket.slosovani, pocet: 2 },
     });
     const f = TestBed.createComponent(Seznam);
     await f.whenStable();
@@ -166,7 +167,9 @@ describe('Správa tiketů', () => {
 
   it('řádek seznamu: výsledek vedle hry, štítky názvu a virtuálního, úplný tiket bez poznámky', async () => {
     await stav.ulozTiket({ ...tiket, nazev: 'Práce', kontrola: { od: '2026-09-08', do: '2026-09-08', cenaZaSlosovaniKc: null } });
-    await stav.ulozTiket({ ...tiket, id: 'papirovy', vlozeno: '2026-09-07T12:00:00Z' });
+    // Tikety se liší sloupcem, jinak by byly duplicitní.
+    const jinySloupec = (cislo: number) => [{ hra: 'eurojackpot', cisla: [2, 3, 5, 6, cislo], eurocisla: [1, 2] }] as const;
+    await stav.ulozTiket({ ...tiket, id: 'papirovy', sloupce: jinySloupec(8), vlozeno: '2026-09-07T12:00:00Z' });
     const f = TestBed.createComponent(Seznam);
     await f.whenStable();
     const radek = (id: string) => f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"]`) as HTMLElement;
@@ -178,7 +181,7 @@ describe('Správa tiketů', () => {
     const detail = (id: string) => radek(id).querySelector('.detail')!.textContent!.replace(/\s+/g, ' ').trim();
     expect(detail('papirovy')).toBe(`${formatujDatum('2026-09-08')} · 1 slos. · 1 sl.`);
     expect(detail(tiket.id)).toBe(`${formatujDatum('2026-09-08')} · 1 sl.`);
-    await stav.ulozTiket({ ...tiket, id: 'bez-konce', vlozeno: '2026-09-06T12:00:00Z', kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null } });
+    await stav.ulozTiket({ ...tiket, id: 'bez-konce', sloupce: jinySloupec(9), vlozeno: '2026-09-06T12:00:00Z', kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null } });
     await f.whenStable();
     expect(detail('bez-konce')).toBe(`${formatujDatum('2026-09-08')} – … · 1 sl.`);
     for (const id of [tiket.id, 'papirovy']) {

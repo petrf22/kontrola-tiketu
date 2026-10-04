@@ -4,10 +4,10 @@ import {
   DELKA_KODU_DOPLNKOVE_HRY,
   DNY_LOSOVANI,
   dnyZVyberu,
-  prekryvy,
+  duplicity,
+  pocetSlosovaniPodleCeny,
   rozpisCenyTiketu,
   ROZSAHY,
-  stejnaSazka,
   vyberSlosovani,
   zkontrolujTiket,
   type Den,
@@ -40,7 +40,8 @@ import {
 } from '../data/format.js';
 import { DocasnyTiket } from '../data/docasnyTiket.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
-import { Stav } from '../data/stav.js';
+import { DuplicitniTiket, Stav } from '../data/stav.js';
+import { popisTerminu } from '../data/zobrazeniTiketu.js';
 import { NazevTiketu } from './nazev-tiketu.js';
 
 interface Radek {
@@ -287,6 +288,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
           {{ rozpoznanoZeSnimku && cena() === cenaZeSnimku ? 'Cena přečtená z tiketu' : 'Zadaná cena' }}
           nesedí s ceníkem: {{ popisRozpisuCeny(hra(), rozpis) }}. Zkontroluj počet sloupců,
           {{ nazevDoplnkoveHry(hra()) }} a počet slosování.
+          @if (pocetPodleCeny(); as n) { <b>Cena vychází na {{ pocetSlosovani(n) }}, ve formuláři je {{ pocet() }}.</b> }
         </p>
       } @else if (cena() === null && rozpisCeny(); as rozpis) {
         <p class="napoveda">Spočítáno podle ceníku: {{ popisRozpisuCeny(hra(), rozpis) }}.</p>
@@ -354,12 +356,32 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
       </details>
 
-      @if (!jenKontrola() && prekryv().length > 0) {
-        <p class="upozorneni">
-          Stejnou sázku už má uložený tiket na {{ pocetSlosovani(prekryv().length) }}
-          ({{ prekryv().map(formatujDatum).join(', ') }}). Výhry i vsazené částky těch slosování
-          se v přehledu započítají dvakrát.
-        </p>
+      <!--
+        Duplicita se uložit nedá: výhry i vsazené by se počítaly dvakrát. Typicky je to druhý
+        sken téhož papíru, a ten bývá úplnější — proto nabídka nahrazení, ne jen zákaz.
+      -->
+      @if (!jenKontrola() && duplicitni().length > 0) {
+        <div class="upozorneni duplicita" tabindex="-1">
+          <p><b>Tento tiket už je uložený.</b> Stejné sloupce na
+            {{ pocetSlosovani(spolecnychSlosovani()) }} má:</p>
+          <ul>
+            @for (d of duplicitni(); track d.tiket.id) {
+              <li>
+                <a [routerLink]="['/tiket', d.tiket.id]">{{ d.tiket.nazev || nazevHry(d.tiket.hra) }}</a>
+                {{ d.termin }}, {{ d.tiket.kontrola ? 'virtuální' : pocetSlosovani(d.tiket.slosovani.pocet) }},
+                cena {{ d.cenaKc === null ? 'neznámá' : formatujKc(d.cenaKc) }}
+              </li>
+            }
+          </ul>
+          <p>Tento: {{ terminNavrhu() }}, {{ virtualni() ? 'virtuální' : pocetSlosovani(pocet()) }},
+            cena {{ cenaNavrhu() === null ? 'neznámá' : formatujKc(cenaNavrhu()!) }}.
+            Dva tikety by se v přehledu započítaly dvakrát, proto se uloží jen jeden.</p>
+          <div class="tlacitka">
+            <button type="button" class="hlavni" [disabled]="uklada()" (click)="nahradAZkontroluj()">
+              Nahradit uložený tiket
+            </button>
+          </div>
+        </div>
       }
 
       <!--
@@ -478,6 +500,9 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
       margin: 0; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
       border-left: 3px solid var(--barva-chyba); font-size: 0.85rem; line-height: 1.5;
     }
+    .duplicita p { margin: 0 0 .4rem; }
+    .duplicita ul { margin: 0 0 .4rem; padding-left: 1.1rem; }
+    .duplicita .tlacitka { display: flex; flex-wrap: wrap; gap: .5rem; }
     .diagnostika { font-size: 0.85rem; }
     .diagnostika summary { cursor: pointer; color: var(--barva-text-tlumeny); }
     .diagnostika ul { margin: 0.4rem 0 0; padding-left: 1.1rem; }
@@ -621,6 +646,17 @@ export class NovyTiket {
     return rozpis !== null && zadana !== null && zadana !== rozpis.celkemKc ? rozpis : null;
   });
 
+  /** Na kolik slosování zadaná cena vychází, když ne na to z formuláře — typicky špatně přečtený počet. */
+  protected readonly pocetPodleCeny = computed(() => {
+    const zadana = this.cena() === null ? null : prectiCastku(this.cena()!);
+    if (this.nesouhlasCeny() === null || zadana === null) return null;
+    return pocetSlosovaniPodleCeny(
+      { hra: this.hra(), sloupce: this.sloupce(), slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: null }, kodDoplnkoveHry: this.kodDoplnkoveHry() },
+      zadana,
+      this.stav.ceny(),
+    );
+  });
+
   // Rozsah kontroly. Dokud ho uživatel nezmění, řídí se papírem: `null` znamená „podle tiketu“.
   protected readonly kontrolaOd = signal<string | null>(null);
   private readonly kontrolaDo = signal<string | null>(null);
@@ -630,7 +666,9 @@ export class NovyTiket {
   private readonly papir = computed<Papir>(() => ({
     hra: this.hra(),
     slosovani: { prvni: this.prvni(), pocet: this.pocet(), dny: dnyZVyberu(this.hra(), this.zaskrtnuteDny()) },
-    cenaKc: prectiCastku(this.cenaPole()),
+    // Jen zadaná nebo přečtená cena. Cena z ceníku se neukládá: zapečená by přestala sedět,
+    // jakmile se změní počet slosování nebo sloupců, a tvářila by se jako cena z papíru.
+    cenaKc: this.cena() === null ? null : prectiCastku(this.cena()!),
   }));
 
   private readonly konecPodleTiketu = computed(() => konecPodlePapiru(this.papir(), this.stav.tahy()));
@@ -685,14 +723,20 @@ export class NovyTiket {
     return doData === null || doData > posledni ? ({ druh: 'do-posledniho', posledni } as const) : null;
   });
 
-  /** Slosování, na která už stejnou sázku kontroluje jiný uložený tiket. */
-  protected readonly prekryv = computed(() => {
-    const navrh = this.navrh();
-    const stejne = this.stav.tikety().filter((t) => t.id !== navrh.id && stejnaSazka(t, navrh));
-    if (stejne.length === 0) return [];
-    const data = (prekryvy([navrh, ...stejne], this.stav.tahy()).get(navrh.id) ?? []).flatMap((p) => p.data);
-    return [...new Set(data)].sort();
+  /** Uložené tikety se stejnými sloupci na některé ze stejných slosování. */
+  protected readonly duplicitni = computed(() => {
+    if (this.jenKontrola() || this.prvni() === '') return [];
+    const tikety = this.stav.tikety();
+    const tahy = this.stav.tahy();
+    return duplicity(this.navrh(), tikety, tahy).flatMap((d) => {
+      const tiket = tikety.find((t) => t.id === d.tiketId);
+      if (tiket === undefined) return [];
+      return [{ tiket, data: d.data, termin: popisTerminu(tiket, tahy), cenaKc: this.stav.vysledky().get(tiket.id)?.vsazenoKc ?? null }];
+    });
   });
+  protected readonly spolecnychSlosovani = computed(() => new Set(this.duplicitni().flatMap((d) => d.data)).size);
+  protected readonly terminNavrhu = computed(() => popisTerminu(this.navrh(), this.stav.tahy()));
+  protected readonly cenaNavrhu = computed(() => this.papir().cenaKc ?? this.rozpisCeny()?.celkemKc ?? null);
 
   private readonly sloupce = computed<readonly Sloupec[]>(() => {
     const hra = this.hra();
@@ -877,12 +921,27 @@ export class NovyTiket {
       await this.router.navigate(['/kontrola'], { replaceUrl: true });
       return;
     }
+    await this.ulozAZkontroluj(tiket, []);
+  }
+
+  /** „Nahradit uložený tiket“: uloží tento a duplicitní tikety smaže. */
+  protected async nahradAZkontroluj(): Promise<void> {
+    if (this.uklada()) return;
+    await this.ulozAZkontroluj(this.navrh(), this.duplicitni().map((d) => d.tiket.id));
+  }
+
+  private async ulozAZkontroluj(tiket: Tiket, nahradit: readonly string[]): Promise<void> {
     this.uklada.set(true);
     this.chybaUlozeni.set(null);
     try {
-      await this.stav.ulozTiket(tiket);
-    } catch {
-      this.chybaUlozeni.set('Tiket se nepodařilo uložit. Zadané údaje zůstaly ve formuláři.');
+      await this.stav.ulozTiket(tiket, { nahradit });
+    } catch (chyba) {
+      if (chyba instanceof DuplicitniTiket) {
+        requestAnimationFrame(() => this.element.nativeElement.querySelector<HTMLElement>('.duplicita')?.focus());
+        this.chybaUlozeni.set('Tiket se neuložil: stejný tiket už je uložený. Nahraď ho, nebo uprav čísla či slosování.');
+      } else {
+        this.chybaUlozeni.set('Tiket se nepodařilo uložit. Zadané údaje zůstaly ve formuláři.');
+      }
       return;
     } finally { this.uklada.set(false); }
     // Průchozí údaje ze skenu už splnily účel.

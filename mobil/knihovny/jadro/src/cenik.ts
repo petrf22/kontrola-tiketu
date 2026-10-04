@@ -93,3 +93,25 @@ export function vsazenoPodleCeniku(
   }
   return soucet;
 }
+
+/**
+ * Na kolik slosování by zadaná cena vyšla podle ceníku, když to není počet z tiketu.
+ *
+ * Nejčastější důvod, proč přečtená cena nesedí, je špatně přečtený počet slosování: Sportka
+ * za 720 Kč se třemi sloupci a Šancí je šest slosování po 120 Kč, ne jedno. Vrací `null`,
+ * když cena vychází na počet z tiketu, když ji ceník nezná nebo když nedělí beze zbytku.
+ */
+export function pocetSlosovaniPodleCeny(
+  tiket: SazkaTiketu,
+  cenaKc: number,
+  ceny: readonly CenikHry[],
+): number | null {
+  const vklad = vkladNaSlosovani(
+    platnyCenik(ceny, tiket.hra, tiket.slosovani.prvni),
+    tiket.sloupce.length,
+    tiket.kodDoplnkoveHry !== null,
+  );
+  if (vklad === null || vklad <= 0 || cenaKc <= 0) return null;
+  const pocet = cenaKc / vklad;
+  return Number.isInteger(pocet) && pocet !== tiket.slosovani.pocet ? pocet : null;
+}

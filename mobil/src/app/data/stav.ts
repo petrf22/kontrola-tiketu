@@ -7,6 +7,7 @@
 
 import { Injectable, computed, inject, signal } from '@angular/core';
 import {
+  duplicity,
   prekryvy,
   sloucTahy,
   vyhodnotTiket,
@@ -26,6 +27,18 @@ import { seskupPodleNazvu, upravNazev } from './nazvyTiketu.js';
 import { nactenyFiltrSeznamu, VYCHOZI_FILTR_SEZNAMU, type FiltrSeznamu } from './zobrazeniTiketu.js';
 
 const KLIC_FILTRU_SEZNAMU = 'filtrSeznamu';
+
+/**
+ * Tiket by se uložil vedle jiného se stejnými sloupci na totéž slosování. Výhry i vsazené
+ * částky by se pak počítaly dvakrát — typicky druhý sken téhož papíru, když jeden z nich
+ * nepřečetl čárový kód a tikety tak dostaly různá id.
+ */
+export class DuplicitniTiket extends Error {
+  constructor(readonly duplicity: readonly Prekryv[]) {
+    super('Tiket se stejnými sloupci na stejná slosování už je uložený.');
+    this.name = 'DuplicitniTiket';
+  }
+}
 
 export interface Zprava {
   readonly uspech: boolean;
@@ -65,7 +78,10 @@ export class Stav {
     () => new Map(this.tikety().map((tiket) => [tiket.id, this.vyhodnot(tiket)])),
   );
 
-  /** Tikety se stejnou sázkou na stejná slosování — započítaly by se dvakrát. */
+  /**
+   * Duplicitní tikety — stejné sloupce na stejná slosování, započítaly by se dvakrát. Nové se
+   * uložit nedají, ukazují se ty z dřívějška.
+   */
   readonly prekryvy = computed<ReadonlyMap<string, readonly Prekryv[]>>(() =>
     prekryvy(this.tikety(), this.tahy()),
   );
@@ -112,14 +128,27 @@ export class Stav {
     await this.uloziste.ulozNastaveni(KLIC_FILTRU_SEZNAMU, this.filtrSeznamu());
   }
 
-  async ulozTiket(tiket: Tiket): Promise<void> {
-    const puvodni = this.tikety().find(t => t.id === tiket.id);
+  /**
+   * Uloží tiket. Když by vznikla duplicita, nic neuloží a vyhodí {@link DuplicitniTiket};
+   * tikety v `nahradit` se po uložení smažou — tak se úplnější sken prosadí místo staršího.
+   * Duplicitu, kterou tiket měl už před úpravou, uložení netrestá: přejmenovat nebo
+   * archivovat se musí dát i tiket z doby před touto kontrolou.
+   */
+  async ulozTiket(tiket: Tiket, { nahradit = [] }: { readonly nahradit?: readonly string[] } = {}): Promise<void> {
+    const tikety = this.tikety();
+    const puvodni = tikety.find(t => t.id === tiket.id);
+    const drivejsi = new Set(puvodni === undefined ? [] : duplicity(puvodni, tikety, this.tahy()).map(d => d.tiketId));
+    const nove = duplicity(tiket, tikety, this.tahy()).filter(d => !nahradit.includes(d.tiketId) && !drivejsi.has(d.tiketId));
+    if (nove.length > 0) throw new DuplicitniTiket(nove);
+
+    const nahrazeny = tikety.find(t => t.id !== tiket.id && nahradit.includes(t.id));
     await this.uloziste.ulozTiket({
       ...tiket,
       // Nový sken bez názvu zachová původní; explicitní null nebo prázdný text jej odstraní.
-      nazev: upravNazev(tiket.nazev === undefined ? puvodni?.nazev : tiket.nazev),
+      nazev: upravNazev(tiket.nazev === undefined ? (puvodni?.nazev ?? nahrazeny?.nazev) : tiket.nazev),
       archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false,
     });
+    for (const id of nahradit) if (id !== tiket.id) await this.uloziste.smazTiket(id);
     this.tikety.set(await this.uloziste.nactiTikety());
   }
 

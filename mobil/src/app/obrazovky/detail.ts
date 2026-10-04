@@ -3,6 +3,7 @@ import { Component, DestroyRef, ElementRef, computed, effect, inject, input, lin
 import { Router, RouterLink } from '@angular/router';
 import {
   platnyCenik,
+  pocetSlosovaniPodleCeny,
   rozpisCenyTiketu,
   type Tiket,
   zkontrolujTiket,
@@ -36,11 +37,11 @@ import {
   popisRozsahuKontroly,
 } from '../data/format.js';
 import { DocasnyTiket } from '../data/docasnyTiket.js';
-import { Stav } from '../data/stav.js';
+import { DuplicitniTiket, Stav } from '../data/stav.js';
 import { NazevTiketu } from './nazev-tiketu.js';
 import { VyhryTahu } from './vyhry-tahu.js';
 import { zobrazTah, type ZobrazenyTah } from '../data/zobrazeniTahu.js';
-import { cekaniNaSlosovani, historieTiketu, neuplneSlosovani, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
+import { cekaniNaSlosovani, historieTiketu, neuplneSlosovani, popisTerminu, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
 const DELKA_SHODY: Readonly<Record<string, number>> = {
@@ -183,8 +184,28 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             </p>
           }
         } @else if (!v.soucetJisty) { <p class="info">Průběžný výsledek: výhra ani bilance nejsou konečné.</p> }
+        <!-- Duplicity z doby před kontrolou při ukládání; nové se uložit nedají. -->
+        @for (p of prekryvyTiketu(); track p.tiketId) {
+          <p class="varovani duplicita">
+            <b>Duplicitní tiket.</b> Stejné sloupce na {{ pocetSlosovani(p.data.length) }} má i
+            <a [routerLink]="['/tiket', p.tiketId]">{{ popisJinehoTiketu(p.tiketId) }}</a>.
+            Výhry i vsazené částky těch slosování se v přehledu počítají dvakrát — jeden z tiketů smaž.
+          </p>
+        }
         @if (!t.kontrola && t.cenaKc !== null && rozpisCeny(); as r) {
-          @if (t.cenaKc !== r.celkemKc) { <p class="varovani">Cena se liší od ceníku ({{ formatujKc(r.celkemKc) }}). Používá se zadaná cena.</p> }
+          @if (t.cenaKc !== r.celkemKc) {
+            <div class="varovani nesouhlas-ceny">
+              <p>Cena tiketu {{ formatujKc(t.cenaKc) }} nesedí s ceníkem: {{ popisRozpisuCeny(t.hra, r) }}.
+                Zkontroluj počet sloupců, {{ nazevDoplnkoveHry(t.hra) }} a počet slosování
+                ({{ pocetSlosovani(t.slosovani.pocet) }}) proti papíru. Dokud to neopravíš, počítá se
+                s cenou {{ formatujKc(t.cenaKc) }}.
+                @if (pocetPodleCeny(); as n) { <b>Cena vychází na {{ pocetSlosovani(n) }} — počet slosování byl nejspíš přečtený špatně. Tiket smaž a naskenuj znovu.</b> }</p>
+              <div class="tlacitka">
+                <button type="button" [disabled]="uklada()" (click)="pouzijCenik()">Použít cenu podle ceníku</button>
+                <button type="button" [disabled]="uklada()" (click)="zacniUpravuCeny()">Upravit cenu</button>
+              </div>
+            </div>
+          }
         }
 
         @if (!cekani()) {
@@ -194,15 +215,6 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
               Kontroluje se dál s každým dalším staženým slosováním.
             </p>
           }
-
-          @for (p of prekryvyTiketu(); track p.tiketId) {
-            <p class="varovani">
-              Stejnou sázku má i <a [routerLink]="['/tiket', p.tiketId]">jiný tiket</a>
-              na {{ pocetSlosovani(p.data.length) }}. Výhry i vsazené částky těch slosování se
-              v přehledu započítají dvakrát.
-            </p>
-          }
-
 
 
           @if (v.chybejicichSlosovani > 0) {
@@ -633,6 +645,12 @@ export class Detail {
    * Týž rozpis přepočtený na jedno slosování. Virtuální tiket se zadává cenou za slosování,
    * takže rozpis za celý papír by mluvil o jiné veličině, než je v poli nad ním.
    */
+  /** Na kolik slosování uložená cena vychází, když ne na to z tiketu. */
+  protected readonly pocetPodleCeny = computed(() => {
+    const t = this.tiket();
+    return t && !t.kontrola && t.cenaKc !== null ? pocetSlosovaniPodleCeny(t, t.cenaKc, this.stav.ceny()) : null;
+  });
+
   protected readonly rozpisZaSlosovani = computed(() => {
     const r = this.rozpisCeny();
     return r === null ? null : { ...r, slosovani: 1, celkemKc: r.sloupcu * r.sloupecKc + (r.doplnkovaHraKc ?? 0) };
@@ -686,7 +704,12 @@ export class Detail {
       if (id !== this.id()) return false;
       return true;
     }
-    catch { this.chybaAkce.set('Změnu se nepodařilo uložit. Zkus to znovu.'); return false; }
+    catch (chyba) {
+      this.chybaAkce.set(chyba instanceof DuplicitniTiket
+        ? 'Změna se neuložila: na některá z těch slosování už stejné sloupce kontroluje jiný tiket a výhry by se počítaly dvakrát.'
+        : 'Změnu se nepodařilo uložit. Zkus to znovu.');
+      return false;
+    }
     finally { this.uklada.set(false); }
   }
 
@@ -703,6 +726,22 @@ export class Detail {
     const t = this.tiket(), archivovany = this.vratitelnyArchiv();
     if (!t || archivovany === null) return;
     if (await this.provedAkci(() => this.stav.ulozTiket({ ...t, archivovany }))) this.zpravaAkce.set('Přesun byl vrácen.');
+  }
+
+  /** Zahodí uloženou cenu; tiket se pak počítá podle ceníku. */
+  protected async pouzijCenik(): Promise<void> {
+    const t = this.tiket();
+    if (!t) return;
+    if (await this.provedAkci(() => this.stav.ulozTiket(sUpravenouCenou(t, '')))) {
+      this.zpravaAkce.set('Cena se teď počítá podle ceníku.');
+    }
+  }
+
+  /** Název druhého tiketu z duplicity, jinak hra a termín. */
+  protected popisJinehoTiketu(id: string): string {
+    const jiny = this.stav.tikety().find((x) => x.id === id);
+    if (!jiny) return 'jiný tiket';
+    return jiny.nazev || `${nazevHry(jiny.hra)} ${popisTerminu(jiny, this.stav.tahy())}`;
   }
 
   protected zacniUpravuCeny(): void {

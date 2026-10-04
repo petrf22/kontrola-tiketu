@@ -17,6 +17,8 @@ interface RadekSeznamu {
   readonly pokracuje: boolean;
   /** Tiket ještě nemá žádné vyhodnocené slosování. */
   readonly cekani: Cekani | null;
+  /** Má tiket duplicitu — stejné sloupce na stejné slosování? */
+  readonly duplicitni: boolean;
 }
 
 @Component({
@@ -64,8 +66,9 @@ interface RadekSeznamu {
                   [class.vyhra]="radek.dosudJisty && radek.castkaKc > 0"
                   [class.nula]="radek.dosudJisty && radek.castkaKc === 0">{{ formatujKc(radek.castkaKc) }}</span>
               }
-              @if (radek.tiket.nazev || radek.tiket.kontrola) {
+              @if (radek.tiket.nazev || radek.tiket.kontrola || radek.duplicitni) {
                 <span class="stitky">
+                  @if (radek.duplicitni) { <span class="stitek duplicitni">Duplicita</span> }
                   @if (radek.tiket.nazev) { <span class="stitek nazev-tiketu">{{ radek.tiket.nazev }}</span> }
                   @if (radek.tiket.kontrola) { <span class="stitek virtualni">Virtuální</span> }
                 </span>
@@ -124,6 +127,7 @@ interface RadekSeznamu {
       font-size: 0.75rem; font-weight: 600; overflow-wrap: anywhere;
     }
     .nazev-tiketu { color: var(--barva-duraz); }
+    .duplicitni { color: var(--barva-chyba); }
     .virtualni {
       color: var(--barva-vyhrano); font-size: 0.65rem; text-transform: uppercase;
       letter-spacing: 0.05em; align-self: center;
@@ -192,6 +196,7 @@ export class Seznam {
         chybi: vysledek.chybejicichSlosovani,
         pokracuje: vysledek.pokracuje,
         cekani: cekaniNaSlosovani(tiket, vysledek, dnesniDatum()),
+        duplicitni: this.stav.prekryvy().has(tiket.id),
       };
     }),
   );

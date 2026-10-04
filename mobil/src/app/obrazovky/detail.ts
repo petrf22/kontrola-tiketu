@@ -279,9 +279,12 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           <!--
             Vsazená čísla se zvýrazněnými shodami. Bez nich se nedá zkontrolovat, jestli
             aplikace tiket přečetla správně — a právě to je u naOCRovaného tiketu potřeba.
+            Sportka losuje dva tahy, každý má vlastní shody i pořadí, proto zvlášť.
           -->
+          @for (skupina of sloupceKZobrazeni(slosovani); track skupina.tah) {
+          @if (skupina.tah !== null) { <h3>{{ skupina.tah }}. tah</h3> }
           <ol class="sloupce">
-            @for (radek of sloupceKZobrazeni(slosovani); track radek.index) {
+            @for (radek of skupina.radky; track radek.index) {
               <li>
                 <span class="kulicky">
                   @for (c of radek.cisla; track $index) {
@@ -299,6 +302,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
               </li>
             }
           </ol>
+          }
 
           @if (doplnkovaKZobrazeni(slosovani); as d) {
             <div class="doplnkova">
@@ -846,41 +850,49 @@ export class Detail {
   /**
    * Poskládá vsazená čísla s příznakem, jestli padla.
    *
-   * U Sportky hraje sloupec v obou tazích, takže se shody sloučí — číslo se zvýrazní,
-   * když padlo aspoň v jednom. Kolik se trefilo v kterém tahu, je vidět v seznamu výher.
+   * Sportka losuje v každém slosování dva tahy a sloupec hraje v obou. Shody se proto
+   * ukazují po tazích — sloučené by tvrdily, že padlo víc čísel, než kolik padlo v kterémkoli
+   * z nich (3 v prvním a 2 jiná ve druhém by se ukázala jako 5). Ostatní hry mají jednu skupinu
+   * s `tah: null`.
    */
   protected sloupceKZobrazeni(slosovani: VysledekSlosovani) {
     const tiket = this.tiket();
     if (tiket === undefined) return [];
 
-    return slosovani.sloupce.map((s) => {
-      const sloupec: Sloupec | undefined = tiket.sloupce[s.index];
-      const trefene = new Set<number>(
-        s.hra === 'sportka' ? s.vysledky.flatMap((v) => v.shoda.cisla) : s.vysledek.shoda.hlavniCisla,
-      );
-      const trefeneDruhe = new Set<number>(
-        s.hra === 'eurojackpot'
-          ? s.vysledek.shoda.euroCisla
-          : s.hra === 'euromiliony'
-            ? s.vysledek.shoda.druheCisla
-            : [],
-      );
+    const oznac = (cisla: readonly number[], kde: readonly number[]) =>
+      cisla.map((hodnota) => ({ hodnota, shoda: kde.includes(hodnota) }));
+    const popis = (poradi: string | null) => (poradi === null ? '—' : `pořadí ${poradi}`);
 
-      const oznac = (cisla: readonly number[], kde: ReadonlySet<number>) =>
-        cisla.map((hodnota) => ({ hodnota, shoda: kde.has(hodnota) }));
+    if (tiket.hra === 'sportka') {
+      return ([1, 2] as const).map((tah) => ({
+        tah,
+        radky: slosovani.sloupce.flatMap((s) => {
+          if (s.hra !== 'sportka') return [];
+          const v = s.vysledky.find((x) => x.poradiTahu === tah);
+          return [{
+            index: s.index,
+            cisla: oznac(tiket.sloupce[s.index]?.cisla ?? [], v?.shoda.cisla ?? []),
+            druheOsudi: [],
+            popis: popis(v?.poradi ?? null),
+          }];
+        }),
+      }));
+    }
 
-      const poradi =
-        s.hra === 'sportka'
-          ? (s.vysledky.map((v) => v.poradi).filter((p) => p !== null)[0] ?? null)
-          : s.vysledek.poradi;
-
-      return {
-        index: s.index,
-        cisla: oznac(sloupec?.cisla ?? [], trefene),
-        druheOsudi: oznac(druheOsudiSloupce(sloupec), trefeneDruhe),
-        popis: poradi === null ? '—' : `pořadí ${poradi}`,
-      };
-    });
+    return [{
+      tah: null,
+      radky: slosovani.sloupce.flatMap((s) => {
+        if (s.hra === 'sportka') return [];
+        const sloupec: Sloupec | undefined = tiket.sloupce[s.index];
+        const druhe = s.hra === 'eurojackpot' ? s.vysledek.shoda.euroCisla : s.vysledek.shoda.druheCisla;
+        return [{
+          index: s.index,
+          cisla: oznac(sloupec?.cisla ?? [], s.vysledek.shoda.hlavniCisla),
+          druheOsudi: oznac(druheOsudiSloupce(sloupec), druhe),
+          popis: popis(s.vysledek.poradi),
+        }];
+      }),
+    }];
   }
 
   /**

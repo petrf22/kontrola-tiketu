@@ -19,6 +19,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 ## [Nezveřejněno]
 
 ### Opraveno
+- U Sportky ukazuje detail slosování shody každého tahu zvlášť (1. tah, 2. tah) — dřív sloučil čísla padlá v obou tazích, takže sloupec se třemi čísly v jednom tahu a dvěma jinými ve druhém vypadal jako pět shod; vypočtené výhry to neovlivnilo (aplikace)
 - Tentýž tiket se nedá uložit dvakrát: tiket se stejnými sloupci na stejné slosování (třeba druhý sken, když první nepřečetl čárový kód) se neuloží a aplikace nabídne „Nahradit uložený tiket“; platí i pro virtuální tikety, kód doplňkové hry nerozhoduje; duplicity uložené dřív jsou v seznamu označené a detail vyzve jednu z nich smazat (aplikace)
 - Cena spočítaná z ceníku se při uložení tiketu už neukládá napevno — počítá se vždy z aktuálního počtu sloupců a slosování; uložená je jen cena z papíru nebo ručně zadaná (aplikace)
 - Když cena tiketu nesedí s ceníkem, detail ukáže rozpis (sloupce, doplňková hra, slosování), upozorní, na kolik slosování cena vychází — nejčastěji jde o špatně přečtený počet slosování — a nabídne Použít cenu podle ceníku (aplikace)

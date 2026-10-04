@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [0.10.1] – 2026-10-04
 
 ### Opraveno
 - Kód Extra 6, Šance ani Eurošance se z fotky nevyplní, když je na tiketu za ním NE — nevsazená doplňková hra se tak nevyhodnocuje ani nepočítá do ceny; když se ANO/NE přečíst nepodaří, formulář kód vyplní a upozorní, ať ho uživatel u NE smaže (aplikace)

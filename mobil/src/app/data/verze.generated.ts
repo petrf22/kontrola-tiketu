@@ -13,10 +13,26 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.10.0';
+export const VERZE = '0.10.1';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.10.1',
+    datum: '2026-10-04',
+    sekce: [
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Kód Extra 6, Šance ani Eurošance se z fotky nevyplní, když je na tiketu za ním NE — nevsazená doplňková hra se tak nevyhodnocuje ani nepočítá do ceny; když se ANO/NE přečíst nepodaří, formulář kód vyplní a upozorní, ať ho uživatel u NE smaže',
+          'U Sportky ukazuje detail slosování shody každého tahu zvlášť (1. tah, 2. tah) — dřív sloučil čísla padlá v obou tazích, takže sloupec se třemi čísly v jednom tahu a dvěma jinými ve druhém vypadal jako pět shod; vypočtené výhry to neovlivnilo',
+          'Tentýž tiket se nedá uložit dvakrát: tiket se stejnými sloupci na stejné slosování (třeba druhý sken, když první nepřečetl čárový kód) se neuloží a aplikace nabídne „Nahradit uložený tiket“; platí i pro virtuální tikety, kód doplňkové hry nerozhoduje; duplicity uložené dřív jsou v seznamu označené a detail vyzve jednu z nich smazat',
+          'Cena spočítaná z ceníku se při uložení tiketu už neukládá napevno — počítá se vždy z aktuálního počtu sloupců a slosování; uložená je jen cena z papíru nebo ručně zadaná',
+          'Když cena tiketu nesedí s ceníkem, detail ukáže rozpis (sloupce, doplňková hra, slosování), upozorní, na kolik slosování cena vychází — nejčastěji jde o špatně přečtený počet slosování — a nabídne Použít cenu podle ceníku',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.10.0',
     datum: '2026-10-03',

@@ -277,6 +277,21 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
           [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
       @for (chyba of chybyPole('kodDoplnkoveHry'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
           </label>
+      <!--
+        Kód je na tiketu vytištěný vždy, vsazenou hru prozradí až ANO/NE za ním. Vyplněný kód
+        se vyhodnocuje, takže u NE musí pole zůstat prázdné.
+      -->
+      @if (doplnkovaNevsazena && doplnkova() === '') {
+        <p class="napoveda doplnkova-ne">
+          Na tiketu je u {{ nazevDoplnkoveHry(hra()) }} NE — kód se nevyplnil a s doplňkovou hrou se nepočítá.
+        </p>
+      }
+      @if (kodBezAnoNe !== null && doplnkova() === kodBezAnoNe) {
+        <p class="upozorneni doplnkova-nevim">
+          U {{ nazevDoplnkoveHry(hra()) }} se nepodařilo přečíst ANO/NE. Je-li na tiketu NE, kód smaž,
+          jinak by aplikace hlásila výhry, které nejsou.
+        </p>
+      }
 
       <label>Cena tiketu v Kč (nepovinné)
         <input data-cesta="cenaKc" type="number" min="0" step="any" inputmode="decimal" placeholder="např. 400"
@@ -587,6 +602,11 @@ export class NovyTiket {
   protected readonly napoveda = computed(() => napoveda(this.hra()));
   protected readonly delkaKodu = computed(() => DELKA_KODU_DOPLNKOVE_HRY[this.hra()]);
   protected readonly doplnkova = signal(this.rozpoznane?.kodDoplnkoveHry ?? '');
+  /** Na tiketu je u doplňkové hry NE, proto se kód nepředvyplnil. */
+  protected readonly doplnkovaNevsazena = this.rozpoznane?.vsazenaDoplnkovaHra === false;
+  /** Kód z fotky, u kterého se nepřečetlo ANO/NE — uživatel ho má zkontrolovat. */
+  protected readonly kodBezAnoNe =
+    this.rozpoznane?.vsazenaDoplnkovaHra === null ? this.rozpoznane.kodDoplnkoveHry : null;
   /** Cena přečtená z fotky, jak ji formulář předvyplnil. */
   protected readonly cenaZeSnimku =
     this.rozpoznane?.cenaKc === null || this.rozpoznane?.cenaKc === undefined

@@ -8,8 +8,8 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 584 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
-npm run test:angular -- --watch=false   # 47 testů obrazovek (seznam, detail, formulář, výsledky)
+npm test             # vitest, 603 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm run test:angular -- --watch=false   # 53 testů obrazovek (seznam, detail, formulář, výsledky)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -49,7 +49,9 @@ Jádro je čistá knihovna: bez UI, bez I/O, bez sítě, bez závislostí. Hlíd
 `document`, `@angular` nebo cizí balík, test spadne. To je záměr, ne překážka.
 
 Ukázkový balík `test/fixtures/vysledky-2026-35-az-37.json` je skutečný výstup backendu
-a zároveň smlouva o formátu. Sazby Extra 6 berou testy jádra z něj.
+a zároveň smlouva o formátu. Sazby Extra 6 berou testy jádra z něj. `test/tiketyUzivatele.test.ts`
+ověřuje sedm skutečných tiketů uživatele (se svolením, skutečná čísla) proti výhře vyplacené
+prodejnou; výsledky má z výřezu `fixtures/vysledky-2026-38-az-40.json`.
 
 ## Ověřené na skutečném telefonu
 
@@ -101,6 +103,17 @@ je `cenaZaSlosovaniKc × počet zkontrolovaných slosování`; když je `cenaZaS
 počítá se každé slosování podle ceníku platného v jeho den (`knihovny/jadro/src/cenik.ts`).
 Rozsah shodný s papírem se neukládá (`sestavKontrolu` v `data/kontrola.ts`).
 
+## Duplicity
+
+Duplicita = stejné sloupce (pořadí ani kód doplňkové hry nerozhodují) aspoň na jedno společné
+slosování, i budoucí a i u virtuálních tiketů (`duplicity` v `rozsah.ts`). **`Stav.ulozTiket`
+ji neuloží** a vyhodí `DuplicitniTiket`; formulář pak nabídne „Nahradit uložený tiket“
+(`{ nahradit: ids }`). Vzniká hlavně tak, že jeden ze dvou skenů téhož papíru nepřečte čárový
+kód a tikety dostanou různá id (4. 10. 2026 Sportka uživatele). Duplicitu, kterou tiket měl už
+před úpravou, uložení netrestá — přejmenování a archivace starých dvojic musí projít; seznam,
+detail a přehled je ukazují přes `Stav.prekryvy`. Testy, které potřebují starou dvojici, ji
+zapisují rovnou do `ULOZISTE`.
+
 ## Kontrola bez uložení
 
 Formulář nabízí nad tlačítkem „Pouze kontrola bez uložení“ (výchozí je uložení). Tiket pak
@@ -114,9 +127,11 @@ by se zapomněl dřív, než by bylo s čím porovnat.
 
 Ceník sázek (`CenikHry`) přichází z backendu v balíku jako `ceny` a ukládá se vždy celý. Cena
 papírového tiketu = (sloupce × cena sloupce + doplňková hra) × počet slosování, podle ceníku
-v den prvního slosování. Formulář ji předvyplní a u zadané nebo přečtené ceny, která nesedí,
-ukáže rozpis. Vytištěná nebo zadaná cena má vždy přednost — ceník ji nikdy nepřepíše. Před
-nejstarším záznamem hry (2012, u Eurojackpotu start v ČR 2014) je cena neznámá, nic se neodhaduje.
+v den prvního slosování. Formulář ji předvyplní, ale **neukládá ji** (`cenaKc: null`) — zapečená
+by přestala sedět po změně počtu slosování. U zadané nebo přečtené ceny, která nesedí, formulář
+i detail ukážou rozpis a `pocetSlosovaniPodleCeny` — nejčastější příčinou je špatně přečtený počet
+slosování (720 Kč za Sportku 3 sloupce + Šance je 6 slosování, ne 1). Vytištěná nebo zadaná
+cena má vždy přednost — ceník ji nikdy nepřepíše. Před nejstarším záznamem hry (2012, u Eurojackpotu start v ČR 2014) je cena neznámá, nic se neodhaduje.
 
 Koláče v přehledu jsou vlastní SVG bez knihovny. Barvy `--barva-vsazeno` a `--barva-vyhrano`
 jsou ověřené na rozlišitelnost pro barvoslepé; hnědá a zelená aplikace to nesplňují.

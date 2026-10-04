@@ -15,6 +15,7 @@ import {
   EUROMILIONY_14_9,
   ROVNE,
   SPORTKA_14_9,
+  SPORTKA_BEZ_SANCE,
 } from './tiketyZFotek.js';
 
 /** Tiket Eurojackpotu přesně podle rozvržení ze zadání, včetně hlavičky a oddělovačů. */
@@ -293,6 +294,7 @@ describe('prectiTiket — přepisy tiketů ze 14. 9. 2026', () => {
       [[5, 17, 29, 33, 41], [4, 10]],
     ]);
     expect(vysledek.kodDoplnkoveHry).toBe('123456');
+    expect(vysledek.vsazenaDoplnkovaHra).toBe(true);
     expect(vysledek.cenaKc).toBe(640);
     expect(jeBezProblemu(vysledek)).toBe(true);
   });
@@ -310,8 +312,16 @@ describe('prectiTiket — přepisy tiketů ze 14. 9. 2026', () => {
       [7, 14, 20, 28, 35, 49],
     ]);
     expect(vysledek.kodDoplnkoveHry).toBe('654321');
+    expect(vysledek.vsazenaDoplnkovaHra).toBe(true);
     expect(vysledek.cenaKc).toBe(720);
     expect(jeBezProblemu(vysledek)).toBe(true);
+  });
+
+  it('Sportka bez Šance — kód za NE se nevyplní', () => {
+    const vysledek = prectiTiket(tiketEJ(SPORTKA_BEZ_SANCE), 'sportka', ROVNE);
+    expect(vysledek.kodDoplnkoveHry).toBeNull();
+    expect(vysledek.vsazenaDoplnkovaHra).toBe(false);
+    expect(vysledek.sloupce).toHaveLength(3);
   });
 
   it('Eurojackpot, starší tiket Sazky na jedno slosování', () => {
@@ -327,6 +337,7 @@ describe('prectiTiket — přepisy tiketů ze 14. 9. 2026', () => {
       [[10, 19, 25, 36, 47], [6, 11]],
     ]);
     expect(vysledek.kodDoplnkoveHry).toBe('112233');
+    expect(vysledek.vsazenaDoplnkovaHra).toBe(true);
     expect(vysledek.cenaKc).toBe(340);
     expect(jeBezProblemu(vysledek)).toBe(true);
   });
@@ -339,6 +350,7 @@ describe('prectiTiket — přepisy tiketů ze 14. 9. 2026', () => {
       [[3, 8, 10, 17, 21, 26, 31], [2]],
     ]);
     expect(vysledek.kodDoplnkoveHry).toBe('24680');
+    expect(vysledek.vsazenaDoplnkovaHra).toBe(true);
     expect(vysledek.cenaKc).toBe(360);
     expect(jeBezProblemu(vysledek)).toBe(true);
   });

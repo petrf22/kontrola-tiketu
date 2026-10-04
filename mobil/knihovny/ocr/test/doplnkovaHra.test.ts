@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { prectiKodDoplnkoveHry } from '../src/index.js';
+import { prectiDoplnkovouHru, prectiKodDoplnkoveHry } from '../src/index.js';
 
 describe('prectiKodDoplnkoveHry — Eurojackpot', () => {
   it('přečte podobu, kterou má reálný tiket', () => {
@@ -91,5 +91,38 @@ describe('Euromiliony', () => {
   it('nezamění hry — Eurošance není Extra 6', () => {
     expect(prectiKodDoplnkoveHry(['Extra 6: 845991'], 'euromiliony')).toBeNull();
     expect(prectiKodDoplnkoveHry(['Eurošance: 37960'], 'eurojackpot')).toBeNull();
+  });
+});
+
+describe('ANO / NE — vsazena, nebo jen vytištěný kód', () => {
+  it('ANO kód ponechá, i s nulou místo O a malými písmeny', () => {
+    for (const konec of ['ANO', 'AN0', 'ano']) {
+      expect(prectiDoplnkovouHru([`Extra 6:  123456  ${konec}`], 'eurojackpot'), konec).toEqual({
+        kod: '123456',
+        vsazena: true,
+      });
+    }
+  });
+
+  it('NE kód zahodí ve všech třech hrách', () => {
+    const nevsazena = { kod: null, vsazena: false };
+    expect(prectiDoplnkovouHru(['Extra 6:  123456  NE'], 'eurojackpot')).toEqual(nevsazena);
+    expect(prectiDoplnkovouHru(['Šance:  654321  NE'], 'sportka')).toEqual(nevsazena);
+    expect(prectiDoplnkovouHru(['Eurošance:  24680  NE'], 'euromiliony')).toEqual(nevsazena);
+    expect(prectiKodDoplnkoveHry(['Šance:  654321  NE'], 'sportka')).toBeNull();
+  });
+
+  it('bez ANO/NE kód ponechá a přiznává, že neví', () => {
+    expect(prectiDoplnkovouHru(['Šance:  654321'], 'sportka')).toEqual({ kod: '654321', vsazena: null });
+    expect(prectiDoplnkovouHru(['Šance:  654321  N'], 'sportka')).toEqual({ kod: '654321', vsazena: null });
+  });
+
+  it('NE uvnitř slova ani jinde než za kódem neplatí', () => {
+    expect(prectiDoplnkovouHru(['Šance:  654321  NEJ'], 'sportka').vsazena).toBeNull();
+    expect(prectiDoplnkovouHru(['NE Šance:  654321'], 'sportka').vsazena).toBeNull();
+  });
+
+  it('bez kódu nic neví', () => {
+    expect(prectiDoplnkovouHru(['Šance:  NE'], 'sportka')).toEqual({ kod: null, vsazena: null });
   });
 });

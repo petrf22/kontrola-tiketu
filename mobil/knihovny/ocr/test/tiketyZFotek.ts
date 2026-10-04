@@ -46,6 +46,14 @@ export const SPORTKA_14_9: readonly string[][] = [
   ['01ABCDE', '12345-000000000-000002'],
 ];
 
+/**
+ * Tentýž tiket, jen se Šancí nevsazenou. Nevyfocený — odvozený změnou `ANO` na `NE`, podoba
+ * řádku podle popisu uživatele. Cena by na takovém tiketu byla jiná, proto se netestuje.
+ */
+export const SPORTKA_BEZ_SANCE: readonly string[][] = SPORTKA_14_9.map((radek) =>
+  radek[1] === 'ANO' ? [radek[0]!, 'NE'] : radek,
+);
+
 export const EUROMILIONY_14_9: readonly string[][] = [
   ['Euromiliony'],
   ...REKLAMA,

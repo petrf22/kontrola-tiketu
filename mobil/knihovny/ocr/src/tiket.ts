@@ -11,7 +11,7 @@ import type { Den, Hra, Sloupec, Tiket } from '@kontrola-tiketu/jadro';
 import { denVTydnu, DNY_LOSOVANI, zkontrolujSloupec, type Problem } from '@kontrola-tiketu/jadro';
 import { prectiCislaSloupce, prectiCislo, ZAMENY, type NactenaHodnota } from './cisla.js';
 import { prectiCenu } from './cena.js';
-import { prectiKodDoplnkoveHry } from './doplnkovaHra.js';
+import { prectiDoplnkovouHru } from './doplnkovaHra.js';
 import { slozRadky, type NastaveniSkladani } from './radky.js';
 import type { RozpoznanyText } from './model.js';
 
@@ -98,9 +98,14 @@ export interface VysledekCteni {
   readonly sloupce: readonly NactenySloupec[];
   /**
    * Kód doplňkové hry přečtený z tiketu, nebo `null`. Z čárového kódu ho vzít nejde —
-   * je v šifrovaném bloku — ale vytištěný na tiketu je.
+   * je v šifrovaném bloku — ale vytištěný na tiketu je. U `NE` je `null`.
    */
   readonly kodDoplnkoveHry: string | null;
+  /**
+   * `ANO`/`NE` za kódem doplňkové hry. `null` = nepřečetlo se nebo se nenašel řádek s kódem;
+   * kód pak zůstává vyplněný a uživatel ho má zkontrolovat.
+   */
+  readonly vsazenaDoplnkovaHra: boolean | null;
   /** Cena tiketu přečtená z tiketu, nebo `null`. */
   readonly cenaKc: number | null;
   /** Řádky, které nevypadaly jako sloupec ani jako hlavička. Pro ladění a pro jistotu. */
@@ -282,11 +287,14 @@ export function prectiTiket(
     else sloupce.push(sloupec);
   }
 
+  const doplnkovaHra = prectiDoplnkovouHru(nepouzite, hra);
+
   return {
     hra,
     hlavicka: prectiHlavicku(nepouzite),
     sloupce,
-    kodDoplnkoveHry: prectiKodDoplnkoveHry(nepouzite, hra),
+    kodDoplnkoveHry: doplnkovaHra.kod,
+    vsazenaDoplnkovaHra: doplnkovaHra.vsazena,
     cenaKc: prectiCenu(nepouzite),
     nepouziteRadky: nepouzite,
   };

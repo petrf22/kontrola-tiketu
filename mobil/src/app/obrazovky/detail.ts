@@ -41,7 +41,17 @@ import { DuplicitniTiket, Stav } from '../data/stav.js';
 import { NazevTiketu } from './nazev-tiketu.js';
 import { VyhryTahu } from './vyhry-tahu.js';
 import { zobrazTah, type ZobrazenyTah } from '../data/zobrazeniTahu.js';
-import { cekaniNaSlosovani, historieTiketu, neuplneSlosovani, popisTerminu, sUpravenouCenou, type FiltrHistorie } from '../data/zobrazeniTiketu.js';
+import {
+  cekaniNaSlosovani,
+  dosudJisty,
+  historieTiketu,
+  neuplneSlosovani,
+  popisTerminu,
+  semaforBilance,
+  semaforVyhry,
+  sUpravenouCenou,
+  type FiltrHistorie,
+} from '../data/zobrazeniTiketu.js';
 
 /** Kolik koncových číslic se u kterého pořadí shoduje. */
 const DELKA_SHODY: Readonly<Record<string, number>> = {
@@ -151,14 +161,18 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             <dt>{{ t.kontrola ? 'Vsazeno' : 'Cena tiketu' }}</dt>
             <dd>{{ v.vsazenoKc === null ? 'Neznámá' : formatujKc(v.vsazenoKc) }}</dd>
           </div>
-          @if (!cekani()) {
+          <!-- Semafor jako v seznamu tiketů; čekající tiket má místo částek „--- Kč“. -->
+          @if (cekani()) {
+            <div><dt>Výhra</dt><dd class="semafor-nehotovy">--- Kč</dd></div>
+            <div><dt>Bilance</dt><dd class="semafor-nehotovy">--- Kč</dd></div>
+          } @else {
             <div>
               <dt>Výhra</dt>
-              <dd [class.nejisty]="!v.soucetJisty">{{ formatujKc(v.celkemKc) }}@if (!v.soucetJisty) { * }</dd>
+              <dd [class]="'semafor-' + semaforVyhry(v.celkemKc, jisty())">{{ formatujKc(v.celkemKc) }}@if (!v.soucetJisty) { * }</dd>
             </div>
             <div>
               <dt>Bilance</dt>
-              <dd [class.zisk]="v.bilanceKc !== null && v.bilanceKc > 0">{{ v.bilanceKc === null ? 'Nelze určit' : (v.bilanceKc > 0 ? '+' : '') + formatujKc(v.bilanceKc) }}</dd>
+              <dd [class]="'semafor-' + semaforBilance(v.celkemKc, v.bilanceKc, jisty())">{{ v.bilanceKc === null ? 'Nelze určit' : (v.bilanceKc > 0 ? '+' : '') + formatujKc(v.bilanceKc) }}</dd>
             </div>
           }
         </dl>
@@ -225,26 +239,25 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           }
         }
 
-        <details class="obsah-tiketu">
-          <summary>Vsazená čísla · {{ pocetSloupcu(t.sloupce.length) }}</summary>
-          <ol class="sloupce vsazene">
-            @for (sloupec of t.sloupce; track $index) {
-              <li>
-                <span class="sloupec-cislo" [attr.aria-label]="'Sloupec ' + ($index + 1)">{{ $index + 1 }}</span>
-                <span class="kulicky">
-                  @for (c of sloupec.cisla; track $index) { <span class="kulicka">{{ c }}</span> }
-                </span>
-                @if (druheOsudi(sloupec).length > 0) {
-                  <span class="kulicky druhe-osudi">
-                    @for (c of druheOsudi(sloupec); track $index) { <span class="kulicka">{{ c }}</span> }
-                  </span>
-                }
-              </li>
-            }
-          </ol>
-          @if (t.kodDoplnkoveHry) { <p>{{ nazevDoplnkoveHry(t.hra) }}: {{ t.kodDoplnkoveHry }}</p> }
-        </details>
-        @if (!cekani()) {
+        <!--
+          Tiket na jedno slosování nemá co skládat: vsazená čísla i detail slosování jsou rovnou
+          vidět bez rámečků. Rámeček a historie mají smysl až u víc slosování.
+        -->
+        @if (jedineSlosovani()) {
+          @if (cekani()) {
+            <h3>Vsazená čísla</h3>
+            <ng-container *ngTemplateOutlet="vsazenaCisla; context: { $implicit: t }" />
+          } @else if (v.slosovani[0]; as slosovani) {
+            <h3>Slosování {{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}</h3>
+            <ng-container *ngTemplateOutlet="sekce; context: { $implicit: slosovani }" />
+          }
+        } @else {
+          <details class="obsah-tiketu">
+            <summary>Vsazená čísla · {{ pocetSloupcu(t.sloupce.length) }}</summary>
+            <ng-container *ngTemplateOutlet="vsazenaCisla; context: { $implicit: t }" />
+          </details>
+        }
+        @if (!cekani() && !jedineSlosovani()) {
           <h3>Historie slosování</h3>
           <div class="prepinace" aria-label="Filtr historie">
             <button type="button" [attr.aria-pressed]="filtrHistorie() === 'vsechna'" (click)="zmenFiltr('vsechna')">Všechna</button>
@@ -253,10 +266,11 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           </div>
           <p class="tlumene">Zobrazeno {{ zobrazenaSlosovani().length }} z {{ historie().length }} slosování.</p>
           @for (slosovani of zobrazenaSlosovani(); track slosovani.datum) {
-            <details class="historie-radek" [open]="!t.kontrola && v.slosovani.length === 1">
+            <!-- Karta jako v seznamu tiketů: datum, částka v barvě semaforu, neúplné s rámečkem důrazu. -->
+            <details class="historie-radek" [class.nehotovy]="neuplne(slosovani)">
               <summary>
-                {{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}
-                <span>{{ slosovani.vyhry.length ? 'Výhra ' + formatujKc(slosovani.celkemKc) : 'Bez výhry' }}</span>
+                <span class="datum">{{ formatujDatum(slosovani.datum) }}{{ denSlosovani(slosovani) }}</span>
+                <span class="castka" [class]="'semafor-' + semaforVyhry(slosovani.celkemKc, !neuplne(slosovani))">{{ formatujKc(slosovani.celkemKc) }}</span>
                 @if (neuplne(slosovani)) { <small>Neúplné vyhodnocení</small> }
               </summary>
               <ng-container *ngTemplateOutlet="sekce; context: { $implicit: slosovani }" />
@@ -265,12 +279,30 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           @if (zobrazenaSlosovani().length < historie().length) {
             <button type="button" class="rozbalit" (click)="limitHistorie.update(dalsiStrana)">Načíst dalších 20</button>
           }
-
-          @if (!v.soucetJisty) {
-            <p class="poznamka">* Součet není úplný — viz poznámky výše.</p>
-          }
+        }
+        @if (!cekani() && !v.soucetJisty) {
+          <p class="poznamka">* Součet není úplný — viz poznámky výše.</p>
         }
       }
+
+      <ng-template #vsazenaCisla let-t>
+        <ol class="sloupce vsazene">
+          @for (sloupec of t.sloupce; track $index) {
+            <li>
+              <span class="sloupec-cislo" [attr.aria-label]="'Sloupec ' + ($index + 1)">{{ $index + 1 }}</span>
+              <span class="kulicky">
+                @for (c of sloupec.cisla; track $index) { <span class="kulicka">{{ c }}</span> }
+              </span>
+              @if (druheOsudi(sloupec).length > 0) {
+                <span class="kulicky druhe-osudi">
+                  @for (c of druheOsudi(sloupec); track $index) { <span class="kulicka">{{ c }}</span> }
+                </span>
+              }
+            </li>
+          }
+        </ol>
+        @if (t.kodDoplnkoveHry) { <p>{{ nazevDoplnkoveHry(t.hra) }}: {{ t.kodDoplnkoveHry }}</p> }
+      </ng-template>
 
       <ng-template #sekce let-slosovani>
         <section>
@@ -438,8 +470,16 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     .nabidka-akci { position: relative; margin: 0; border: 0; padding: 0; }
     .nabidka-akci > div { position: fixed; right: max(1rem, calc((100vw - 44rem) / 2)); bottom: calc(6rem + env(safe-area-inset-bottom)); z-index: 6; max-height: calc(100dvh - 8rem - env(safe-area-inset-bottom) - env(safe-area-inset-top)); overflow-y: auto; display: grid; width: min(20rem, calc(100vw - 2rem)); padding: .5rem; gap: .25rem; background: var(--barva-pozadi); border: 1px solid var(--barva-ram); border-radius: .75rem; box-shadow: 0 .5rem 1.5rem #0003; }
     .nabidka-akci button { text-align: left; }
-    .historie-radek summary span, .historie-radek summary small { display: block; font-weight: 400; margin-left: 1.1rem; }
-    .historie-radek summary small { color: var(--barva-text-tlumeny); }
+    .historie-radek { border-radius: .85rem; padding: 0 .75rem; }
+    .historie-radek.nehotovy { border-color: var(--barva-duraz); }
+    .historie-radek summary {
+      display: grid; grid-template-columns: 1fr auto; gap: .15rem 1rem; padding: .75rem .25rem; list-style: none;
+    }
+    .historie-radek summary::-webkit-details-marker { display: none; }
+    .historie-radek summary .castka { text-align: right; }
+    .historie-radek summary small { grid-column: 1 / -1; font-size: .8rem; font-weight: 400; color: var(--barva-text-tlumeny); }
+    /* Jediné slosování má nadpis rovnou nad sebou, bez mezery jako mezi kartami. */
+    h3 + section { margin-top: 0; }
 
     h2 { overflow-wrap: anywhere; }
     .popis { color: var(--barva-text-tlumeny); font-size: 0.85rem; }
@@ -586,6 +626,13 @@ export class Detail {
     return tah === undefined ? '' : ` (${nazevDne(tah.den)})`;
   }
 
+  /** Tiket na jediné slosování — papír na jedno, nebo virtuální s rozsahem na jeden den. */
+  protected readonly jedineSlosovani = computed(() => {
+    const t = this.tiket();
+    if (t === undefined) return false;
+    return t.kontrola ? t.kontrola.do === t.kontrola.od : t.slosovani.pocet === 1;
+  });
+
   protected readonly vysledek = computed<VysledekTiketu | null>(() => {
     if (!this.docasny()) return this.stav.vysledky().get(this.id()) ?? null;
     const t = this.tiket();
@@ -597,6 +644,11 @@ export class Detail {
     const t = this.tiket(), v = this.vysledek();
     return t === undefined || v === null ? null : cekaniNaSlosovani(t, v, dnesniDatum());
   });
+
+  /** Dosavadní výsledek je konečný — rozhoduje o barvě částek stejně jako v seznamu. */
+  protected readonly jisty = computed(() => { const v = this.vysledek(); return v !== null && dosudJisty(v); });
+  protected readonly semaforVyhry = semaforVyhry;
+  protected readonly semaforBilance = semaforBilance;
 
   // Neuložený tiket se do přehledu nezapočítá, takže se ani nic nezapočte dvakrát.
   protected readonly prekryvyTiketu = computed(() => (this.docasny() ? [] : (this.stav.prekryvy().get(this.id()) ?? [])));

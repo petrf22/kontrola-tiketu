@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { vyhodnotTiket, type Tiket } from '@kontrola-tiketu/jadro';
 import { EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
 import { dnesniDatum, formatujDatum } from '../src/app/data/format.js';
-import { cekaniNaSlosovani, historieTiketu, nactenyFiltrSeznamu, neuplneSlosovani, popisTerminu, sUpravenouCenou, VYCHOZI_FILTR_SEZNAMU } from '../src/app/data/zobrazeniTiketu.js';
+import {
+  cekaniNaSlosovani, dosudJisty, historieTiketu, nactenyFiltrSeznamu, neuplneSlosovani, popisTerminu,
+  semaforBilance, semaforVyhry, sUpravenouCenou, VYCHOZI_FILTR_SEZNAMU,
+} from '../src/app/data/zobrazeniTiketu.js';
 
 const tiket: Tiket = {
   id: 'test', hra: 'eurojackpot', sloupce: [{ hra: 'eurojackpot', cisla: [47, 14, 27, 34, 1], eurocisla: [4, 1] }],
@@ -94,5 +97,27 @@ describe('termín tiketu v seznamu', () => {
     expect(popisTerminu(virtualni('2026-09-01', '2026-09-01'), [])).toBe(d('2026-09-01'));
     expect(popisTerminu(virtualni('2026-09-01', '2026-09-30'), [])).toBe(`${d('2026-09-01')} – ${d('2026-09-30')}`);
     expect(popisTerminu(virtualni('2026-09-01', null), [])).toBe(`${d('2026-09-01')} – …`);
+  });
+});
+
+describe('semafor částek', () => {
+  it('výhra: nekonečná má důraz, jinak výhra nebo nula', () => {
+    expect(semaforVyhry(150, false)).toBe('nehotovy');
+    expect(semaforVyhry(0, false)).toBe('nehotovy');
+    expect(semaforVyhry(150, true)).toBe('vyhra');
+    expect(semaforVyhry(0, true)).toBe('nula');
+  });
+  it('bilance: zisk, výhra pod vsazeným, prohra; nekonečná jako výhra', () => {
+    expect(semaforBilance(500, 100, true)).toBe('zisk');
+    expect(semaforBilance(400, 0, true)).toBe('ztrata-s-vyhrou');
+    expect(semaforBilance(150, -250, true)).toBe('ztrata-s-vyhrou');
+    expect(semaforBilance(0, -400, true)).toBe('prohra');
+    expect(semaforBilance(500, 100, false)).toBe('nehotovy');
+    expect(semaforBilance(150, null, true)).toBe('nula');
+  });
+  it('virtuální tiket, který běží dál, má dosavadní výsledek jistý', () => {
+    const v = vyhodnotTiket({ ...tiket, kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null } }, [EJ_2026_09_08], []);
+    expect(v.soucetJisty).toBe(false);
+    expect(dosudJisty(v)).toBe(true);
   });
 });

@@ -3,7 +3,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { dnesniDatum, formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
-import { cekaniNaSlosovani, popisTerminu, type Cekani, type FiltrSeznamu } from '../data/zobrazeniTiketu.js';
+import { cekaniNaSlosovani, dosudJisty, popisTerminu, semaforVyhry, type Cekani, type FiltrSeznamu } from '../data/zobrazeniTiketu.js';
 import { FiltrNazvu } from './filtr-nazvu.js';
 import type { Tiket } from '@kontrola-tiketu/jadro';
 
@@ -60,11 +60,9 @@ interface RadekSeznamu {
                    i s rámečkem celého tiketu, výhra zeleně, nula tlumeně. Proč se čeká nebo co chybí,
                    říká poznámka dole. -->
               @if (radek.cekani) {
-                <span class="vysledek nehotovy">--- Kč</span>
+                <span class="vysledek semafor-nehotovy">--- Kč</span>
               } @else {
-                <span class="vysledek" [class.nehotovy]="!radek.dosudJisty"
-                  [class.vyhra]="radek.dosudJisty && radek.castkaKc > 0"
-                  [class.nula]="radek.dosudJisty && radek.castkaKc === 0">{{ formatujKc(radek.castkaKc) }}</span>
+                <span class="vysledek" [class]="'semafor-' + semaforVyhry(radek.castkaKc, radek.dosudJisty)">{{ formatujKc(radek.castkaKc) }}</span>
               }
               @if (radek.tiket.nazev || radek.tiket.kontrola || radek.duplicitni) {
                 <span class="stitky">
@@ -116,9 +114,6 @@ interface RadekSeznamu {
     .nazev-skupiny { margin: 1.5rem 0 .5rem; overflow-wrap: anywhere; }
     .nazev-skupiny small { color: var(--barva-text-tlumeny); font-weight: 400; }
     .vysledek { text-align: right; font-variant-numeric: tabular-nums; }
-    .vysledek.nehotovy { color: var(--barva-duraz); }
-    .vysledek.vyhra { color: var(--barva-ok); }
-    .vysledek.nula { color: var(--barva-text-tlumeny); }
     /* Pod prvním řádkem už je všechno přes celou šířku. */
     .stitky, .detail, .poznamka { grid-column: 1 / -1; }
     .stitky { display: flex; flex-wrap: wrap; gap: .3rem; margin: .15rem 0; }
@@ -166,6 +161,7 @@ export class Seznam {
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujKc = formatujKc;
   protected readonly nazevHry = nazevHry;
+  protected readonly semaforVyhry = semaforVyhry;
 
   protected readonly skupiny = computed(() => this.seskupit()
     ? seskupPodleNazvu(this.radky(), r => r.tiket.nazev)
@@ -192,7 +188,7 @@ export class Seznam {
         tiket,
         termin: popisTerminu(tiket, this.stav.tahy()),
         castkaKc: vysledek.celkemKc,
-        dosudJisty: vysledek.chybejicichSlosovani === 0 && vysledek.slosovani.every(s => s.nejistychVyher === 0),
+        dosudJisty: dosudJisty(vysledek),
         chybi: vysledek.chybejicichSlosovani,
         pokracuje: vysledek.pokracuje,
         cekani: cekaniNaSlosovani(tiket, vysledek, dnesniDatum()),

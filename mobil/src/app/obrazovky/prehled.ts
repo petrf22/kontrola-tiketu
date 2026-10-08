@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { souhrnBilance, type Hra } from '@kontrola-tiketu/jadro';
 import { HRY, nazevHry, formatujKc } from '../data/format.js';
 import { Stav } from '../data/stav.js';
+import { semaforBilance, semaforVyhry } from '../data/zobrazeniTiketu.js';
 import { Kolac } from './kolac.js';
 import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
 import { FiltrNazvu } from './filtr-nazvu.js';
@@ -40,8 +41,8 @@ function uTiketu(pocet: number): string {
     } @else {
       <dl class="souhrn-tiketu">
         <div><dt>Vsazeno</dt><dd>{{ formatujKc(souhrn().celkem.vsazenoKc) }}</dd></div>
-        <div><dt>Vyhráno</dt><dd>{{ formatujKc(souhrn().celkem.vyhranoKc) }}</dd></div>
-        <div><dt>Bilance</dt><dd>{{ formatujKc(souhrn().celkem.vyhranoKc - souhrn().celkem.vsazenoKc) }}</dd></div>
+        <div><dt>Vyhráno</dt><dd [class]="'semafor-' + semafor(souhrn().celkem).vyhra">{{ formatujKc(souhrn().celkem.vyhranoKc) }}</dd></div>
+        <div><dt>Bilance</dt><dd [class]="'semafor-' + semafor(souhrn().celkem).bilance">{{ formatujKc(souhrn().celkem.vyhranoKc - souhrn().celkem.vsazenoKc) }}</dd></div>
       </dl>
       <p class="tlumene">Včetně archivovaných tiketů.</p>
       @if (souhrn().celkem.nejistych > 0 || souhrn().celkem.tiketuBezCeny > 0) {
@@ -55,8 +56,8 @@ function uTiketu(pocet: number): string {
             <p class="pocet">{{ pocetTiketu(skupina.bilance.tiketu) }}</p>
             <dl class="souhrn-tiketu">
               <div><dt>Vsazeno</dt><dd>{{ formatujKc(skupina.bilance.vsazenoKc) }}</dd></div>
-              <div><dt>Vyhráno</dt><dd>{{ formatujKc(skupina.bilance.vyhranoKc) }}</dd></div>
-              <div><dt>Bilance</dt><dd>{{ formatujKc(skupina.bilance.vyhranoKc - skupina.bilance.vsazenoKc) }}</dd></div>
+              <div><dt>Vyhráno</dt><dd [class]="'semafor-' + semafor(skupina.bilance).vyhra">{{ formatujKc(skupina.bilance.vyhranoKc) }}</dd></div>
+              <div><dt>Bilance</dt><dd [class]="'semafor-' + semafor(skupina.bilance).bilance">{{ formatujKc(skupina.bilance.vyhranoKc - skupina.bilance.vsazenoKc) }}</dd></div>
             </dl>
             @if (skupina.bilance.nejistych > 0 || skupina.bilance.tiketuBezCeny > 0) {
               <p class="tlumene">Neúplná bilance — chybí konečný výsledek nebo cena.</p>
@@ -135,6 +136,12 @@ export class Prehled {
   protected readonly nazevHry = nazevHry;
   protected readonly pocetTiketu = pocetTiketu;
   protected readonly uTiketu = uTiketu;
+
+  /** Barvy součtů jako u tiketu; neúplný součet (chybí výsledek nebo cena) má barvu důrazu. */
+  protected semafor(b: { vsazenoKc: number; vyhranoKc: number; nejistych: number; tiketuBezCeny: number }) {
+    const jisty = b.nejistych === 0 && b.tiketuBezCeny === 0;
+    return { vyhra: semaforVyhry(b.vyhranoKc, jisty), bilance: semaforBilance(b.vyhranoKc, b.vyhranoKc - b.vsazenoKc, jisty) };
+  }
 
   protected readonly nazev = signal('*');
   private readonly vybraneTikety = computed(() => this.stav.tikety().filter(t => odpovidaNazvu(t, this.nazev())));

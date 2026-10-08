@@ -156,9 +156,9 @@ describe('Správa tiketů', () => {
     await f.whenStable();
     const radek = (id: string, cast: string) =>
       (f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"] ${cast}`) as HTMLElement | null)?.textContent;
-    expect(radek('virtualni', '.vysledek.nula')?.trim()).toBe('0 Kč');
+    expect(radek('virtualni', '.vysledek.semafor-nula')?.trim()).toBe('0 Kč');
     expect(radek('virtualni', '.poznamka')).toContain('Další slosování ještě přijdou');
-    expect(radek('papirovy', '.vysledek.nehotovy')?.trim()).toBe('0 Kč');
+    expect(radek('papirovy', '.vysledek.semafor-nehotovy')?.trim()).toBe('0 Kč');
     expect(radek('papirovy', '.poznamka')).toContain('Chybí 1 slosování');
     const karta = (id: string) => (f.nativeElement.querySelector(`.tikety a[href="/tiket/${id}"]`) as HTMLElement).closest('li')!;
     expect(karta('papirovy').classList).toContain('nehotovy');
@@ -219,7 +219,7 @@ describe('Správa tiketů', () => {
     expect(znovu.nativeElement.querySelector('summary').textContent).toBe('Filtr · Aktuální · Virtuální');
   });
 
-  it('tiket před slosováním neukazuje výhru ani bilanci, ale že se čeká', async () => {
+  it('tiket před slosováním ukazuje místo výhry a bilance „--- Kč“ a vsazená čísla bez rámečku', async () => {
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 8, 11, 12));
     try {
@@ -227,13 +227,18 @@ describe('Správa tiketů', () => {
       const f = await detail();
       const text = (f.nativeElement as HTMLElement).textContent ?? '';
       expect(f.nativeElement.querySelector('.souhrn-tiketu').textContent).toContain('400');
+      const cekajici = [...f.nativeElement.querySelectorAll('.souhrn-tiketu dd.semafor-nehotovy')].map(e => (e as HTMLElement).textContent);
+      expect(cekajici).toEqual(['--- Kč', '--- Kč']);
       expect(text).toContain('zatím nebyl slosován');
-      for (const skryte of ['Výhra', 'Bilance', 'Historie slosování', 'Průběžný výsledek', 'Chybí výsledky', 'Součet není úplný']) {
+      expect(f.nativeElement.querySelector('.obsah-tiketu')).toBeNull();
+      const vsazene = [...f.nativeElement.querySelectorAll('.vsazene .kulicka')].map(e => Number((e as HTMLElement).textContent));
+      expect(vsazene).toEqual([47, 14, 27, 34, 1, 4, 1]);
+      for (const skryte of ['Historie slosování', 'Průběžný výsledek', 'Chybí výsledky', 'Součet není úplný']) {
         expect(text).not.toContain(skryte);
       }
       const s = TestBed.createComponent(Seznam);
       await s.whenStable();
-      expect(s.nativeElement.querySelector('.tikety .vysledek.nehotovy').textContent.trim()).toBe('--- Kč');
+      expect(s.nativeElement.querySelector('.tikety .vysledek.semafor-nehotovy').textContent.trim()).toBe('--- Kč');
       expect(s.nativeElement.querySelector('.tikety li').classList).toContain('nehotovy');
       expect(s.nativeElement.querySelector('.tikety .poznamka').textContent).toContain('Slosování od');
     } finally { vi.useRealTimers(); }
@@ -248,7 +253,7 @@ describe('Správa tiketů', () => {
       const upozorneni = f.nativeElement.querySelector('.cekani') as HTMLElement;
       expect(upozorneni.textContent).toContain('už proběhlo');
       expect(upozorneni.querySelector('a')?.textContent).toContain('Aktualizovat výsledky');
-      expect(f.nativeElement.querySelector('.souhrn-tiketu').textContent).not.toContain('Bilance');
+      expect(f.nativeElement.querySelector('.souhrn-tiketu').textContent).toContain('Bilance--- Kč');
     } finally { vi.useRealTimers(); }
   });
 
@@ -271,9 +276,38 @@ describe('Správa tiketů', () => {
     expect(f.nativeElement.querySelectorAll('.historie-radek')).toHaveLength(20);
   });
 
-  it('vsazená čísla i tabulka výher u slosování se ukážou až po kliknutí', async () => {
+  it('souhrn barví výhru a bilanci jako semafor v seznamu', async () => {
+    await stav.ulozTiket({ ...tiket, cenaKc: 1000 });
+    const f = await detail();
+    const v = stav.vysledky().get(tiket.id)!;
+    const [, vyhra, bilance] = [...f.nativeElement.querySelectorAll('.souhrn-tiketu dd')] as HTMLElement[];
+    expect(vyhra!.className).toBe(v.celkemKc > 0 ? 'semafor-vyhra' : 'semafor-nula');
+    expect(bilance!.className).toBe(v.celkemKc > 1000 ? 'semafor-zisk' : v.celkemKc > 0 ? 'semafor-ztrata-s-vyhrou' : 'semafor-prohra');
+  });
+
+  it('tiket na jedno slosování ukáže slosování rovnou, bez rámečků, filtru a historie', async () => {
+    const f = await detail();
+    const el = f.nativeElement as HTMLElement;
+    expect(el.querySelector('.obsah-tiketu')).toBeNull();
+    expect(el.querySelector('.historie-radek')).toBeNull();
+    expect(el.querySelector('[aria-label="Filtr historie"]')).toBeNull();
+    expect(el.textContent).not.toContain('Historie slosování');
+    expect(el.textContent).toContain(`Slosování ${formatujDatum('2026-09-08')}`);
+    expect(el.querySelectorAll('section .sloupce .kulicka.shoda').length).toBeGreaterThan(0);
+  });
+
+  it('u víc slosování jsou vsazená čísla i tabulka výher v kartách až po kliknutí', async () => {
+    stav.tahy.set([EJ_2026_09_04, EJ_2026_09_08]);
+    await stav.ulozTiket({ ...tiket, kontrola: { od: '2026-09-04', do: '2026-09-08', cenaZaSlosovaniKc: null } });
     const f = await detail();
     expect((f.nativeElement.querySelector('.obsah-tiketu') as HTMLDetailsElement).open).toBe(false);
+    const karty = [...f.nativeElement.querySelectorAll('.historie-radek')] as HTMLDetailsElement[];
+    expect(karty).toHaveLength(2);
+    expect(karty.every(k => !k.open)).toBe(true);
+    for (const k of karty) {
+      expect(k.querySelector('summary .castka')!.textContent).toMatch(/Kč$/);
+      expect(k.querySelector('summary .castka')!.className).toMatch(/semafor-(vyhra|nula)/);
+    }
     const vyhry = f.nativeElement.querySelector('.historie-radek .tabulka-vyher') as HTMLDetailsElement;
     expect(vyhry.open).toBe(false);
     expect(vyhry.querySelector('summary')!.textContent!.trim()).toBe('Tabulka výher');

@@ -68,8 +68,14 @@ app-detail .akce-tiketu a { color: var(--barva-text-tlumeny); font-size: 0.85rem
 .souhrn-tiketu dd {
   margin: 0.1rem 0 0; font-weight: 700; font-variant-numeric: tabular-nums; overflow-wrap: anywhere;
 }
-app-detail .souhrn-tiketu .zisk { color: var(--barva-ok); }
-app-detail .souhrn-tiketu .nejisty { color: var(--barva-text-tlumeny); }
+/*
+  Semafor částek — seznam tiketů, souhrny i historie slosování. Jen stávající barvy: nekonečný
+  výsledek a výhra, která nepokryla vsazené, mají důraz, zisk zelenou, prohra červenou.
+*/
+.semafor-nehotovy, .semafor-ztrata-s-vyhrou { color: var(--barva-duraz); }
+.semafor-vyhra, .semafor-zisk { color: var(--barva-ok); }
+.semafor-nula { color: var(--barva-text-tlumeny); }
+.semafor-prohra { color: var(--barva-chyba); }
 
 /* Společné ovládání všech obrazovek. */
 html { scroll-padding-top: 6rem; }
@@ -97,10 +103,10 @@ button:disabled { opacity: .6; cursor: default; }
 details { margin: .75rem 0; border: 1px solid var(--barva-ram); border-radius: .75rem; padding: 0 .85rem; }
 summary { padding: .75rem 0; cursor: pointer; font-weight: 600; }
 details[open] { padding-bottom: .85rem; }
-.souhrn-tiketu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .75rem; padding: 1rem; margin: 1rem 0; background: var(--barva-plocha); border-radius: .85rem; }
-.souhrn-tiketu dt { font-size: .85rem; color: var(--barva-text-tlumeny); }
+.souhrn-tiketu { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; padding: .55rem .75rem; margin: .75rem 0; background: var(--barva-plocha); border-radius: .85rem; }
+.souhrn-tiketu dt { font-size: .75rem; color: var(--barva-text-tlumeny); }
 .souhrn-tiketu > div { min-width: 0; }
-.souhrn-tiketu dd { font-size: 1.15rem; }
+.souhrn-tiketu dd { font-size: 1rem; }
 .zprava-akce { padding: .75rem; border-left: 3px solid var(--barva-ok); background: var(--barva-plocha); }
 .chyba-akce { color: var(--barva-chyba); }
 @media (max-width: 380px) {

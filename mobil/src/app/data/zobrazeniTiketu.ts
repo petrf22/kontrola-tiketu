@@ -74,3 +74,31 @@ export function nactenyFiltrSeznamu(data: unknown): FiltrSeznamu {
     seskupit: typeof d['seskupit'] === 'boolean' ? d['seskupit'] : VYCHOZI_FILTR_SEZNAMU.seskupit,
   };
 }
+
+/**
+ * Jsou spočítaná všechna proběhlá slosování a každá výhra má jistou částku? Na rozdíl od
+ * `soucetJisty` nevadí, že virtuální tiket běží dál — dosavadní výsledek je konečný.
+ */
+export function dosudJisty(vysledek: VysledekTiketu): boolean {
+  return vysledek.chybejicichSlosovani === 0 && vysledek.slosovani.every(s => s.nejistychVyher === 0);
+}
+
+/**
+ * Semafor částky výhry — stejně v seznamu, souhrnu detailu i historii slosování: výsledek, který
+ * ještě není konečný, má barvu důrazu, výhra zelenou, nula tlumenou.
+ */
+export type SemaforVyhry = 'nehotovy' | 'vyhra' | 'nula';
+export function semaforVyhry(castkaKc: number, jista: boolean): SemaforVyhry {
+  return !jista ? 'nehotovy' : castkaKc > 0 ? 'vyhra' : 'nula';
+}
+
+/**
+ * Semafor bilance: dokud výsledek není konečný, má barvu výhry (důraz). Pak zisk zeleně, výhra,
+ * která nepokryla vsazené, barvou důrazu a žádná výhra červeně. Neznámá cena bilanci nemá.
+ */
+export type SemaforBilance = 'nehotovy' | 'zisk' | 'ztrata-s-vyhrou' | 'prohra' | 'nula';
+export function semaforBilance(vyhraKc: number, bilanceKc: number | null, jista: boolean): SemaforBilance {
+  if (!jista) return 'nehotovy';
+  if (bilanceKc === null) return 'nula';
+  return bilanceKc > 0 ? 'zisk' : vyhraKc > 0 ? 'ztrata-s-vyhrou' : 'prohra';
+}

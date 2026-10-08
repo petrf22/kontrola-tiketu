@@ -3,7 +3,7 @@ import { vyhodnotTiket, type Tiket } from '@kontrola-tiketu/jadro';
 import { EJ_2026_09_08 } from '../knihovny/jadro/test/fixtures/eurojackpot.js';
 import { dnesniDatum, formatujDatum } from '../src/app/data/format.js';
 import {
-  cekaniNaSlosovani, dosudJisty, historieTiketu, nactenyFiltrSeznamu, neuplneSlosovani, popisTerminu,
+  cekaniNaSlosovani, dosudJisty, historieTiketu, nactenyFiltrSeznamu, neuplneSlosovani, noveVyhodnocene, popisTerminu,
   semaforBilance, semaforVyhry, sUpravenouCenou, VYCHOZI_FILTR_SEZNAMU,
 } from '../src/app/data/zobrazeniTiketu.js';
 
@@ -119,5 +119,15 @@ describe('semafor částek', () => {
     const v = vyhodnotTiket({ ...tiket, kontrola: { od: '2026-09-08', do: null, cenaZaSlosovaniKc: null } }, [EJ_2026_09_08], []);
     expect(v.soucetJisty).toBe(false);
     expect(dosudJisty(v)).toBe(true);
+  });
+});
+
+describe('nově vyhodnocené tikety', () => {
+  it('ohlásí jen ty, které předtím čekaly na slosování', () => {
+    const ceka = vyhodnotTiket(tiket, [], []);
+    const hotovy = vyhodnotTiket(tiket, [EJ_2026_09_08], []);
+    const pred = new Map([['a', ceka], ['b', hotovy], ['c', ceka]]);
+    const po = new Map([['a', hotovy], ['b', hotovy], ['c', ceka], ['d', hotovy]]);
+    expect(noveVyhodnocene(pred, po)).toEqual(['a']);
   });
 });

@@ -24,9 +24,13 @@ import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js
 import { stahniVysledky, type KontrolaServeru } from './stahovani.js';
 import { shrnutiStazeni, zpracujStazene } from './vysledkyZeServeru.js';
 import { seskupPodleNazvu, upravNazev } from './nazvyTiketu.js';
-import { nactenyFiltrSeznamu, VYCHOZI_FILTR_SEZNAMU, type FiltrSeznamu } from './zobrazeniTiketu.js';
+import { nactenyFiltrSeznamu, noveVyhodnocene, popisTerminu, VYCHOZI_FILTR_SEZNAMU, type FiltrSeznamu } from './zobrazeniTiketu.js';
+import { nazevHry } from './format.js';
 
 const KLIC_FILTRU_SEZNAMU = 'filtrSeznamu';
+
+/** Jak dlouho zůstane vidět krátké hlášení, než samo zmizí. */
+export const DELKA_OZNAMENI_MS = 4000;
 
 /**
  * Tiket by se uložil vedle jiného se stejnými sloupci na totéž slosování. Výhry i vsazené
@@ -94,6 +98,13 @@ export class Stav {
 
   /** Jak dopadl poslední pokus o stažení — pro obrazovku výsledků. */
   readonly posledniStazeni = signal<Zprava | null>(null);
+
+  /**
+   * Krátké hlášení přes obrazovku, které po {@link DELKA_OZNAMENI_MS} samo zmizí. Teď jen to, že
+   * nové výsledky vyhodnotily tiket, který čekal na slosování — jinak by si změny nemusel všimnout.
+   */
+  readonly oznameni = signal<string | null>(null);
+  private casovacOznameni: ReturnType<typeof setTimeout> | undefined;
 
   async nacti(): Promise<void> {
     try {
@@ -166,11 +177,13 @@ export class Stav {
       return { uspech: false, zprava: vysledek.duvod };
     }
 
+    const pred = this.vysledky();
     // Do úložiště jen nové tahy — úložiště je doplní, nemusí přepisovat celý seznam.
     await this.uloziste.ulozTahy(vysledek.tahy);
     this.tahy.set(sloucTahy(this.tahy(), vysledek.tahy));
 
     await this.ulozSazby(vysledek);
+    this.oznamVyhodnocene(pred);
 
     return { uspech: true, zprava: shrnutiImportu(vysledek) };
   }
@@ -195,6 +208,7 @@ export class Stav {
       const zpracovano = zpracujStazene(this.tahy(), stazeno.nove);
       if (zpracovano.stav === 'chyba') return this.zapis({ uspech: false, zprava: zpracovano.duvod });
 
+      const pred = this.vysledky();
       for (const balik of zpracovano.baliky) {
         await this.uloziste.ulozTahy(balik.tahy);
         await this.ulozSazby(balik);
@@ -203,6 +217,7 @@ export class Stav {
         this.tahy.set(sloucTahy(this.tahy(), balik.tahy));
       }
 
+      this.oznamVyhodnocene(pred);
       this.kontrolaServeru.set(stazeno.manifest.kontrola);
       return this.zapis({ uspech: true, zprava: shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno) });
     } catch (chyba) {
@@ -233,6 +248,23 @@ export class Stav {
       await this.uloziste.ulozCeny(balik.ceny);
       this.ceny.set(balik.ceny);
     }
+  }
+
+  /** Ohlásí tikety, které před doplněním výsledků čekaly na slosování a teď jsou vyhodnocené. */
+  private oznamVyhodnocene(pred: ReadonlyMap<string, VysledekTiketu>): void {
+    const ids = noveVyhodnocene(pred, this.vysledky());
+    if (ids.length === 0) return;
+    const tiket = this.tikety().find(t => t.id === ids[0]);
+    const n = ids.length;
+    this.oznam(n > 1
+      ? `${n <= 4 ? 'Vyhodnoceny' : 'Vyhodnoceno'} ${n} ${n <= 4 ? 'tikety' : 'tiketů'}, které čekaly na slosování.`
+      : `Tiket ${tiket?.nazev ? `„${tiket.nazev}“` : tiket ? `${nazevHry(tiket.hra)} ${popisTerminu(tiket, this.tahy())}` : ''} je vyhodnocený.`);
+  }
+
+  private oznam(text: string): void {
+    clearTimeout(this.casovacOznameni);
+    this.oznameni.set(text);
+    this.casovacOznameni = setTimeout(() => this.oznameni.set(null), DELKA_OZNAMENI_MS);
   }
 
   private zapis(zprava: Zprava): Zprava {

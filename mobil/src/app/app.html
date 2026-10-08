@@ -27,6 +27,11 @@
   <router-outlet />
 </main>
 
+<!-- Krátké hlášení, které samo zmizí. Nic neblokuje a nedá se na něj kliknout. -->
+@if (stav.oznameni(); as oznameni) {
+  <p class="oznameni" role="status">{{ oznameni }}</p>
+}
+
 <footer>
   @if (stav.vysledkyDo(); as datum) {
     <span>Výsledky mám do {{ formatujDatum(datum) }}.</span>

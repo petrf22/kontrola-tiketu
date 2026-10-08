@@ -102,3 +102,11 @@ export function semaforBilance(vyhraKc: number, bilanceKc: number | null, jista:
   if (bilanceKc === null) return 'nula';
   return bilanceKc > 0 ? 'zisk' : vyhraKc > 0 ? 'ztrata-s-vyhrou' : 'prohra';
 }
+
+/** Tikety, které dosud žádné vyhodnocené slosování neměly a teď mají — čekání skončilo. */
+export function noveVyhodnocene(
+  pred: ReadonlyMap<string, VysledekTiketu>,
+  po: ReadonlyMap<string, VysledekTiketu>,
+): string[] {
+  return [...po].filter(([id, v]) => v.slosovani.length > 0 && pred.get(id)?.slosovani.length === 0).map(([id]) => id);
+}

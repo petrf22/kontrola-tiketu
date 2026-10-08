@@ -1,6 +1,6 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
-import { souhrnBilance, type Tah, type Tiket, type VysledekSlosovani } from '@kontrola-tiketu/jadro';
+import { souhrnBilance, VERZE_FORMATU, type Tah, type Tiket, type VysledekSlosovani } from '@kontrola-tiketu/jadro';
 import { EJ_2026_09_04, EJ_2026_09_08 } from '../../../knihovny/jadro/test/fixtures/eurojackpot';
 import { SP_2026_09_06 } from '../../../knihovny/jadro/test/fixtures/sportka';
 import { EM_2026_09_08 } from '../../../knihovny/jadro/test/fixtures/euromiliony';
@@ -8,7 +8,7 @@ import { ImportVysledku } from './import-vysledku';
 import { Detail } from './detail';
 import { Seznam } from './seznam';
 import { NovyTiket } from './novy-tiket';
-import { Stav } from '../data/stav';
+import { DELKA_OZNAMENI_MS, Stav } from '../data/stav';
 import { ULOZISTE } from '../data/tokeny';
 import { UlozisteVPameti } from '../data/uloziste';
 import { sRozsahem } from '../data/kontrola';
@@ -283,6 +283,25 @@ describe('Správa tiketů', () => {
     const [, vyhra, bilance] = [...f.nativeElement.querySelectorAll('.souhrn-tiketu dd')] as HTMLElement[];
     expect(vyhra!.className).toBe(v.celkemKc > 0 ? 'semafor-vyhra' : 'semafor-nula');
     expect(bilance!.className).toBe(v.celkemKc > 1000 ? 'semafor-zisk' : v.celkemKc > 0 ? 'semafor-ztrata-s-vyhrou' : 'semafor-prohra');
+  });
+
+  it('výsledky, které vyhodnotí čekající tiket, to na pár sekund ohlásí', async () => {
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    try {
+      stav.tahy.set([EJ_2026_09_04]);
+      expect(stav.vysledky().get(tiket.id)?.slosovani).toHaveLength(0);
+      const soubor = JSON.stringify({
+        verzeFormatu: VERZE_FORMATU, vygenerovano: '2026-09-09T06:00:00.000Z', zdroj: 'https://www.allwyn.cz/system/vyherka',
+        obdobi: { od: '2026-37', do: '2026-37' }, sazbyExtra6: [], tahy: [EJ_2026_09_08],
+      });
+      expect((await stav.importuj(soubor)).uspech).toBe(true);
+      expect(stav.oznameni()).toBe(`Tiket Eurojackpot ${formatujDatum('2026-09-08')} je vyhodnocený.`);
+      vi.advanceTimersByTime(DELKA_OZNAMENI_MS);
+      expect(stav.oznameni()).toBeNull();
+      // Tiket už vyhodnocený byl — stejné výsledky znovu nic neohlásí.
+      await stav.importuj(soubor);
+      expect(stav.oznameni()).toBeNull();
+    } finally { vi.useRealTimers(); }
   });
 
   it('tiket na jedno slosování ukáže slosování rovnou, bez rámečků, filtru a historie', async () => {

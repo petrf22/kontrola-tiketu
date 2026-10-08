@@ -16,6 +16,16 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [0.11.0] – 2026-10-08
+
+### Přidáno
+- Když nové výsledky vyhodnotí tiket, který čekal na slosování, aplikace to na pár sekund oznámí krátkým hlášením nad spodní navigací (aplikace)
+
+### Změněno
+- Tiket na jedno slosování ukazuje v detailu slosování rovnou — vsazená čísla se shodami, výhry a tabulku výher bez rámečků, filtru a historie; tiket před slosováním ukáže vsazená čísla bez rámečku (aplikace)
+- Souhrn Vsazeno, Výhra a Bilance je menší a barevný jako seznam tiketů: výhra zeleně, nula tlumeně, nekonečný výsledek barvou důrazu; bilance se ziskem zeleně, s výhrou nižší než vsazeno barvou důrazu a bez výhry červeně; tiket před slosováním ukazuje „--- Kč“; totéž v Přehledu (aplikace)
+- Slosování v historii tiketu vypadají jako karty v seznamu tiketů: datum a částka v barvě výsledku, neúplně vyhodnocené s orámováním (aplikace)
+
 ## [0.10.1] – 2026-10-04
 
 ### Opraveno

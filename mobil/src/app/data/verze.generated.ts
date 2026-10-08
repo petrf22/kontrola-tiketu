@@ -13,10 +13,30 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.10.1';
+export const VERZE = '0.11.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.11.0',
+    datum: '2026-10-08',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Když nové výsledky vyhodnotí tiket, který čekal na slosování, aplikace to na pár sekund oznámí krátkým hlášením nad spodní navigací',
+        ],
+      },
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'Tiket na jedno slosování ukazuje v detailu slosování rovnou — vsazená čísla se shodami, výhry a tabulku výher bez rámečků, filtru a historie; tiket před slosováním ukáže vsazená čísla bez rámečku',
+          'Souhrn Vsazeno, Výhra a Bilance je menší a barevný jako seznam tiketů: výhra zeleně, nula tlumeně, nekonečný výsledek barvou důrazu; bilance se ziskem zeleně, s výhrou nižší než vsazeno barvou důrazu a bez výhry červeně; tiket před slosováním ukazuje „--- Kč“; totéž v Přehledu',
+          'Slosování v historii tiketu vypadají jako karty v seznamu tiketů: datum a částka v barvě výsledku, neúplně vyhodnocené s orámováním',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.10.1',
     datum: '2026-10-04',

@@ -97,6 +97,8 @@ export class Stav {
   /** Jak dopadl poslední pokus o stažení — pro obrazovku výsledků. */
   readonly posledniStazeni = signal<Zprava | null>(null);
 
+  private fronta: Promise<unknown> = Promise.resolve();
+
   async nacti(): Promise<void> {
     try {
       await this.uloziste.pripoj?.();
@@ -137,31 +139,35 @@ export class Stav {
    * Duplicitu, kterou tiket měl už před úpravou, uložení netrestá: přejmenovat nebo
    * archivovat se musí dát i tiket z doby před touto kontrolou.
    */
-  async ulozTiket(tiket: Tiket, { nahradit = [] }: { readonly nahradit?: readonly string[] } = {}): Promise<void> {
-    const pred = this.vysledky();
-    const tikety = this.tikety();
-    const puvodni = tikety.find(t => t.id === tiket.id);
-    const drivejsi = new Set(puvodni === undefined ? [] : duplicity(puvodni, tikety, this.tahy()).map(d => d.tiketId));
-    const nove = duplicity(tiket, tikety, this.tahy()).filter(d => !nahradit.includes(d.tiketId) && !drivejsi.has(d.tiketId));
-    if (nove.length > 0) throw new DuplicitniTiket(nove);
+  ulozTiket(tiket: Tiket, { nahradit = [] }: { readonly nahradit?: readonly string[] } = {}): Promise<void> {
+    return this.vyhradne(async () => {
+      const pred = this.vysledky();
+      const tikety = this.tikety();
+      const puvodni = tikety.find(t => t.id === tiket.id);
+      const drivejsi = new Set(puvodni === undefined ? [] : duplicity(puvodni, tikety, this.tahy()).map(d => d.tiketId));
+      const nove = duplicity(tiket, tikety, this.tahy()).filter(d => !nahradit.includes(d.tiketId) && !drivejsi.has(d.tiketId));
+      if (nove.length > 0) throw new DuplicitniTiket(nove);
 
-    const nahrazeny = tikety.find(t => t.id !== tiket.id && nahradit.includes(t.id));
-    await this.uloziste.ulozTiket({
-      ...tiket,
-      // Nový sken bez názvu zachová původní; explicitní null nebo prázdný text jej odstraní.
-      nazev: upravNazev(tiket.nazev === undefined ? (puvodni?.nazev ?? nahrazeny?.nazev) : tiket.nazev),
-      archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false,
+      const nahrazeny = tikety.find(t => t.id !== tiket.id && nahradit.includes(t.id));
+      await this.uloziste.ulozTiket({
+        ...tiket,
+        // Nový sken bez názvu zachová původní; explicitní null nebo prázdný text jej odstraní.
+        nazev: upravNazev(tiket.nazev === undefined ? (puvodni?.nazev ?? nahrazeny?.nazev) : tiket.nazev),
+        archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false,
+      });
+      for (const id of nahradit) if (id !== tiket.id) await this.uloziste.smazTiket(id);
+      this.tikety.set(await this.uloziste.nactiTikety());
+      await this.oznameni.aktualizuj(pred, this.vysledky(), [tiket.id, ...nahradit]);
     });
-    for (const id of nahradit) if (id !== tiket.id) await this.uloziste.smazTiket(id);
-    this.tikety.set(await this.uloziste.nactiTikety());
-    await this.oznameni.aktualizuj(pred, this.vysledky(), [tiket.id, ...nahradit]);
   }
 
-  async smazTiket(id: string): Promise<void> {
-    const pred = this.vysledky();
-    await this.uloziste.smazTiket(id);
-    this.tikety.set(await this.uloziste.nactiTikety());
-    await this.oznameni.aktualizuj(pred, this.vysledky(), [id]);
+  smazTiket(id: string): Promise<void> {
+    return this.vyhradne(async () => {
+      const pred = this.vysledky();
+      await this.uloziste.smazTiket(id);
+      this.tikety.set(await this.uloziste.nactiTikety());
+      await this.oznameni.aktualizuj(pred, this.vysledky(), [id]);
+    });
   }
 
   /**
@@ -173,13 +179,15 @@ export class Stav {
       return { uspech: false, zprava: vysledek.duvod };
     }
 
-    const pred = this.vysledky();
-    // Do úložiště jen nové tahy — úložiště je doplní, nemusí přepisovat celý seznam.
-    await this.uloziste.ulozTahy(vysledek.tahy);
-    this.tahy.set(sloucTahy(this.tahy(), vysledek.tahy));
+    await this.vyhradne(async () => {
+      const pred = this.vysledky();
+      // Do úložiště jen nové tahy — úložiště je doplní, nemusí přepisovat celý seznam.
+      await this.uloziste.ulozTahy(vysledek.tahy);
+      this.tahy.set(sloucTahy(this.tahy(), vysledek.tahy));
 
-    await this.ulozSazby(vysledek);
-    await this.oznameni.aktualizuj(pred, this.vysledky());
+      await this.ulozSazby(vysledek);
+      await this.oznameni.aktualizuj(pred, this.vysledky());
+    });
 
     return { uspech: true, zprava: shrnutiImportu(vysledek) };
   }
@@ -201,21 +209,24 @@ export class Stav {
       const stazeno = await stahniVysledky(this.sit, await this.uloziste.nactiHashe());
       if (stazeno.stav === 'chyba') return this.zapis({ uspech: false, zprava: stazeno.duvod });
 
-      const zpracovano = zpracujStazene(this.tahy(), stazeno.nove);
-      if (zpracovano.stav === 'chyba') return this.zapis({ uspech: false, zprava: zpracovano.duvod });
+      // Síť proběhla mimo frontu; uložení tiketu tak na stahování nečeká.
+      return await this.vyhradne(async () => {
+        const zpracovano = zpracujStazene(this.tahy(), stazeno.nove);
+        if (zpracovano.stav === 'chyba') return this.zapis({ uspech: false, zprava: zpracovano.duvod });
 
-      const pred = this.vysledky();
-      for (const balik of zpracovano.baliky) {
-        await this.uloziste.ulozTahy(balik.tahy);
-        await this.ulozSazby(balik);
-        // Hash až po datech: kdyby aplikace mezitím spadla, balík se příště stáhne znovu.
-        await this.uloziste.ulozHash(balik.soubor, balik.hash);
-        this.tahy.set(sloucTahy(this.tahy(), balik.tahy));
-      }
+        const pred = this.vysledky();
+        for (const balik of zpracovano.baliky) {
+          await this.uloziste.ulozTahy(balik.tahy);
+          await this.ulozSazby(balik);
+          // Hash až po datech: kdyby aplikace mezitím spadla, balík se příště stáhne znovu.
+          await this.uloziste.ulozHash(balik.soubor, balik.hash);
+          this.tahy.set(sloucTahy(this.tahy(), balik.tahy));
+        }
 
-      await this.oznameni.aktualizuj(pred, this.vysledky());
-      this.kontrolaServeru.set(stazeno.manifest.kontrola);
-      return this.zapis({ uspech: true, zprava: shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno) });
+        await this.oznameni.aktualizuj(pred, this.vysledky());
+        this.kontrolaServeru.set(stazeno.manifest.kontrola);
+        return this.zapis({ uspech: true, zprava: shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno) });
+      });
     } catch (chyba) {
       return this.zapis({
         uspech: false,
@@ -244,6 +255,16 @@ export class Stav {
       await this.uloziste.ulozCeny(balik.ceny);
       this.ceny.set(balik.ceny);
     }
+  }
+
+  /**
+   * Změny tiketů a výsledků jedna po druhé. Jinak by uložení tiketu uprostřed stahování
+   * srovnalo upozornění proti tahům, které stahování ještě neohlásilo, a výhru umlčelo.
+   */
+  private vyhradne<T>(akce: () => Promise<T>): Promise<T> {
+    const beh = this.fronta.then(akce);
+    this.fronta = beh.catch(() => {});
+    return beh;
   }
 
   private zapis(zprava: Zprava): Zprava {

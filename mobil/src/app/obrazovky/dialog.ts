@@ -7,6 +7,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 export class Dialogy {
   readonly otevreny = signal<Dialog | null>(null);
   readonly upravuje = signal(false);
+  readonly aktivni = signal(true);
 
   zpet(): boolean {
     const dialog = this.otevreny();
@@ -20,7 +21,7 @@ export class Dialogy {
   selector: 'app-dialog',
   template: `
     <dialog #okno [class.spodni]="spodni()" [attr.aria-label]="nadpis()"
-      (cancel)="$event.preventDefault(); zavri()" (close)="uklid()"
+      (cancel)="$event.preventDefault(); zavri()" (close)="priZavreni()"
       (click)="pozadi($event)">
       <h2>{{ nadpis() }}</h2>
       <ng-content />
@@ -88,6 +89,10 @@ export class Dialog {
     if (!this.zavritPozadim() || e.target !== this.okno().nativeElement) return;
     const r = this.okno().nativeElement.getBoundingClientRect();
     if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) this.zavri();
+  }
+
+  protected priZavreni(): void {
+    if (!this.okno().nativeElement.open) this.uklid();
   }
 
   protected uklid(): void {

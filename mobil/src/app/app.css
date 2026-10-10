@@ -6,12 +6,3 @@ nav a { flex: 1; max-width: 15rem; display: grid; place-items: center; min-heigh
 nav a.aktivni { background: var(--barva-plocha); color: var(--barva-duraz); font-weight: 700; box-shadow: inset 0 -3px var(--barva-duraz); }
 footer { display: flex; flex-direction: column; gap: .2rem; margin-top: 2rem; padding-top: .75rem; border-top: 1px solid var(--barva-ram); font-size: .8rem; color: var(--barva-text-tlumeny); }
 .poplach { padding: .75rem; border-left: 3px solid var(--barva-chyba); background: var(--barva-plocha); font-size: .85rem; }
-.oznameni {
-  position: fixed; left: 50%; bottom: calc(5rem + env(safe-area-inset-bottom)); z-index: 7; transform: translateX(-50%);
-  width: max-content; max-width: min(28rem, calc(100vw - 2rem)); margin: 0; padding: .65rem .85rem;
-  border: 1px solid var(--barva-ram); border-left: 3px solid var(--barva-ok); border-radius: .65rem;
-  background: var(--barva-plocha); box-shadow: 0 .5rem 1.5rem #0003; font-size: .9rem;
-  pointer-events: none; animation: oznameni-prolnuti .25s ease-out;
-}
-@keyframes oznameni-prolnuti { from { opacity: 0; transform: translate(-50%, .5rem); } }
-@media (prefers-reduced-motion: reduce) { .oznameni { animation: none; } }

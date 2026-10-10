@@ -24,13 +24,10 @@ import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js
 import { stahniVysledky, type KontrolaServeru } from './stahovani.js';
 import { shrnutiStazeni, zpracujStazene } from './vysledkyZeServeru.js';
 import { seskupPodleNazvu, upravNazev } from './nazvyTiketu.js';
-import { nactenyFiltrSeznamu, noveVyhodnocene, popisTerminu, VYCHOZI_FILTR_SEZNAMU, type FiltrSeznamu } from './zobrazeniTiketu.js';
-import { nazevHry } from './format.js';
+import { nactenyFiltrSeznamu, VYCHOZI_FILTR_SEZNAMU, type FiltrSeznamu } from './zobrazeniTiketu.js';
+import { Oznameni } from './oznameni.js';
 
 const KLIC_FILTRU_SEZNAMU = 'filtrSeznamu';
-
-/** Jak dlouho zůstane vidět krátké hlášení, než samo zmizí. */
-export const DELKA_OZNAMENI_MS = 4000;
 
 /**
  * Tiket by se uložil vedle jiného se stejnými sloupci na totéž slosování. Výhry i vsazené
@@ -53,6 +50,7 @@ export interface Zprava {
 export class Stav {
   private readonly uloziste = inject(ULOZISTE);
   private readonly sit = inject(SIT);
+  readonly oznameni = inject(Oznameni);
 
   readonly tikety = signal<readonly Tiket[]>([]);
   readonly skupinyNazvu = computed(() => seskupPodleNazvu(this.tikety(), t => t.nazev));
@@ -99,13 +97,6 @@ export class Stav {
   /** Jak dopadl poslední pokus o stažení — pro obrazovku výsledků. */
   readonly posledniStazeni = signal<Zprava | null>(null);
 
-  /**
-   * Krátké hlášení přes obrazovku, které po {@link DELKA_OZNAMENI_MS} samo zmizí. Teď jen to, že
-   * nové výsledky vyhodnotily tiket, který čekal na slosování — jinak by si změny nemusel všimnout.
-   */
-  readonly oznameni = signal<string | null>(null);
-  private casovacOznameni: ReturnType<typeof setTimeout> | undefined;
-
   async nacti(): Promise<void> {
     try {
       await this.uloziste.pripoj?.();
@@ -131,6 +122,7 @@ export class Stav {
     this.sazby.set(sazby);
     this.sazbyEurosance.set(sazbyEurosance);
     this.ceny.set(ceny);
+    await this.oznameni.nacti(this.vysledky());
     this.nacteno.set(true);
   }
 
@@ -146,6 +138,7 @@ export class Stav {
    * archivovat se musí dát i tiket z doby před touto kontrolou.
    */
   async ulozTiket(tiket: Tiket, { nahradit = [] }: { readonly nahradit?: readonly string[] } = {}): Promise<void> {
+    const pred = this.vysledky();
     const tikety = this.tikety();
     const puvodni = tikety.find(t => t.id === tiket.id);
     const drivejsi = new Set(puvodni === undefined ? [] : duplicity(puvodni, tikety, this.tahy()).map(d => d.tiketId));
@@ -161,11 +154,14 @@ export class Stav {
     });
     for (const id of nahradit) if (id !== tiket.id) await this.uloziste.smazTiket(id);
     this.tikety.set(await this.uloziste.nactiTikety());
+    await this.oznameni.aktualizuj(pred, this.vysledky(), [tiket.id, ...nahradit]);
   }
 
   async smazTiket(id: string): Promise<void> {
+    const pred = this.vysledky();
     await this.uloziste.smazTiket(id);
     this.tikety.set(await this.uloziste.nactiTikety());
+    await this.oznameni.aktualizuj(pred, this.vysledky(), [id]);
   }
 
   /**
@@ -183,7 +179,7 @@ export class Stav {
     this.tahy.set(sloucTahy(this.tahy(), vysledek.tahy));
 
     await this.ulozSazby(vysledek);
-    this.oznamVyhodnocene(pred);
+    await this.oznameni.aktualizuj(pred, this.vysledky());
 
     return { uspech: true, zprava: shrnutiImportu(vysledek) };
   }
@@ -217,7 +213,7 @@ export class Stav {
         this.tahy.set(sloucTahy(this.tahy(), balik.tahy));
       }
 
-      this.oznamVyhodnocene(pred);
+      await this.oznameni.aktualizuj(pred, this.vysledky());
       this.kontrolaServeru.set(stazeno.manifest.kontrola);
       return this.zapis({ uspech: true, zprava: shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno) });
     } catch (chyba) {
@@ -248,23 +244,6 @@ export class Stav {
       await this.uloziste.ulozCeny(balik.ceny);
       this.ceny.set(balik.ceny);
     }
-  }
-
-  /** Ohlásí tikety, které před doplněním výsledků čekaly na slosování a teď jsou vyhodnocené. */
-  private oznamVyhodnocene(pred: ReadonlyMap<string, VysledekTiketu>): void {
-    const ids = noveVyhodnocene(pred, this.vysledky());
-    if (ids.length === 0) return;
-    const tiket = this.tikety().find(t => t.id === ids[0]);
-    const n = ids.length;
-    this.oznam(n > 1
-      ? `${n <= 4 ? 'Vyhodnoceny' : 'Vyhodnoceno'} ${n} ${n <= 4 ? 'tikety' : 'tiketů'}, které čekaly na slosování.`
-      : `Tiket ${tiket?.nazev ? `„${tiket.nazev}“` : tiket ? `${nazevHry(tiket.hra)} ${popisTerminu(tiket, this.tahy())}` : ''} je vyhodnocený.`);
-  }
-
-  private oznam(text: string): void {
-    clearTimeout(this.casovacOznameni);
-    this.oznameni.set(text);
-    this.casovacOznameni = setTimeout(() => this.oznameni.set(null), DELKA_OZNAMENI_MS);
   }
 
   private zapis(zprava: Zprava): Zprava {

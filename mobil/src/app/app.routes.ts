@@ -1,6 +1,7 @@
 import type { Routes } from '@angular/router';
 
 export const routes: Routes = [
+  { path: 'nastaveni', loadComponent: () => import('./obrazovky/nastaveni.js').then(m => m.Nastaveni), title: 'Nastavení' },
   { path: 'pridat', loadComponent: () => import('./obrazovky/nabidky.js').then(m => m.PridatTiket), title: 'Přidat tiket' },
   { path: 'dalsi', loadComponent: () => import('./obrazovky/nabidky.js').then(m => m.Dalsi), title: 'Další' },
   {

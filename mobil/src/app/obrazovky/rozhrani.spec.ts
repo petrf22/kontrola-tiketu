@@ -8,7 +8,7 @@ import { ImportVysledku } from './import-vysledku';
 import { Detail } from './detail';
 import { Seznam } from './seznam';
 import { NovyTiket } from './novy-tiket';
-import { DELKA_OZNAMENI_MS, Stav } from '../data/stav';
+import { Stav } from '../data/stav';
 import { ULOZISTE } from '../data/tokeny';
 import { UlozisteVPameti } from '../data/uloziste';
 import { sRozsahem } from '../data/kontrola';
@@ -285,23 +285,24 @@ describe('Správa tiketů', () => {
     expect(bilance!.className).toBe(v.celkemKc > 1000 ? 'semafor-zisk' : v.celkemKc > 0 ? 'semafor-ztrata-s-vyhrou' : 'semafor-prohra');
   });
 
-  it('výsledky, které vyhodnotí čekající tiket, to na pár sekund ohlásí', async () => {
-    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
-    try {
-      stav.tahy.set([EJ_2026_09_04]);
-      expect(stav.vysledky().get(tiket.id)?.slosovani).toHaveLength(0);
-      const soubor = JSON.stringify({
-        verzeFormatu: VERZE_FORMATU, vygenerovano: '2026-09-09T06:00:00.000Z', zdroj: 'https://www.allwyn.cz/system/vyherka',
-        obdobi: { od: '2026-37', do: '2026-37' }, sazbyExtra6: [], tahy: [EJ_2026_09_08],
-      });
-      expect((await stav.importuj(soubor)).uspech).toBe(true);
-      expect(stav.oznameni()).toBe(`Tiket Eurojackpot ${formatujDatum('2026-09-08')} je vyhodnocený.`);
-      vi.advanceTimersByTime(DELKA_OZNAMENI_MS);
-      expect(stav.oznameni()).toBeNull();
-      // Tiket už vyhodnocený byl — stejné výsledky znovu nic neohlásí.
-      await stav.importuj(soubor);
-      expect(stav.oznameni()).toBeNull();
-    } finally { vi.useRealTimers(); }
+  it('nové výsledky zůstanou nepřečtené do potvrzení a stejný import se neopakuje', async () => {
+    stav.tahy.set([EJ_2026_09_04]);
+    const soubor = JSON.stringify({
+      verzeFormatu: VERZE_FORMATU, vygenerovano: '2026-09-09T06:00:00.000Z', zdroj: 'https://www.allwyn.cz/system/vyherka',
+      obdobi: { od: '2026-37', do: '2026-37' }, sazbyExtra6: [], tahy: [EJ_2026_09_08],
+    });
+    // Výchozí stav již obsahoval tento tah; simulujeme čekající tiket novou evidencí.
+    await TestBed.inject(ULOZISTE).ulozNastaveni('oznameniVysledku', null);
+    await stav.oznameni.nacti(stav.vysledky());
+    expect((await stav.importuj(soubor)).uspech).toBe(true);
+    const polozky = stav.oznameni.neprectene();
+    expect(polozky).toHaveLength(1);
+    expect(polozky[0]!.tiketId).toBe(tiket.id);
+    await stav.importuj(soubor);
+    expect(stav.oznameni.neprectene()).toEqual(polozky);
+    await stav.oznameni.potvrdit(polozky.map(p => p.id));
+    await stav.importuj(soubor);
+    expect(stav.oznameni.neprectene()).toEqual([]);
   });
 
   it('tiket na jedno slosování ukáže slosování rovnou, bez rámečků, filtru a historie', async () => {
@@ -339,7 +340,7 @@ describe('Správa tiketů', () => {
 
   it('mazání vyžaduje otevření a potvrzení dialogu', async () => {
     const f = await detail();
-    const dialog = f.nativeElement.querySelector('dialog') as HTMLDialogElement;
+    const dialog = f.nativeElement.querySelector('app-dialog[nadpis="Smazat tiket"] dialog') as HTMLDialogElement;
     dialog.showModal = () => dialog.setAttribute('open', '');
     dialog.close = () => dialog.removeAttribute('open');
     const smaz = vi.spyOn(stav, 'smazTiket');

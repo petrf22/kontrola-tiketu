@@ -8,8 +8,11 @@ Nová slosování a změny výsledků se evidují lokálně podle tiketu a data.
 bez konečné částky je také upozornění na výhru, ale s výslovně uvedenou nejistotou.
 První zavedení evidence neoznamuje historii. Archivace pokračující kontrolu nevypíná.
 
-Nepřečtené položky, otisky výsledků a preference dialogu jsou v existující šifrované
-tabulce nastavení pod klíčem `oznameniVysledku`. V prohlížeči zůstávají jen v paměti.
+Nepřečtené položky a preference dialogu jsou v existující šifrované tabulce nastavení
+pod klíčem `oznameniVysledku`, otisky výsledků zvlášť pod `oznameniOtisky`. Potvrzení
+a změna nastavení tak nepřepisují celou historii; otisky se zapíšou jen při změně, vždy
+až po nepřečtených položkách. Starší záznam verze 1 se při načtení rozdělí. V prohlížeči
+zůstávají jen v paměti.
 Zápisy evidence jsou serializované; potvrzení odkazuje na konkrétní revize položek,
 takže nesmaže později příchozí opravu téhož slosování. Selhání zápisu potvrzení ponechá
 položky nepřečtené. Restart porovná uloženou evidenci s aktuálními výsledky a dožene

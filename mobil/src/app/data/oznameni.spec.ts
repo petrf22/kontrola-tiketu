@@ -137,4 +137,31 @@ describe('Trvalá oznámení výsledků', () => {
     expect(zapis).not.toHaveBeenCalled();
     expect(oznameni.chyba()).not.toBeNull();
   });
+
+  it('potvrzení ani nastavení nepřepisují otisky výsledků', async () => {
+    const pred = vysledky([EJ_2026_09_04]), po = vysledky([EJ_2026_09_04, EJ_2026_09_08]);
+    await oznameni.nacti(pred);
+    await oznameni.aktualizuj(pred, po);
+    const zapis = vi.spyOn(uloziste, 'ulozNastaveni');
+    await oznameni.potvrdit(oznameni.neprectene().map(p => p.id));
+    await oznameni.nastavDialog(false);
+    await oznameni.aktualizuj(po, po);
+    expect(zapis.mock.calls.map(([klic]) => klic)).toEqual(['oznameniVysledku', 'oznameniVysledku', 'oznameniVysledku']);
+  });
+
+  it('převede evidenci verze 1 a pokračuje bez falešných hlášení', async () => {
+    const pred = vysledky([EJ_2026_09_04]), po = vysledky([EJ_2026_09_04, EJ_2026_09_08]);
+    const polozka = { id: 1, tiketId: tiket.id, datum: EJ_2026_09_04.datum, vyhra: false, castkaKc: 0, nejista: false, oprava: false };
+    await uloziste.ulozNastaveni('oznameniVysledku', {
+      verze: 1, dialog: false, dalsiId: 2, neprectene: [polozka],
+      zaznamy: pred.get(tiket.id)!.slosovani.map(s => ({ tiketId: tiket.id, datum: s.datum, otisk: JSON.stringify([s.vyhry, s.celkemKc, s.nejistychVyher]) })),
+    });
+    await oznameni.nacti(pred);
+    expect(oznameni.dialog()).toBe(false);
+    expect(oznameni.neprectene()).toEqual([polozka]);
+    expect(await uloziste.nactiNastaveni('oznameniVysledku')).not.toHaveProperty('zaznamy');
+    expect(await uloziste.nactiNastaveni('oznameniOtisky')).toHaveLength(1);
+    await oznameni.aktualizuj(pred, po);
+    expect(oznameni.neprectene().map(p => p.datum)).toEqual([EJ_2026_09_08.datum, EJ_2026_09_04.datum]);
+  });
 });

@@ -16,6 +16,22 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [0.12.0] – 2026-10-10
+
+### Přidáno
+- Nové výsledky tiketů zůstávají v panelu nahoře, dokud je neoznačíte jako přečtené — i po zavření aplikace; panel ukáže tiket, datum slosování a výhru, nebo že výsledek ještě není konečný (aplikace)
+- Nová výhra se ukáže v dialogu, který počká, až dokončíte zadávání nebo úpravu tiketu; „Později“ ji nechá v panelu (aplikace)
+- Další → Nastavení: dialog výher lze vypnout a výhry pak vidět jen v panelu (aplikace)
+
+### Změněno
+- Krátké hlášení o vyhodnoceném tiketu nahradil panel nových výsledků (aplikace)
+- Nabídka akcí tiketu a potvrzení smazání jsou jednotné dialogy; za otevřeným dialogem nejde nic omylem ovládat a systémové Zpět ho nejdřív zavře (aplikace)
+- Když se stažení výsledků nepovede, upozornění nahoře nabídne Zkusit znovu a jde zavřít (aplikace)
+- Lepší ovládání pro čtečku obrazovky a klávesnici: chyby a hlášení se ohlásí, záložky Výsledků losování jdou přepínat šipkami (aplikace)
+
+### Opraveno
+- Chyba importu souboru zůstane vidět a soubor jde vybrat znovu (aplikace)
+
 ## [0.11.0] – 2026-10-08
 
 ### Přidáno

@@ -13,10 +13,39 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.11.0';
+export const VERZE = '0.12.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.12.0',
+    datum: '2026-10-10',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Nové výsledky tiketů zůstávají v panelu nahoře, dokud je neoznačíte jako přečtené — i po zavření aplikace; panel ukáže tiket, datum slosování a výhru, nebo že výsledek ještě není konečný',
+          'Nová výhra se ukáže v dialogu, který počká, až dokončíte zadávání nebo úpravu tiketu; „Později“ ji nechá v panelu',
+          'Další → Nastavení: dialog výher lze vypnout a výhry pak vidět jen v panelu',
+        ],
+      },
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'Krátké hlášení o vyhodnoceném tiketu nahradil panel nových výsledků',
+          'Nabídka akcí tiketu a potvrzení smazání jsou jednotné dialogy; za otevřeným dialogem nejde nic omylem ovládat a systémové Zpět ho nejdřív zavře',
+          'Když se stažení výsledků nepovede, upozornění nahoře nabídne Zkusit znovu a jde zavřít',
+          'Lepší ovládání pro čtečku obrazovky a klávesnici: chyby a hlášení se ohlásí, záložky Výsledků losování jdou přepínat šipkami',
+        ],
+      },
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Chyba importu souboru zůstane vidět a soubor jde vybrat znovu',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.11.0',
     datum: '2026-10-08',

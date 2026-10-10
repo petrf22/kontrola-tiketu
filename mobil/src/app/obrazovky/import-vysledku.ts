@@ -11,8 +11,8 @@ import { Tahy } from './tahy.js';
     <a class="zpet" routerLink="/dalsi">← Další</a>
     <h2>Výsledky losování</h2>
     <div class="karty" (keydown)="klavesaKarty($event)" role="tablist" aria-label="Výsledky losování">
-      <button type="button" id="karta-prehled" role="tab" aria-controls="panel-prehled" [attr.tabindex]="karta() === 'prehled' ? 0 : -1" [attr.aria-selected]="karta() === 'prehled'" (click)="karta.set('prehled')">Přehled</button>
-      <button type="button" id="karta-sprava" role="tab" aria-controls="panel-sprava" [attr.tabindex]="karta() === 'sprava' ? 0 : -1" [attr.aria-selected]="karta() === 'sprava'" (click)="karta.set('sprava')">Správa</button>
+      <button type="button" id="karta-prehled" role="tab" [attr.aria-controls]="karta() === 'prehled' ? 'panel-prehled' : null" [attr.tabindex]="karta() === 'prehled' ? 0 : -1" [attr.aria-selected]="karta() === 'prehled'" (click)="karta.set('prehled')">Přehled</button>
+      <button type="button" id="karta-sprava" role="tab" [attr.aria-controls]="karta() === 'sprava' ? 'panel-sprava' : null" [attr.tabindex]="karta() === 'sprava' ? 0 : -1" [attr.aria-selected]="karta() === 'sprava'" (click)="karta.set('sprava')">Správa</button>
     </div>
 
     <div role="tabpanel" [id]="'panel-' + karta()" [attr.aria-labelledby]="'karta-' + karta()" tabindex="0">

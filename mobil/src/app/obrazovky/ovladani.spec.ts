@@ -29,6 +29,8 @@ describe('Zpětná vazba a přístupné ovládání', () => {
     const aktivni = f.nativeElement.querySelector('[role=tab][aria-selected=true]') as HTMLElement;
     const panel = f.nativeElement.querySelector('[role=tabpanel]') as HTMLElement;
     expect(aktivni.getAttribute('aria-controls')).toBe(panel.id);
+    // Neaktivní panel se nevykresluje, odkaz na něj by vedl na neexistující id.
+    expect(tab.hasAttribute('aria-controls')).toBe(false);
     expect(panel.getAttribute('aria-labelledby')).toBe(aktivni.id);
     expect(aktivni.tabIndex).toBe(0);
     expect(tab.tabIndex).toBe(-1);

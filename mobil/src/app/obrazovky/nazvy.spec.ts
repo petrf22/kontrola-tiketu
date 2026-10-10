@@ -93,7 +93,7 @@ describe('Pojmenování a skupiny tiketů', () => {
     expect(f.nativeElement.querySelector('input[name=nazev]').value).toBe('práce');
     await vypln(f, 'input[name=nazev]', '  kolega  ');
     await klikni(f, 'Uložit název');
-    expect(f.nativeElement.querySelector('h2').textContent).toContain('kolega');
+    expect(f.nativeElement.querySelector(':scope > h2').textContent).toContain('kolega');
     expect(stav.tikety()[0]).toEqual({ ...tiket, nazev: 'kolega', archivovany: false });
     expect(stav.vysledky().get(tiket.id)).toEqual(puvodniVysledek);
     await klikni(f, 'Pojmenovat tiket');

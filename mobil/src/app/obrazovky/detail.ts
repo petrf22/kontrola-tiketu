@@ -1,3 +1,4 @@
+import { Dialog, Dialogy } from './dialog.js';
 import { NgTemplateOutlet } from '@angular/common';
 import { Component, DestroyRef, ElementRef, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
@@ -81,7 +82,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
 
 @Component({
   selector: 'app-detail',
-  imports: [NgTemplateOutlet, RouterLink, NazevTiketu, VyhryTahu],
+  imports: [Dialog, NgTemplateOutlet, RouterLink, NazevTiketu, VyhryTahu],
   template: `
     @if (tiket(); as t) {
       @if (docasny()) {
@@ -89,9 +90,9 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       } @else {
       <div class="akce-tiketu">
         <a routerLink="/" [queryParams]="t.archivovany ? {archiv: '1'} : {}">← {{ t.archivovany ? 'Archiv' : 'Tikety' }}</a>
-        <details class="nabidka-akci" (click)="zavriAkce($event)">
-          <summary>Akce tiketu</summary>
-          <div>
+        <button type="button" (click)="nabidkaAkci.otevri()">Akce tiketu</button>
+        <app-dialog #nabidkaAkci nadpis="Akce tiketu" [spodni]="true" [zavritPozadim]="true">
+          <div class="nabidka-akci" (click)="zavriAkce($event)">
             <button type="button" [disabled]="uklada()" (click)="zacniUpravuNazvu()">Pojmenovat tiket</button>
             <button type="button" [disabled]="uklada()" (click)="zacniUpravuCeny()">Upravit cenu</button>
             <button type="button" [disabled]="uklada()" (click)="zacniUpravuRozsahu()">Upravit rozsah kontroly</button>
@@ -104,7 +105,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             <button type="button" class="smazat" [disabled]="uklada()" (click)="otevriMazani()">Smazat tiket</button>
             <button type="button">Zavřít nabídku</button>
           </div>
-        </details>
+        </app-dialog>
       </div>
       }
       <h2>{{ t.nazev ? t.nazev + ' · ' : '' }}{{ nazevHry(t.hra) }} @if (t.kontrola) { <span class="stitek">virtuální</span> }
@@ -452,13 +453,14 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       </p>
 
       </details>
-      <dialog #dialogMazani class="potvrzeni" aria-labelledby="potvrzeni-text">
+      <app-dialog #dialogMazani nadpis="Smazat tiket" [pracuje]="uklada()">
+        @if (chybaAkce(); as chyba) { <p role="alert" class="chyba-akce">{{ chyba }}</p> }
         <p id="potvrzeni-text">Opravdu smazat tenhle tiket? Vrátit to nepůjde.</p>
         <div>
           <button type="button" class="smazat" [disabled]="uklada()" (click)="smaz()">Ano, smazat</button>
-          <button type="button" autofocus (click)="ponechat()">Ponechat</button>
+          <button type="button" autofocus [disabled]="uklada()" (click)="ponechat()">Ponechat</button>
         </div>
-      </dialog>
+      </app-dialog>
     } @else if (docasny()) {
       <a class="zpet" routerLink="/pridat">← Přidat tiket</a>
       <p>Tiket z kontroly bez uložení už byl zapomenut.</p>
@@ -467,8 +469,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     }
   `,
   styles: `
-    .nabidka-akci { position: relative; margin: 0; border: 0; padding: 0; }
-    .nabidka-akci > div { position: fixed; right: max(1rem, calc((100vw - 44rem) / 2)); bottom: calc(6rem + env(safe-area-inset-bottom)); z-index: 6; max-height: calc(100dvh - 8rem - env(safe-area-inset-bottom) - env(safe-area-inset-top)); overflow-y: auto; display: grid; width: min(20rem, calc(100vw - 2rem)); padding: .5rem; gap: .25rem; background: var(--barva-pozadi); border: 1px solid var(--barva-ram); border-radius: .75rem; box-shadow: 0 .5rem 1.5rem #0003; }
+    .nabidka-akci { display: grid; gap: .5rem; }
     .nabidka-akci button { text-align: left; }
     .historie-radek { border-radius: .85rem; padding: 0 .75rem; }
     .historie-radek.nehotovy { border-color: var(--barva-duraz); }
@@ -558,13 +559,6 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       margin-top: 1.5rem; font-size: 0.8rem; color: var(--barva-text-tlumeny);
     }
     .smazat { color: var(--barva-chyba); }
-    .potvrzeni {
-      max-width: 22rem; border: 1px solid var(--barva-chyba); border-radius: 6px;
-      background: var(--barva-pozadi); color: inherit;
-    }
-    .potvrzeni::backdrop { background: #0008; }
-    .potvrzeni p { margin: 0; }
-    .potvrzeni div { display: flex; justify-content: flex-end; gap: 0.5rem; }
     .zapomenuti {
       display: grid; gap: 0.5rem; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
       border-left: 3px solid var(--barva-chyba); font-size: 0.85rem; line-height: 1.5;
@@ -592,7 +586,10 @@ export class Detail {
    * Potvrzení mazání. HTML `<dialog>` je modál uvnitř webview: neblokuje ho jako `window.confirm`
    * a na rozdíl od nativního dialogu (samostatné okno) ho kryje FLAG_SECURE aktivity.
    */
-  private readonly dialogMazani = viewChild<ElementRef<HTMLDialogElement>>('dialogMazani');
+  private readonly dialogMazani = viewChild<Dialog>('dialogMazani');
+  private readonly nabidkaAkci = viewChild<Dialog>('nabidkaAkci');
+  private readonly dialogy = inject(Dialogy);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujDatumCas = formatujDatumCas;
@@ -718,6 +715,14 @@ export class Detail {
 
   constructor() {
     effect(() => {
+      const uprava = this.uprava();
+      this.dialogy.upravuje.set(uprava !== 'zadna' || this.uklada());
+      if (uprava !== 'zadna') requestAnimationFrame(() => {
+        if (!this.element.nativeElement.isConnected) return;
+        this.element.nativeElement.querySelector<HTMLElement>('.uprava input, .uprava select')?.focus();
+      });
+    });
+    effect(() => {
       this.id();
       this.uprava.set('zadna');
       this.vratitelnyArchiv.set(null);
@@ -726,6 +731,7 @@ export class Detail {
     });
     // Odchodem z výsledku — zpět, spodní nabídkou i odkazem — se tiket jen ke kontrole zapomene.
     inject(DestroyRef).onDestroy(() => {
+      this.dialogy.upravuje.set(false);
       if (this.docasny()) this.docasnyTiket.zapomen();
     });
   }
@@ -741,7 +747,7 @@ export class Detail {
   }
 
   protected zavriAkce(e: Event): void {
-    if ((e.target as HTMLElement).closest('button')) (e.currentTarget as HTMLDetailsElement).open = false;
+    if ((e.target as HTMLElement).closest('button')) this.nabidkaAkci()?.zavri();
   }
 
   /**
@@ -766,7 +772,14 @@ export class Detail {
         : 'Změnu se nepodařilo uložit. Zkus to znovu.');
       return false;
     }
-    finally { this.uklada.set(false); }
+    finally {
+      this.uklada.set(false);
+      requestAnimationFrame(() => {
+        if (this.dialogy.otevreny()) return;
+        const zprava = this.element.nativeElement.querySelector<HTMLElement>('.chyba-akce, .zprava-akce');
+        zprava?.scrollIntoView?.({ block: 'nearest' });
+      });
+    }
   }
 
   protected async archivuj(): Promise<void> {
@@ -1006,15 +1019,19 @@ export class Detail {
   }
 
   protected otevriMazani(): void {
-    this.dialogMazani()?.nativeElement.showModal();
+    this.nabidkaAkci()?.zavri();
+    this.chybaAkce.set(null);
+    this.dialogMazani()?.otevri();
   }
 
   protected ponechat(): void {
-    this.dialogMazani()?.nativeElement.close();
+    this.dialogMazani()?.zavri();
   }
 
   protected async smaz(): Promise<void> {
-    this.dialogMazani()?.nativeElement.close();
-    if (await this.provedAkci(() => this.stav.smazTiket(this.id()))) await this.router.navigate(['/']);
+    if (await this.provedAkci(() => this.stav.smazTiket(this.id()))) {
+      this.dialogMazani()?.zavri(true);
+      await this.router.navigate(['/']);
+    }
   }
 }

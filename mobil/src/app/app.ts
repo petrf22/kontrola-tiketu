@@ -6,6 +6,7 @@ import { Capacitor } from '@capacitor/core';
 import { filter, map } from 'rxjs';
 import { formatujDatum, formatujDatumCas, nazevHry } from './data/format.js';
 import type { StavHry } from './data/stahovani.js';
+import { Dialogy } from './obrazovky/dialog.js';
 import { Stav } from './data/stav.js';
 
 @Component({
@@ -15,6 +16,7 @@ import { Stav } from './data/stav.js';
   styleUrl: './app.css',
 })
 export class App {
+  private readonly dialogy = inject(Dialogy);
   private readonly router = inject(Router);
   private readonly adresa = toSignal(this.router.events.pipe(
     filter((e): e is NavigationEnd => e instanceof NavigationEnd), map(e => e.urlAfterRedirects),
@@ -51,6 +53,7 @@ export class App {
     // Bez posluchače by Android zavřel aplikaci odkudkoliv.
     if (Capacitor.isNativePlatform()) {
       void AplikaceCapacitor.addListener('backButton', ({ canGoBack }) => {
+        if (this.dialogy.zpet()) return;
         if (canGoBack) history.back();
         else void AplikaceCapacitor.exitApp();
       });

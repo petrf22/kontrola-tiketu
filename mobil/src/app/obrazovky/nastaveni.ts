@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, type WritableSignal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Oznameni } from '../data/oznameni.js';
 
@@ -20,12 +20,20 @@ export class Nastaveni {
   protected readonly uklada = signal(false);
   protected readonly ulozeno = signal(false);
   protected async zmen(e: Event): Promise<void> {
-    const pole = e.target as HTMLInputElement;
-    this.uklada.set(true);
     this.ulozeno.set(false);
-    const ok = await this.oznameni.nastavDialog(pole.checked);
-    pole.checked = this.oznameni.dialog();
-    this.ulozeno.set(ok);
-    this.uklada.set(false);
+    this.ulozeno.set(await ulozVolbuDialogu(this.oznameni, e.target as HTMLInputElement, { obracene: false, pracuje: this.uklada }));
   }
+}
+
+/**
+ * Uloží volbu dialogu výher ze zaškrtávátka a vrátí ho do skutečného stavu i po chybě zápisu.
+ * `obracene` je zaškrtávátko, které znamená „jen v panelu“.
+ */
+export async function ulozVolbuDialogu(oznameni: Oznameni, pole: HTMLInputElement,
+  { obracene, pracuje }: { readonly obracene: boolean; readonly pracuje: WritableSignal<boolean> }): Promise<boolean> {
+  pracuje.set(true);
+  const ok = await oznameni.nastavDialog(pole.checked !== obracene);
+  pole.checked = oznameni.dialog() !== obracene;
+  pracuje.set(false);
+  return ok;
 }

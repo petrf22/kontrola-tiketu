@@ -6,6 +6,7 @@ import { Oznameni, type OznameniVysledku } from '../data/oznameni.js';
 import { Stav, type Zprava } from '../data/stav.js';
 import { formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Dialog, Dialogy } from './dialog.js';
+import { ulozVolbuDialogu } from './nastaveni.js';
 
 @Component({
   selector: 'app-oznameni-panel',
@@ -101,6 +102,9 @@ export class OznameniPanel {
   protected readonly zavreneStazeni = signal<Zprava | null>(null);
   protected readonly maVyhru = computed(() => this.oznameni.neprectene().some(p => p.vyhra));
   protected readonly skryto = computed(() => ['/sken', '/sken-cisel', '/z-obrazku', '/kontrola'].includes(this.cesta().split('?')[0]!));
+  /** Dialog výhry nesmí přerušit zadávání, úpravu, skenování ani přechod mezi obrazovkami. */
+  private readonly muzeOtevrit = computed(() => this.stav.nacteno() && this.oznameni.dialog() && this.viditelna()
+    && this.dialogy.aktivni() && !this.prechazi() && !this.skryto() && !this.dialogy.upravuje());
   protected readonly datum = formatujDatum;
   protected readonly kc = formatujKc;
 
@@ -126,17 +130,14 @@ export class OznameniPanel {
         });
         return;
       }
-      if (!this.stav.nacteno() || !this.oznameni.dialog() || !this.viditelna() || !this.dialogy.aktivni()
-        || this.prechazi() || this.skryto() || this.cesta().split('?')[0] === '/tiket/novy'
-        || this.dialogy.upravuje() || otevreny) return;
+      if (!this.muzeOtevrit() || otevreny) return;
       const nove = neprectene.filter(p => p.vyhra && !this.jizZobrazeno.has(p.id));
       if (nove.length === 0) return;
       untracked(() => {
         this.zobrazeno.set(nove);
         // Po vykreslení obsahu, aby showModal zaostřilo skutečné tlačítko.
         requestAnimationFrame(() => {
-          if (this.destroyRef.destroyed || this.prechazi() || this.skryto() || this.cesta().split('?')[0] === '/tiket/novy'
-            || this.dialogy.upravuje() || !this.viditelna() || !this.dialogy.aktivni() || !this.oznameni.dialog()) return;
+          if (this.destroyRef.destroyed || !this.muzeOtevrit()) return;
           if (!this.oznameni.neprectene().some(p => nove.some(n => n.id === p.id))) return;
           if (dialog.otevri()) nove.forEach(p => this.jizZobrazeno.add(p.id));
         });
@@ -175,10 +176,6 @@ export class OznameniPanel {
   }
 
   protected async jenPanel(e: Event): Promise<void> {
-    const pole = e.target as HTMLInputElement;
-    this.pracuje.set(true);
-    await this.oznameni.nastavDialog(!pole.checked);
-    pole.checked = !this.oznameni.dialog();
-    this.pracuje.set(false);
+    await ulozVolbuDialogu(this.oznameni, e.target as HTMLInputElement, { obracene: true, pracuje: this.pracuje });
   }
 }

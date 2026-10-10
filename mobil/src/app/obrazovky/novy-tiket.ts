@@ -1,4 +1,4 @@
-import { Component, ElementRef, computed, inject, linkedSignal, signal } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, inject, linkedSignal, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   DELKA_KODU_DOPLNKOVE_HRY,
@@ -43,6 +43,7 @@ import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { DuplicitniTiket, Stav } from '../data/stav.js';
 import { popisTerminu } from '../data/zobrazeniTiketu.js';
 import { NazevTiketu } from './nazev-tiketu.js';
+import { Dialogy } from './dialog.js';
 
 interface Radek {
   cisla: string;
@@ -533,6 +534,13 @@ export class NovyTiket {
   protected readonly chybaUlozeni = signal<string | null>(null);
   private readonly router = inject(Router);
   private readonly docasny = inject(DocasnyTiket);
+
+  constructor() {
+    // Během zadávání panel nových výsledků neotevře dialog výhry.
+    const dialogy = inject(Dialogy);
+    dialogy.upravuje.set(true);
+    inject(DestroyRef).onDestroy(() => dialogy.upravuje.set(false));
+  }
 
   /** Zvolil uživatel „Pouze kontrola bez uložení“? */
   protected readonly jenKontrola = signal(false);

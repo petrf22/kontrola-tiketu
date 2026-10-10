@@ -4,9 +4,19 @@ import { ImportVysledku } from './import-vysledku';
 import { NovyTiket } from './novy-tiket';
 import { Seznam } from './seznam';
 import { Stav } from '../data/stav';
+import { Dialogy } from './dialog';
 
 describe('Zpětná vazba a přístupné ovládání', () => {
   beforeEach(() => TestBed.configureTestingModule({ providers: [provideRouter([])] }));
+
+  it('formulář nového tiketu odkládá dialog výhry po dobu zadávání', async () => {
+    const dialogy = TestBed.inject(Dialogy);
+    const f = TestBed.createComponent(NovyTiket);
+    await f.whenStable();
+    expect(dialogy.upravuje()).toBe(true);
+    f.destroy();
+    expect(dialogy.upravuje()).toBe(false);
+  });
 
   it('záložky ovládá šipkami a propojuje aktivní záložku s panelem', async () => {
     const f = TestBed.createComponent(ImportVysledku);

@@ -60,10 +60,11 @@ describe('Zobrazení nových výsledků', () => {
 
   it('odloží výhru při zadávání a úpravě, pak ji zobrazí', async () => {
     const f = await priprav('/tiket/novy');
+    // Formulář i detail v úpravě to hlásí přes Dialogy.upravuje, panel trasy nezná.
+    TestBed.inject(Dialogy).upravuje.set(true);
     await vyhra(); await vykresli(f);
     const dialog = f.nativeElement.querySelector('dialog') as HTMLDialogElement;
     expect(dialog.open).toBe(false);
-    TestBed.inject(Dialogy).upravuje.set(true);
     await TestBed.inject(Router).navigateByUrl('/tiket/test');
     await vykresli(f);
     expect(dialog.open).toBe(false);

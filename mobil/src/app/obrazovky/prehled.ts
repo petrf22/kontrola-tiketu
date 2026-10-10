@@ -46,7 +46,7 @@ function uTiketu(pocet: number): string {
       </dl>
       <p class="tlumene">Včetně archivovaných tiketů.</p>
       @if (souhrn().celkem.nejistych > 0 || souhrn().celkem.tiketuBezCeny > 0) {
-        <p class="zprava-akce">Přehled není úplný: některé tikety nemají konečný výsledek nebo známou cenu.</p>
+        <p class="varovani-akce">Přehled není úplný: některé tikety nemají konečný výsledek nebo známou cenu.</p>
       }
       <h3>Podle názvu</h3>
       <div class="skupiny-nazvu">

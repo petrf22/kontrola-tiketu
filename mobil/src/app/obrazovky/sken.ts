@@ -42,7 +42,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
     }
 
     @if (chyba(); as text) {
-      <p class="chyba">{{ text }}</p>
+      <p class="chyba-akce" role="alert">{{ text }}</p>
     }
     @if (!skenuje()) { <a class="zpet" routerLink="/tiket/novy">Zadat tiket ručně</a> }
   `,

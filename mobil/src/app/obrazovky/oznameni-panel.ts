@@ -34,7 +34,11 @@ import { Dialog, Dialogy } from './dialog.js';
           </div>
         }
       }
-      @if (oznameni.chyba(); as chyba) { <p class="chyba-akce" role="alert">{{ chyba }}</p> }
+      @if (oznameni.chyba(); as chyba) {
+        <div class="chyba-akce" role="alert">{{ chyba }}
+          <button type="button" [disabled]="pracuje()" (click)="obnov()">Zkusit uložit upozornění znovu</button>
+        </div>
+      }
     }
     <app-dialog #dialog nadpis="Nové výherní výsledky" [pracuje]="pracuje()" (zavreno)="zobrazeno.set([])">
       <ng-container *ngTemplateOutlet="polozky; context: { $implicit: zobrazeno() }" />
@@ -159,6 +163,12 @@ export class OznameniPanel {
       this.dialog().zavri(true);
       await this.router.navigate(['/tiket', id]);
     }
+  }
+
+  protected async obnov(): Promise<void> {
+    this.pracuje.set(true);
+    await this.oznameni.aktualizuj(this.stav.vysledky(), this.stav.vysledky());
+    this.pracuje.set(false);
   }
 
   protected async jenPanel(e: Event): Promise<void> {

@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, ElementRef, inject, signal } from '@angular/core';
 import { formatujDatum, formatujDatumCas } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { RouterLink } from '@angular/router';
@@ -10,11 +10,12 @@ import { Tahy } from './tahy.js';
   template: `
     <a class="zpet" routerLink="/dalsi">← Další</a>
     <h2>Výsledky losování</h2>
-    <div class="karty" role="tablist" aria-label="Výsledky losování">
-      <button type="button" role="tab" [attr.aria-selected]="karta() === 'prehled'" (click)="karta.set('prehled')">Přehled</button>
-      <button type="button" role="tab" [attr.aria-selected]="karta() === 'sprava'" (click)="karta.set('sprava')">Správa</button>
+    <div class="karty" (keydown)="klavesaKarty($event)" role="tablist" aria-label="Výsledky losování">
+      <button type="button" id="karta-prehled" role="tab" aria-controls="panel-prehled" [attr.tabindex]="karta() === 'prehled' ? 0 : -1" [attr.aria-selected]="karta() === 'prehled'" (click)="karta.set('prehled')">Přehled</button>
+      <button type="button" id="karta-sprava" role="tab" aria-controls="panel-sprava" [attr.tabindex]="karta() === 'sprava' ? 0 : -1" [attr.aria-selected]="karta() === 'sprava'" (click)="karta.set('sprava')">Správa</button>
     </div>
 
+    <div role="tabpanel" [id]="'panel-' + karta()" [attr.aria-labelledby]="'karta-' + karta()" tabindex="0">
     @if (karta() === 'prehled') {
       @if (stav.tahy().length > 0) {
         <app-tahy />
@@ -24,7 +25,7 @@ import { Tahy } from './tahy.js';
           {{ stav.stahuje() ? 'Stahuji…' : 'Stáhnout výsledky' }}
         </button>
         @if (stav.posledniStazeni(); as z) {
-          <p class="zprava" [class.chyba]="!z.uspech">{{ z.zprava }}</p>
+          <p class="zprava" [class.chyba]="!z.uspech" [attr.role]="z.uspech ? 'status' : 'alert'">{{ z.zprava }}</p>
         }
       }
     } @else {
@@ -35,7 +36,7 @@ import { Tahy } from './tahy.js';
         </button>
 
         @if (stav.posledniStazeni(); as z) {
-          <p class="zprava" [class.chyba]="!z.uspech">{{ z.zprava }}</p>
+          <p class="zprava" [class.chyba]="!z.uspech" [attr.role]="z.uspech ? 'status' : 'alert'">{{ z.zprava }}</p>
         }
 
         @if (stav.kontrolaServeru(); as k) {
@@ -86,13 +87,14 @@ import { Tahy } from './tahy.js';
         </p>
         <label class="vyber">
           Soubor s výsledky
-          <input type="file" accept="application/json,.json" (change)="vyber($event)" />
+          <input type="file" [disabled]="importuje()" accept="application/json,.json" (change)="vyber($event)" />
         </label>
         @if (zprava(); as z) {
-          <p class="zprava" [class.chyba]="!uspech()">{{ z }}</p>
+          <p class="zprava" [class.chyba]="!uspech()" [attr.role]="uspech() ? 'status' : 'alert'">{{ z }}</p>
         }
       </details>
     }
+    </div>
   `,
   styles: `
     /* Záložky, ne přepínače — filtr hry pod nimi je přepínač a obojí by splývalo. */
@@ -117,6 +119,8 @@ import { Tahy } from './tahy.js';
 })
 export class ImportVysledku {
   protected readonly stav = inject(Stav);
+  private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
+  protected readonly importuje = signal(false);
   protected readonly zprava = signal<string | null>(null);
   protected readonly uspech = signal(true);
   /** Jen v komponentě — po návratu na stránku je zase Přehled. */
@@ -134,9 +138,27 @@ export class ImportVysledku {
     const soubor = vstup.files?.[0];
     if (soubor === undefined) return;
 
-    const vysledek = await this.stav.importuj(await soubor.text());
-    this.uspech.set(vysledek.uspech);
-    this.zprava.set(vysledek.zprava);
-    vstup.value = '';
+    if (this.importuje()) return;
+    this.importuje.set(true);
+    this.zprava.set(null);
+    try {
+      const vysledek = await this.stav.importuj(await soubor.text());
+      this.uspech.set(vysledek.uspech);
+      this.zprava.set(vysledek.zprava);
+    } catch {
+      this.uspech.set(false);
+      this.zprava.set('Soubor se nepodařilo přečíst nebo uložit. Vyber ho znovu a zkus import opakovat.');
+    } finally {
+      vstup.value = '';
+      this.importuje.set(false);
+    }
+  }
+
+  protected klavesaKarty(e: KeyboardEvent): void {
+    if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const karta = e.key === 'Home' ? 'prehled' : e.key === 'End' ? 'sprava' : this.karta() === 'prehled' ? 'sprava' : 'prehled';
+    this.karta.set(karta);
+    this.element.nativeElement.querySelector<HTMLElement>('#karta-' + karta)?.focus();
   }
 }

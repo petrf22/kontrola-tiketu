@@ -108,7 +108,9 @@ details[open] { padding-bottom: .85rem; }
 .souhrn-tiketu > div { min-width: 0; }
 .souhrn-tiketu dd { font-size: 1rem; }
 .zprava-akce { padding: .75rem; border-left: 3px solid var(--barva-ok); background: var(--barva-plocha); }
+.chyba-akce, .varovani-akce { padding: .75rem; border-left: 3px solid; background: var(--barva-plocha); }
 .chyba-akce { color: var(--barva-chyba); }
+.varovani-akce { border-color: var(--barva-duraz); }
 @media (max-width: 380px) {
   .souhrn-tiketu, app-detail .souhrn-tiketu { grid-template-columns: 1fr; }
   .souhrn-tiketu > div { display: flex; justify-content: space-between; flex-wrap: wrap; gap: .25rem; }

@@ -1,6 +1,6 @@
 import { Dialog, Dialogy } from './dialog.js';
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, ElementRef, computed, effect, inject, input, linkedSignal, signal, viewChild } from '@angular/core';
+import { Component, DestroyRef, ElementRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   platnyCenik,
@@ -126,7 +126,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           @if (vratitelnyArchiv() !== null) { <button type="button" [disabled]="uklada()" (click)="vratArchiv()">Zpět</button> }
         </p>
       }
-      @if (chybaAkce(); as chyba) { <p class="chyba-akce" role="alert">{{ chyba }}</p> }
+      @if (!dialogy.otevreny() && chybaAkce(); as chyba) { <p id="chyba-akce" class="chyba-akce" role="alert">{{ chyba }}</p> }
       <p class="popis">
         {{ pocetSloupcu(t.sloupce.length) }} ·
         @if (t.kontrola; as k) { Kontrola {{ popisRozsahuKontroly(k) }} }
@@ -143,7 +143,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       @if (uprava() === 'cena') {
         <form class="uprava" (submit)="ulozCenu($event)">
           <label>{{ t.kontrola ? 'Cena za jedno slosování v Kč' : 'Cena celého tiketu v Kč' }}
-            <input type="text" inputmode="decimal" [value]="novaCena()" (input)="novaCena.set($any($event.target).value)" aria-describedby="napoveda-ceny" />
+            <input type="text" inputmode="decimal" [value]="novaCena()" (input)="novaCena.set($any($event.target).value)" [attr.aria-invalid]="chybaAkce() !== null" [attr.aria-describedby]="chybaAkce() ? 'napoveda-ceny chyba-akce' : 'napoveda-ceny'" />
           </label>
           <p id="napoveda-ceny" class="tlumene">Prázdné pole použije ceník. Zadaná cena má přednost.</p>
           @if (t.kontrola) {
@@ -390,11 +390,13 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           @case ('ukonceni') {
             <div class="uprava">
               <label>Poslední kontrolované slosování
-                <input type="date" [value]="upravaDo()" (input)="upravaDo.set($any($event.target).value)" />
+                <input type="date" [value]="upravaDo()" aria-describedby="chyby-rozsahu" [attr.aria-invalid]="problemyUpravy().length > 0" (input)="upravaDo.set($any($event.target).value)" />
               </label>
+              <div id="chyby-rozsahu" aria-live="polite">
               @for (problem of problemyUpravy(); track problem.cesta + problem.kod) {
                 <p class="chyba">{{ problem.zprava }}</p>
               }
+              </div>
               <div class="tlacitka">
                 <button type="button" class="hlavni" [disabled]="uklada()" (click)="ulozRozsah()">Ukončit</button>
                 <button type="button" (click)="uprava.set('zadna')">Zpět</button>
@@ -405,23 +407,25 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             <div class="uprava">
               <div class="dvojice">
                 <label>Od
-                  <input type="date" [value]="upravaOd()" (input)="upravaOd.set($any($event.target).value)" />
+                  <input type="date" [value]="upravaOd()" aria-describedby="chyby-rozsahu" [attr.aria-invalid]="problemyUpravy().length > 0" (input)="upravaOd.set($any($event.target).value)" />
                 </label>
                 <label>Do (prázdné = bez konce)
-                  <input type="date" [value]="upravaDo()" (input)="upravaDo.set($any($event.target).value)" />
+                  <input type="date" [value]="upravaDo()" aria-describedby="chyby-rozsahu" [attr.aria-invalid]="problemyUpravy().length > 0" (input)="upravaDo.set($any($event.target).value)" />
                 </label>
               </div>
               @if (upravenyTiket()?.kontrola) {
                 <label>Cena za jedno slosování v Kč (prázdné = podle ceníku)
                   <input type="number" min="0" step="any" inputmode="decimal"
-                    [value]="upravaCena()" (input)="upravaCena.set($any($event.target).value)" />
+                    [value]="upravaCena()" aria-describedby="chyby-rozsahu" [attr.aria-invalid]="problemyUpravy().length > 0" (input)="upravaCena.set($any($event.target).value)" />
                 </label>
               } @else {
                 <p class="tazene">Rozsah odpovídá tiketu — tiket se kontroluje podle papíru.</p>
               }
+              <div id="chyby-rozsahu" aria-live="polite">
               @for (problem of problemyUpravy(); track problem.cesta + problem.kod) {
                 <p class="chyba">{{ problem.zprava }}</p>
               }
+              </div>
               <div class="tlacitka">
                 <button type="button" class="hlavni" [disabled]="uklada()" (click)="ulozRozsah()">Uložit rozsah</button>
                 @if (t.kontrola) {
@@ -588,7 +592,7 @@ export class Detail {
    */
   private readonly dialogMazani = viewChild<Dialog>('dialogMazani');
   private readonly nabidkaAkci = viewChild<Dialog>('nabidkaAkci');
-  private readonly dialogy = inject(Dialogy);
+  protected readonly dialogy = inject(Dialogy);
   private readonly element = inject<ElementRef<HTMLElement>>(ElementRef);
 
   protected readonly formatujDatum = formatujDatum;
@@ -714,6 +718,15 @@ export class Detail {
   protected readonly vratitelnyArchiv = signal<boolean | null>(null);
 
   constructor() {
+    // Potvrzujeme jen stav při příchodu, nikoli nová slosování přibývající během čtení detailu.
+    effect(() => {
+      const id = this.id();
+      if (this.docasny() || !this.stav.nacteno()) return;
+      untracked(() => {
+        const ids = this.stav.oznameni.neprectene().filter(p => p.tiketId === id).map(p => p.id);
+        if (ids.length > 0) void this.stav.oznameni.potvrdit(ids);
+      });
+    });
     effect(() => {
       const uprava = this.uprava();
       this.dialogy.upravuje.set(uprava !== 'zadna' || this.uklada());

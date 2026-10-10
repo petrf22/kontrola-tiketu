@@ -146,13 +146,13 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
       <div class="dvojice">
         <label>První slosování
-          <input data-cesta="slosovani.prvni" type="date" [value]="prvni()" (input)="prvni.set($any($event.target).value)" required />
-        @for (chyba of chybyPole('slosovani.prvni'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          <input data-cesta="slosovani.prvni" [attr.aria-invalid]="chybyPole('slosovani.prvni').length > 0" aria-describedby="chyby-slosovani-prvni" type="date" [value]="prvni()" (input)="prvni.set($any($event.target).value)" required />
+        <span id="chyby-slosovani-prvni">@for (chyba of chybyPole('slosovani.prvni'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }</span>
           </label>
         <label>Počet slosování
-          <input data-cesta="slosovani.pocet" type="number" min="1" max="52" [value]="pocet()"
+          <input data-cesta="slosovani.pocet" [attr.aria-invalid]="chybyPole('slosovani.pocet').length > 0" aria-describedby="chyby-slosovani-pocet" type="number" min="1" max="52" [value]="pocet()"
             (input)="pocet.set(+$any($event.target).value)" required />
-        @for (chyba of chybyPole('slosovani.pocet'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+        <span id="chyby-slosovani-pocet">@for (chyba of chybyPole('slosovani.pocet'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }</span>
           </label>
       </div>
 
@@ -171,7 +171,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
           }
         }
         @for (den of nabidkaDnu(); track den) {
-          <label><input data-cesta="slosovani.dny" type="checkbox" name="dny" [value]="den"
+          <label><input data-cesta="slosovani.dny" [attr.aria-invalid]="chybyPole('slosovani.dny').length > 0" [attr.aria-describedby]="nepokryteProblemy().length > 0 ? 'problemy-tiketu' : null" type="checkbox" name="dny" [value]="den"
             [checked]="zaskrtnuteDny().includes(den)"
             (change)="prepniDen(den, $any($event.target).checked)" /> {{ nazevDne(den) }}</label>
         }
@@ -240,17 +240,17 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
           <span class="poradi">{{ $index + 1 }}.</span>
           <input type="text" inputmode="numeric" [value]="radek.cisla" [attr.data-cesta]="'sloupce[' + $index + '].cisla'"
             [attr.aria-invalid]="chybyPole('sloupce[' + $index + '].cisla').length > 0"
-            [attr.aria-label]="'Čísla sloupce ' + ($index + 1)"
+            [attr.aria-describedby]="'chyby-sloupce-' + $index" [attr.aria-label]="'Čísla sloupce ' + ($index + 1)"
             [placeholder]="napoveda().cisla"
             (input)="zmenCisla($index, $any($event.target).value)"
             (blur)="dotkni($index, 'cisla')" />
           @if (napoveda().druheOsudi; as druhe) {
             <input type="text" inputmode="numeric" class="euro" [value]="radek.druheOsudi" [attr.data-cesta]="'sloupce[' + $index + '].' + (hra() === 'eurojackpot' ? 'eurocisla' : 'druheOsudi')"
-              [attr.aria-label]="napoveda().druheOsudiNazev" [placeholder]="druhe"
+              [attr.aria-invalid]="chybyPole('sloupce[' + $index + '].' + (hra() === 'eurojackpot' ? 'eurocisla' : 'druheOsudi')).length > 0" [attr.aria-describedby]="'chyby-sloupce-' + $index" [attr.aria-label]="napoveda().druheOsudiNazev" [placeholder]="druhe"
               (input)="zmenDruheOsudi($index, $any($event.target).value)"
               (blur)="dotkni($index, 'druhe')" />
           }
-          @for (chyba of chybyPole('sloupce[' + $index + ']'); track $index) { <p class="chyba-pole">{{ chyba }}</p> }
+          <div class="chyby-sloupce" [id]="'chyby-sloupce-' + $index">@for (chyba of chybyPole('sloupce[' + $index + ']'); track $index) { <p class="chyba-pole">{{ chyba }}</p> }</div>
           @if (radky().length > 1) {
             <button type="button" class="odebrat" (click)="odeber($index)" aria-label="Odebrat sloupec">×</button>
           }
@@ -259,7 +259,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
       <button type="button" class="pridat" (click)="pridej()">Přidat sloupec</button>
 
       @if (nepokryteProblemy().length > 0) {
-        <ul class="problemy">
+        <ul class="problemy" id="problemy-tiketu" aria-live="polite">
           @for (problem of nepokryteProblemy(); track problem.cesta + problem.kod) {
             <li>{{ popisProblemu(problem) }}</li>
           }
@@ -272,10 +272,10 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         do minulosti nebo nechá konec prázdný a tiket se kontroluje s každým losováním.
       -->
       <label>{{ nazevDoplnkoveHry(hra()) }} — {{ delkaKodu() === 5 ? 'pět' : 'šest' }} číslic (nepovinné)
-        <input data-cesta="kodDoplnkoveHry" type="text" inputmode="numeric" [attr.maxlength]="delkaKodu()"
+        <input data-cesta="kodDoplnkoveHry" [attr.aria-invalid]="chybyPole('kodDoplnkoveHry').length > 0" aria-describedby="chyby-kodDoplnkoveHry" type="text" inputmode="numeric" [attr.maxlength]="delkaKodu()"
           [placeholder]="delkaKodu() === 5 ? 'např. 37960' : 'např. 236412'"
           [value]="doplnkova()" (input)="doplnkova.set($any($event.target).value)" />
-      @for (chyba of chybyPole('kodDoplnkoveHry'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+      <span id="chyby-kodDoplnkoveHry">@for (chyba of chybyPole('kodDoplnkoveHry'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }</span>
           </label>
       <!--
         Kód je na tiketu vytištěný vždy, vsazenou hru prozradí až ANO/NE za ním. Vyplněný kód
@@ -294,9 +294,9 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
       }
 
       <label>Cena tiketu v Kč (nepovinné)
-        <input data-cesta="cenaKc" type="number" min="0" step="any" inputmode="decimal" placeholder="např. 400"
+        <input data-cesta="cenaKc" [attr.aria-invalid]="chybyPole('cenaKc').length > 0" aria-describedby="chyby-cenaKc" type="number" min="0" step="any" inputmode="decimal" placeholder="např. 400"
           [value]="cenaPole()" (input)="cena.set($any($event.target).value)" />
-      @for (chyba of chybyPole('cenaKc'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+      <span id="chyby-cenaKc">@for (chyba of chybyPole('cenaKc'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }</span>
           </label>
       @if (nesouhlasCeny(); as rozpis) {
         <p class="upozorneni">
@@ -315,14 +315,14 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         <legend>Rozsah kontroly</legend>
         <div class="dvojice">
           <label>Od
-            <input data-cesta="kontrola.od" type="date" [value]="odKontroly()"
+            <input data-cesta="kontrola.od" [attr.aria-invalid]="chybyPole('kontrola.od').length > 0" aria-describedby="chyby-kontrola-od" type="date" [value]="odKontroly()"
               (input)="kontrolaOd.set($any($event.target).value)" />
-          @for (chyba of chybyPole('kontrola.od'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          <span id="chyby-kontrola-od">@for (chyba of chybyPole('kontrola.od'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }</span>
           </label>
           <label>Do
-            <input data-cesta="kontrola.do" type="date" [value]="doKontroly() ?? ''"
+            <input data-cesta="kontrola.do" [attr.aria-invalid]="chybyPole('kontrola.do').length > 0" aria-describedby="chyby-kontrola-do" type="date" [value]="doKontroly() ?? ''"
               (input)="zmenDoKontroly($any($event.target).value)" />
-          @for (chyba of chybyPole('kontrola.do'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          <span id="chyby-kontrola-do">@for (chyba of chybyPole('kontrola.do'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }</span>
           </label>
         </div>
         <div class="tlacitka-rozsahu">
@@ -336,10 +336,10 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
 
         @if (virtualni()) {
           <label>Cena za jedno slosování v Kč
-            <input data-cesta="kontrola.cenaZaSlosovaniKc" type="number" min="0" step="any" inputmode="decimal"
+            <input data-cesta="kontrola.cenaZaSlosovaniKc" [attr.aria-invalid]="chybyPole('kontrola.cenaZaSlosovaniKc').length > 0" aria-describedby="chyby-kontrola-cenaZaSlosovaniKc" type="number" min="0" step="any" inputmode="decimal"
               [placeholder]="cenaZaSlosovaniZCeniku() === null ? 'např. 400' : 'podle ceníku'"
               [value]="cenaZaSlosovaniPole()" (input)="cenaZaSlosovani.set($any($event.target).value)" />
-          @for (chyba of chybyPole('kontrola.cenaZaSlosovaniKc'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }
+          <span id="chyby-kontrola-cenaZaSlosovaniKc">@for (chyba of chybyPole('kontrola.cenaZaSlosovaniKc'); track $index) { <span class="chyba-pole">{{ chyba }}</span> }</span>
           </label>
           <p class="napoveda">
             Tiket bude <strong>virtuální</strong> — kontroluje se {{ popisRozsahuKontroly({ od: odKontroly(), do: doKontroly() }) }},
@@ -457,6 +457,8 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
     </form>
   `,
   styles: `
+    .chyby-sloupce { grid-column: 1 / -1; }
+    .chyby-sloupce:empty { display: none; }
     .chyba-pole { display: block; color: var(--barva-chyba); grid-column: 1 / -1; margin: .25rem 0; font-size: .85rem; }
     input[aria-invalid=true] { border-color: var(--barva-chyba); }
     form { display: grid; gap: 1rem; }

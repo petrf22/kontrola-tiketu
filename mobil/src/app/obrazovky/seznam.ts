@@ -47,6 +47,9 @@ interface RadekSeznamu {
       <p class="prazdno">
         {{ archiv() ? 'V archivu nejsou žádné tikety odpovídající filtrům.' : 'Zatím tu nejsou žádné tikety odpovídající filtrům.' }}
       </p>
+      @if (typ() !== 'vsechny' || nazev() !== '*') {
+        <button type="button" (click)="zrusFiltry()">Zrušit filtry</button>
+      }
       @if (!archiv()) { <p><a class="zpet" routerLink="/sken-cisel">Vyfotit tiket</a> · <a class="zpet" routerLink="/tiket/novy">Zadat ručně</a></p> }
     } @else {
       @for (skupina of skupiny(); track skupina.klic) {
@@ -146,6 +149,11 @@ export class Seznam {
     const klic = this.nazevZOdkazu() ?? this.stav.filtrSeznamu().nazev;
     return klic === '*' || this.stav.skupinyNazvu().some(s => s.klic === klic) ? klic : '*';
   });
+
+  protected zrusFiltry(): void {
+    this.nazevZOdkazu.set(null);
+    void this.stav.ulozFiltrSeznamu({ typ: 'vsechny', nazev: '*' });
+  }
 
   protected zmenTyp(typ: FiltrSeznamu['typ']): void {
     void this.stav.ulozFiltrSeznamu({ typ });

@@ -3,7 +3,7 @@ import { Component, DestroyRef, computed, effect, inject, signal, untracked, vie
 import { NavigationCancel, NavigationError, NavigationEnd, NavigationStart, Router } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Oznameni, type OznameniVysledku } from '../data/oznameni.js';
-import { Stav } from '../data/stav.js';
+import { Stav, type Zprava } from '../data/stav.js';
 import { formatujDatum, formatujKc, nazevHry } from '../data/format.js';
 import { Dialog, Dialogy } from './dialog.js';
 
@@ -27,10 +27,11 @@ import { Dialog, Dialogy } from './dialog.js';
         </section>
       }
       @if (stav.posledniStazeni(); as z) {
-        @if (!z.uspech && !stav.stahuje()) {
+        @if (!z.uspech && !stav.stahuje() && z !== zavreneStazeni()) {
           <div class="panel varovani" role="status">
             <span>Výsledky se nepodařilo aktualizovat. Zobrazuji uložené výsledky.</span>
             <button type="button" (click)="stav.stahniVysledky()">Zkusit znovu</button>
+            <button type="button" (click)="zavreneStazeni.set(z)">Zavřít</button>
           </div>
         }
       }
@@ -96,6 +97,8 @@ export class OznameniPanel {
   protected readonly zobrazeno = signal<readonly OznameniVysledku[]>([]);
   protected readonly rozbaleno = signal(false);
   protected readonly pracuje = signal(false);
+  /** Zavřené varování se nevrátí, dokud selže další pokus — ten vrací novou zprávu. */
+  protected readonly zavreneStazeni = signal<Zprava | null>(null);
   protected readonly maVyhru = computed(() => this.oznameni.neprectene().some(p => p.vyhra));
   protected readonly skryto = computed(() => ['/sken', '/sken-cisel', '/z-obrazku', '/kontrola'].includes(this.cesta().split('?')[0]!));
   protected readonly datum = formatujDatum;

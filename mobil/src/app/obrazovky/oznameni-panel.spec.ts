@@ -96,4 +96,18 @@ describe('Zobrazení nových výsledků', () => {
     expect(TestBed.inject(Oznameni).neprectene()).toEqual([]);
     expect(f.nativeElement.querySelector('dialog').open).toBe(false);
   });
+
+  it('varování o neúspěšném stažení jde zavřít a další neúspěch ho vrátí', async () => {
+    const f = await priprav();
+    const stav = TestBed.inject(Stav);
+    const varovani = () => f.nativeElement.querySelector('.varovani') as HTMLElement | null;
+    stav.posledniStazeni.set({ uspech: false, zprava: 'offline' });
+    await vykresli(f);
+    const zavrit = [...varovani()!.querySelectorAll('button')].find(b => b.textContent?.trim() === 'Zavřít')!;
+    zavrit.click(); await vykresli(f);
+    expect(varovani()).toBeNull();
+    stav.posledniStazeni.set({ uspech: false, zprava: 'offline' });
+    await vykresli(f);
+    expect(varovani()).not.toBeNull();
+  });
 });

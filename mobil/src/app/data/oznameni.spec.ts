@@ -114,4 +114,27 @@ describe('Trvalá oznámení výsledků', () => {
     expect(oznameni.neprectene().map(p => p.datum)).toEqual([EJ_2026_09_08.datum]);
     expect(oznameni.dialog()).toBe(false);
   });
+
+  it('změna nastavení před načtením evidence nepřepíše uložené záznamy', async () => {
+    const pred = vysledky([EJ_2026_09_04]), po = vysledky([EJ_2026_09_04, EJ_2026_09_08]);
+    await oznameni.nacti(pred);
+    await oznameni.aktualizuj(pred, po);
+    const polozky = oznameni.neprectene();
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({ providers: [{ provide: ULOZISTE, useValue: uloziste }] });
+    oznameni = TestBed.inject(Oznameni);
+    // Start aplikace evidenci nenačetl, uživatel přesto přepne nastavení.
+    expect(await oznameni.nastavDialog(false)).toBe(true);
+    expect(oznameni.neprectene()).toEqual(polozky);
+    await oznameni.aktualizuj(po, po);
+    expect(oznameni.neprectene()).toEqual(polozky);
+  });
+
+  it('bez uložené evidence se před načtením nic nezapíše', async () => {
+    const zapis = vi.spyOn(uloziste, 'ulozNastaveni');
+    expect(await oznameni.nastavDialog(false)).toBe(false);
+    expect(await oznameni.potvrdit([1])).toBe(false);
+    expect(zapis).not.toHaveBeenCalled();
+    expect(oznameni.chyba()).not.toBeNull();
+  });
 });

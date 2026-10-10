@@ -108,11 +108,26 @@ export class Oznameni {
     return { ...data, dalsiId, zaznamy: aktualni, neprectene: [...neprectene.values()].sort((a, b) => b.datum.localeCompare(a.datum) || b.id - a.id) };
   }
 
+  /** Bez načtené evidence by zápis přepsal uloženou prázdnou a další stažení by ohlásilo celou historii. */
+  private async zajistiNacteni(): Promise<void> {
+    if (this.nacteno) return;
+    const ulozene = evidence(await this.uloziste.nactiNastaveni(KLIC));
+    if (!ulozene) throw new Error('Upozornění ještě nejsou načtená.');
+    this.stav.set(ulozene);
+    this.nacteno = true;
+  }
+
   potvrdit(ids: readonly number[]): Promise<boolean> {
-    return this.veFronte(() => this.zapis({ ...this.stav(), neprectene: this.neprectene().filter(z => !ids.includes(z.id)) }));
+    return this.veFronte(async () => {
+      await this.zajistiNacteni();
+      await this.zapis({ ...this.stav(), neprectene: this.neprectene().filter(z => !ids.includes(z.id)) });
+    });
   }
 
   nastavDialog(dialog: boolean): Promise<boolean> {
-    return this.veFronte(() => this.zapis({ ...this.stav(), dialog }));
+    return this.veFronte(async () => {
+      await this.zajistiNacteni();
+      await this.zapis({ ...this.stav(), dialog });
+    });
   }
 }

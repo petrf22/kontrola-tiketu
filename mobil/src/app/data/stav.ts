@@ -149,15 +149,29 @@ export class Stav {
       if (nove.length > 0) throw new DuplicitniTiket(nove);
 
       const nahrazeny = tikety.find(t => t.id !== tiket.id && nahradit.includes(t.id));
-      await this.uloziste.ulozTiket({
+      const ulozeny: Tiket = {
         ...tiket,
         // Nový sken bez názvu zachová původní; explicitní null nebo prázdný text jej odstraní.
         nazev: upravNazev(tiket.nazev === undefined ? (puvodni?.nazev ?? nahrazeny?.nazev) : tiket.nazev),
         archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false,
-      });
-      for (const id of nahradit) if (id !== tiket.id) await this.uloziste.smazTiket(id);
-      this.tikety.set(await this.uloziste.nactiTikety());
-      await this.oznameni.aktualizuj(pred, this.vysledky(), [tiket.id, ...nahradit]);
+      };
+      await this.uloziste.ulozTiket(ulozeny);
+      const smazane = new Set<string>();
+      try {
+        for (const id of nahradit) if (id !== tiket.id) { await this.uloziste.smazTiket(id); smazane.add(id); }
+      } finally {
+        // Tiket už je uložený. Upozornění musí jeho úpravu znát i po chybě, jinak by ji
+        // příští stažení ohlásilo jako nové výsledky.
+        let chybaNacteni: unknown = null;
+        try {
+          this.tikety.set(await this.uloziste.nactiTikety());
+        } catch (chyba) {
+          chybaNacteni = chyba;
+          this.tikety.set([...tikety.filter(t => t.id !== tiket.id && !smazane.has(t.id)), ulozeny]);
+        }
+        await this.oznameni.aktualizuj(pred, this.vysledky(), [tiket.id, ...nahradit]);
+        if (chybaNacteni !== null) throw chybaNacteni;
+      }
     });
   }
 

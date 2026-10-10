@@ -39,4 +39,30 @@ describe('Stav a upozornění na nové výsledky', () => {
     await Promise.all([import_, uprava]);
     expect(stav.oznameni.neprectene()).toMatchObject([{ tiketId: tiket.id, datum: EJ_2026_09_08.datum, vyhra: true }]);
   });
+
+  // Krátký tiket zná jen 4. 9.; rozšíření rozsahu na virtuální dodá výsledek 8. 9. úpravou, ne stažením.
+  const kratky: Tiket = { ...tiket, slosovani: { ...tiket.slosovani, pocet: 1 } };
+  const virtualni: Tiket = { ...kratky, kontrola: { od: '2026-09-01', do: null, cenaZaSlosovaniKc: null } };
+
+  it('chyba při mazání nahrazeného tiketu nezpůsobí falešné hlášení rozšířeného rozsahu', async () => {
+    stav.tahy.set([EJ_2026_09_04, EJ_2026_09_08]);
+    await stav.ulozTiket(kratky);
+    await stav.ulozTiket({ ...kratky, id: 'jiny', sloupce: [{ hra: 'eurojackpot', cisla: [1, 2, 3, 4, 5], eurocisla: [1, 2] }] });
+    expect(stav.oznameni.neprectene()).toEqual([]);
+    vi.spyOn(uloziste, 'smazTiket').mockRejectedValueOnce(new Error('disk'));
+    await expect(stav.ulozTiket(virtualni, { nahradit: ['jiny'] })).rejects.toThrow('disk');
+    expect(stav.tikety().find(t => t.id === tiket.id)?.kontrola).toEqual(virtualni.kontrola);
+    await stav.oznameni.aktualizuj(stav.vysledky(), stav.vysledky());
+    expect(stav.oznameni.neprectene()).toEqual([]);
+  });
+
+  it('ani selhané načtení tiketů po uložení nezpůsobí falešné hlášení', async () => {
+    stav.tahy.set([EJ_2026_09_04, EJ_2026_09_08]);
+    await stav.ulozTiket(kratky);
+    vi.spyOn(uloziste, 'nactiTikety').mockRejectedValueOnce(new Error('disk'));
+    await expect(stav.ulozTiket(virtualni)).rejects.toThrow('disk');
+    expect(stav.tikety().find(t => t.id === tiket.id)?.kontrola).toEqual(virtualni.kontrola);
+    await stav.oznameni.aktualizuj(stav.vysledky(), stav.vysledky());
+    expect(stav.oznameni.neprectene()).toEqual([]);
+  });
 });

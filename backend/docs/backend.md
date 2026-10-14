@@ -169,7 +169,7 @@ dotazy na každé losování a dva v pondělí. **V den bez losování nevznikne
 
 ### Časy zveřejnění zatím nejsou ověřené
 
-`prvniDotaz` (Eurojackpot 22:00, Sportka 21:00, Euromiliony 21:00) je odhad. Nevadí to — v okně se backend ptá
+`prvniDotaz` (Eurojackpot, Sportka i Euromiliony 21:00; Eurojackpot do 14. 10. 2026 22:00) je odhad. Nevadí to — v okně se backend ptá
 každou hodinu, dokud výsledek nemá. Databáze si ale u každého tahu zapisuje, **kdy byl poprvé
 úplný**, a `bin/vyherka stav` to vypíše. Po pár týdnech provozu podle toho upravit
 `config/konfigurace.lokalni.php`.

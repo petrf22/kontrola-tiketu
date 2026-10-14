@@ -41,7 +41,9 @@ return (static function (): array {
          * jedno denní stažení.
          */
         'rozvrh' => [
-            'eurojackpot' => ['dny' => ['ut', 'pa'], 'prvniDotaz' => '22:00', 'oknoHodin' => 4],
+            // Losuje se v Helsinkách mezi 20 a 21 hodinou, až po nahlášení sázek ze všech zemí.
+            // Dřív 22:00 — v úterý pak Euromiliony z 21:00 předběhly Eurojackpot o hodinu.
+            'eurojackpot' => ['dny' => ['ut', 'pa'], 'prvniDotaz' => '21:00', 'oknoHodin' => 4],
             'sportka' => ['dny' => ['st', 'pa', 'ne'], 'prvniDotaz' => '21:00', 'oknoHodin' => 4],
             // Losuje se od 19 do 23 hodin (herní plán, Euromiliony bod 7); čas je zatím odhad.
             'euromiliony' => ['dny' => ['ut', 'so'], 'prvniDotaz' => '21:00', 'oknoHodin' => 4],

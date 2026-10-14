@@ -100,7 +100,7 @@ final class RozvrhTest extends TestCase
 
     public function testVDenLosovaniPredPrvnimDotazemCeka(): void
     {
-        self::assertSame([], self::ukoly('2026-09-08 21:30', self::bez('eurojackpot|2026-09-08')));
+        self::assertSame([], self::ukoly('2026-09-08 20:30', self::bez('eurojackpot|2026-09-08')));
     }
 
     public function testVOkneSePtaNaTydenLosovani(): void

@@ -20,6 +20,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 
 ### Opraveno
 - Patička i obrazovka Výsledky losování ukazují, do kdy jsou výsledky u každé hry zvlášť — dřív „Výsledky mám do 13. 10.“ platilo jen pro hru, která dorazila nejdřív; když losování podle rozvrhu už proběhlo a výsledky chybí, aplikace to napíše (např. „Eurojackpot 13. 10. 2026 zatím není“) spolu s tím, kdy server naposledy kontroloval a kdy se stahovalo do telefonu (aplikace)
+- Server se na Eurojackpot ptá od 21:00 místo 22:00 — losuje se mezi 20 a 21 hodinou a v úterý ho dosud o hodinu předbíhaly Euromiliony (backend)
 
 ## [0.12.1] – 2026-10-14
 

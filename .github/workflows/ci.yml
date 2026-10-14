@@ -10,10 +10,12 @@ on:
 permissions:
   contents: read
 
+# Runner je pevně ubuntu-24.04, ne ubuntu-latest — ten se od 19. 10. 2026 stěhuje na
+# Ubuntu 26 a přechod na novou verzi má být vlastní rozhodnutí, ne tichá změna pod CI.
 jobs:
   nastroje:
     name: Verze a nástroje
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -27,7 +29,7 @@ jobs:
 
   backend:
     name: Backend (PHP)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: backend
@@ -46,7 +48,7 @@ jobs:
 
   mobil:
     name: Mobil (Angular)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: mobil
@@ -65,7 +67,7 @@ jobs:
 
   android:
     name: Mobil (Android)
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     defaults:
       run:
         working-directory: mobil

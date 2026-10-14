@@ -46,20 +46,23 @@ describe('zobrazení tahu', () => {
     const [hlavni, extra6] = z.tabulky;
     expect(hlavni!.radky).toHaveLength(12);
     expect(hlavni!.radky.slice(1, 4)).toEqual([
-      { popis: '5+1', vzor: null, pocetVyher: 0, castkaKc: 15070584 },
-      { popis: '5+0', vzor: null, pocetVyher: 0, castkaKc: 2663542 },
-      { popis: '4+2', vzor: null, pocetVyher: 0, castkaKc: 80932 },
+      { poradi: '2.', uhodnuto: '5+1', vzor: null, pocetVyher: 0, castkaKc: 15070584 },
+      { poradi: '3.', uhodnuto: '5+0', vzor: null, pocetVyher: 0, castkaKc: 2663542 },
+      { poradi: '4.', uhodnuto: '4+2', vzor: null, pocetVyher: 0, castkaKc: 80932 },
     ]);
+    expect(hlavni!.radky.map(r => r.poradi).at(-1)).toBe('12.');
+    // Listina počítá jen výherce v ČR — tabulka to musí říct, jinak 0 v 1. pořadí mate.
+    expect(hlavni!.poznamka).toContain('jen z České republiky');
 
     // Sazby od 29. 3. 2024: sázka 40 Kč, šestičíslí 25 000×, koncové i sousední číslo 1,5×.
-    expect(extra6!.radky.map(r => [r.popis, r.vzor, r.castkaKc])).toEqual([
-      ['šestičíslí', '912799', 1000000],
-      ['pětičíslí', '12799', 100000],
-      ['čtyřčíslí', '2799', 10000],
-      ['trojčíslí', '799', 1000],
-      ['dvojčíslí', '99', 100],
-      ['koncové číslo', '9', 60],
-      ['sousední číslo', '0 nebo 8', 60],
+    expect(extra6!.radky.map(r => [r.poradi, r.uhodnuto, r.vzor, r.castkaKc])).toEqual([
+      ['1.', 'šestičíslí', '912799', 1000000],
+      ['2.', 'pětičíslí', '12799', 100000],
+      ['3.', 'čtyřčíslí', '2799', 10000],
+      ['4.', 'trojčíslí', '799', 1000],
+      ['5.', 'dvojčíslí', '99', 100],
+      ['6.', 'koncové číslo', '9', 60],
+      ['7.', 'sousední číslo', '0 nebo 8', 60],
     ]);
     expect(extra6!.radky.every(r => r.pocetVyher === null)).toBe(true);
   });
@@ -67,8 +70,8 @@ describe('zobrazení tahu', () => {
   it('Extra 6 před 29. 3. 2024 sousední číslo nevypisuje — tehdy nevyhrávalo', () => {
     const stary: TahEurojackpot = { ...(tah('eurojackpot', '2026-09-08') as TahEurojackpot), datum: '2023-09-08' };
     const extra6 = zobrazTah(stary, sazbyExtra6, sazbyEurosance).tabulky[1]!;
-    expect(extra6.radky.map(r => r.popis)).not.toContain('sousední číslo');
-    expect(extra6.radky.find(r => r.popis === 'koncové číslo')!.castkaKc).toBe(120);
+    expect(extra6.radky.map(r => r.uhodnuto)).not.toContain('sousední číslo');
+    expect(extra6.radky.find(r => r.uhodnuto === 'koncové číslo')).toMatchObject({ poradi: '6.', castkaKc: 120 });
   });
 
   it('bez sazeb Extra 6 ukáže prázdnou tabulku s vysvětlením', () => {
@@ -81,13 +84,14 @@ describe('zobrazení tahu', () => {
     const z = zobrazTah(tah('euromiliony', '2026-09-01'), sazbyExtra6, sazbyEurosance);
     expect(z.osudi[0]).toEqual({ nadpis: null, cisla: [5, 16, 17, 21, 28, 30, 33], vPoradiLosovani: [17, 5, 28, 21, 16, 30, 33], druhe: [4], druheVPoradiLosovani: [4], nazevDruhych: 'druhé osudí' });
     expect(z.jackpot).toEqual({ nazev: 'Jackpot', castkaKc: 89200000 });
-    expect(z.tabulky[0]!.radky[3]).toEqual({ popis: '6', vzor: null, pocetVyher: 4, castkaKc: 6141 });
-    expect(z.tabulky[1]!.radky.map(r => [r.popis, r.vzor, r.castkaKc])).toEqual([
-      ['pětičíslí', '47489', 500000],
-      ['čtyřčíslí', '7489', 20000],
-      ['trojčíslí', '489', 2000],
-      ['dvojčíslí', '89', 200],
-      ['koncové číslo', '9', 50],
+    expect(z.tabulky[0]!.radky[3]).toEqual({ poradi: '4.', uhodnuto: '6', vzor: null, pocetVyher: 4, castkaKc: 6141 });
+    expect(z.tabulky[0]!.poznamka).toContain('jen z České republiky');
+    expect(z.tabulky[1]!.radky.map(r => [r.poradi, r.uhodnuto, r.vzor, r.castkaKc])).toEqual([
+      ['1.', 'pětičíslí', '47489', 500000],
+      ['2.', 'čtyřčíslí', '7489', 20000],
+      ['3.', 'trojčíslí', '489', 2000],
+      ['4.', 'dvojčíslí', '89', 200],
+      ['5.', 'koncové číslo', '9', 50],
     ]);
   });
 
@@ -99,14 +103,17 @@ describe('zobrazení tahu', () => {
     ]);
     expect(z.jackpot).toEqual({ nazev: 'Superjackpot', castkaKc: 251000000 });
     expect(z.tabulky.map(t => t.nadpis)).toEqual(['1. tah', '2. tah', 'Bonus', 'Šance']);
-    expect(z.tabulky[0]!.radky.map(r => r.popis)).toEqual(['6', '5+dodatkové', '5', '4', '3']);
-    expect(z.tabulky[0]!.radky[1]).toEqual({ popis: '5+dodatkové', vzor: null, pocetVyher: 1, castkaKc: 985862 });
-    expect(z.tabulky[1]!.radky[2]).toEqual({ popis: '5', vzor: null, pocetVyher: 23, castkaKc: 27252 });
+    expect(z.tabulky[0]!.radky.map(r => [r.poradi, r.uhodnuto])).toEqual([['1.', '6'], ['2.', '5+dodatkové'], ['3.', '5'], ['4.', '4'], ['5.', '3']]);
+    expect(z.tabulky[0]!.radky[1]).toEqual({ poradi: '2.', uhodnuto: '5+dodatkové', vzor: null, pocetVyher: 1, castkaKc: 985862 });
+    expect(z.tabulky[1]!.radky[2]).toEqual({ poradi: '3.', uhodnuto: '5', vzor: null, pocetVyher: 23, castkaKc: 27252 });
+    expect(z.tabulky[2]!.radky.map(r => [r.poradi, r.uhodnuto])).toEqual([['Bonus', '']]);
+    // Sportka je jen česká, poznámka o zahraničí k ní nepatří.
+    expect(z.tabulky[0]!.poznamka).toBeNull();
 
     const sance = z.tabulky[3]!.radky;
-    expect(sance[1]).toEqual({ popis: 'pětičíslí', vzor: '36412', pocetVyher: 2, castkaKc: 100000 });
+    expect(sance[1]).toEqual({ poradi: '2.', uhodnuto: 'pětičíslí', vzor: '36412', pocetVyher: 2, castkaKc: 100000 });
     // Listina u sousedního čísla vzor neuvádí — dopočítá se z koncové číslice 2.
-    expect(sance[6]).toEqual({ popis: 'koncové číslo +/- 1', vzor: '1 nebo 3', pocetVyher: 32484, castkaKc: 30 });
+    expect(sance[6]).toEqual({ poradi: '7.', uhodnuto: 'koncové číslo +/- 1', vzor: '1 nebo 3', pocetVyher: 32484, castkaKc: 30 });
   });
 
   it('tah, ke kterému listina ještě nemá tabulku, nemá žádné tabulky', () => {

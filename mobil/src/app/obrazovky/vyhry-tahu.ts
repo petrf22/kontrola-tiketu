@@ -39,15 +39,17 @@ const POCET = new Intl.NumberFormat('cs-CZ');
         <thead>
           <tr>
             <th scope="col">Pořadí</th>
+            <th scope="col">Uhodnuto</th>
             @if (maVzory(t)) { <th scope="col">Vylosováno</th> }
-            @if (maPocty(t)) { <th scope="col" class="cislo-sloupec">Výherců</th> }
+            @if (maPocty(t)) { <th scope="col" class="cislo-sloupec">Výherců v ČR</th> }
             <th scope="col" class="cislo-sloupec">Výhra</th>
           </tr>
         </thead>
         <tbody>
           @for (r of t.radky; track $index) {
             <tr>
-              <td>{{ r.popis }}</td>
+              <td>{{ r.poradi }}</td>
+              <td>{{ r.uhodnuto }}</td>
               @if (maVzory(t)) { <td>{{ r.vzor ?? '' }}</td> }
               @if (maPocty(t)) { <td class="cislo-sloupec">{{ r.pocetVyher === null ? '' : pocet(r.pocetVyher) }}</td> }
               <td class="cislo-sloupec">{{ formatujKc(r.castkaKc) }}</td>
@@ -70,8 +72,10 @@ const POCET = new Intl.NumberFormat('cs-CZ');
     table { width: 100%; border-collapse: collapse; margin-top: 0.75rem; font-size: 0.85rem; }
     caption { text-align: left; font-weight: 600; padding-bottom: 0.25rem; }
     th { text-align: left; font-weight: 400; color: var(--barva-text-tlumeny); }
-    th, td { padding: 0.3rem 0.25rem; border-bottom: 1px solid var(--barva-ram); }
+    th, td { padding: 0.3rem 0.2rem; border-bottom: 1px solid var(--barva-ram); }
     .cislo-sloupec { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+    /* Na úzkém displeji se zalomí nadpis, ne částka. */
+    th.cislo-sloupec { white-space: normal; }
   `,
 })
 export class VyhryTahu {

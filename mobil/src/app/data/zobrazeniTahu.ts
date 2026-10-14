@@ -47,10 +47,16 @@ export interface Osudi {
 }
 
 export interface RadekVyher {
-  readonly popis: string;
+  /** `1.` až `12.`, u Sportky i `Bonus` — jako „1. pořadí“ na webu Allwynu. */
+  readonly poradi: string;
+  /** Popis z listiny (`5+2`, `5+dodatkové`) nebo název pořadí doplňkové hry (`trojčíslí`). */
+  readonly uhodnuto: string;
   /** Vylosovaný konec u doplňkové hry, např. `412` u trojčíslí. */
   readonly vzor: string | null;
-  /** `null` u pevných výher, kde listina počty neuvádí. */
+  /**
+   * Jen výherci v ČR — listina zahraniční výherce Eurojackpotu ani Euromilionů neuvádí.
+   * `null` u pevných výher, kde listina počty neuvádí.
+   */
   readonly pocetVyher: number | null;
   readonly castkaKc: number;
 }
@@ -81,8 +87,19 @@ function osudi(nadpis: string | null, cisla: readonly number[], druhe: readonly 
   return { nadpis, cisla: vzestupne(cisla), vPoradiLosovani: cisla, druhe: vzestupne(druhe), druheVPoradiLosovani: druhe, nazevDruhych };
 }
 
+const RIMSKE = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
+
+/** Pořadí z listiny je římsky (`III`), web i tiket mluví o „3. pořadí“. */
+function nazevPoradi(klic: string): string {
+  const i = RIMSKE.indexOf(klic);
+  return i < 0 ? klic : `${i + 1}.`;
+}
+
 function radky(poradi: readonly Poradi[]): RadekVyher[] {
-  return poradi.map(p => ({ popis: p.popis, vzor: null, pocetVyher: p.pocetVyher, castkaKc: p.vyseVyhryKc }));
+  return poradi.map(p => p.klic === 'bonus'
+    // Listina má v popisu Bonusu jen „Bonus“, uhodnutá čísla neuvádí.
+    ? { poradi: 'Bonus', uhodnuto: '', vzor: null, pocetVyher: p.pocetVyher, castkaKc: p.vyseVyhryKc }
+    : { poradi: nazevPoradi(p.klic), uhodnuto: p.popis, vzor: null, pocetVyher: p.pocetVyher, castkaKc: p.vyseVyhryKc });
 }
 
 const DELKA: Readonly<Record<PoradiKoncoveCislice, number>> = {
@@ -93,6 +110,11 @@ const DELKA: Readonly<Record<PoradiKoncoveCislice, number>> = {
 function vzor(klic: PoradiKoncoveCislice, cislice: string): string {
   return klic === 'sousedni-cislo' ? sousedniCislice(cislice.at(-1)!).sort().join(' nebo ') : cislice.slice(-DELKA[klic]);
 }
+
+/** Pořadí Extra 6 a Šance podle herního plánu — Extra 6 vynechává pořadí, která tehdy neznal. */
+const poradiDoplnkove = (klic: PoradiKoncoveCislice) => `${Object.keys(DELKA).indexOf(klic) + 1}.`;
+
+const BEZ_ZAHRANICI = 'Počty výherců jsou jen z České republiky, zahraniční výherce listina neuvádí.';
 
 const PEVNE = 'Výhry jsou pevné podle herního plánu, počty výherců listina neuvádí.';
 
@@ -105,7 +127,7 @@ function tabulkaExtra6(datum: Datum, cislice: string, sazby: readonly SazbyExtra
   if (platne === null) return { nadpis: 'Extra 6', radky: [], poznamka: 'Sazby Extra 6 pro tento den aplikace nemá.' };
   const radkyExtra6 = (Object.keys(DELKA) as PoradiKoncoveCislice[]).flatMap(klic => {
     const nasobek = platne.nasobky[klic];
-    return nasobek === null ? [] : [{ popis: nazevPoradiDoplnkoveHry(klic), vzor: vzor(klic, cislice), pocetVyher: null, castkaKc: nasobek * platne.sazkaKc }];
+    return nasobek === null ? [] : [{ poradi: poradiDoplnkove(klic), uhodnuto: nazevPoradiDoplnkoveHry(klic), vzor: vzor(klic, cislice), pocetVyher: null, castkaKc: nasobek * platne.sazkaKc }];
   });
   return { nadpis: 'Extra 6', radky: radkyExtra6, poznamka: `${PEVNE} Šestičíslí se při více než dvou výhrách dělí.` };
 }
@@ -114,10 +136,11 @@ function tabulkaExtra6(datum: Datum, cislice: string, sazby: readonly SazbyExtra
 function tabulkaEurosance(datum: Datum, cislice: string, sazby: readonly SazbyEurosance[]): TabulkaVyher {
   const platne = vyberSazby(sazby, datum);
   if (platne === null) return { nadpis: 'Eurošance', radky: [], poznamka: 'Sazby Eurošance pro tento den aplikace nemá.' };
+  // Eurošance začíná pětičíslím a žádné pořadí nevynechává — 1. pořadí je pětičíslí.
   const radkyEurosance = (Object.keys(DELKA) as PoradiKoncoveCislice[]).flatMap(klic => {
     const castka = (platne.vyhryKc as Partial<Record<PoradiKoncoveCislice, number>>)[klic];
-    return castka === undefined ? [] : [{ popis: nazevPoradiDoplnkoveHry(klic), vzor: vzor(klic, cislice), pocetVyher: null, castkaKc: castka }];
-  });
+    return castka === undefined ? [] : [{ uhodnuto: nazevPoradiDoplnkoveHry(klic), vzor: vzor(klic, cislice), pocetVyher: null, castkaKc: castka }];
+  }).map((r, i) => ({ poradi: `${i + 1}.`, ...r }));
   return { nadpis: 'Eurošance', radky: radkyEurosance, poznamka: PEVNE };
 }
 
@@ -130,7 +153,7 @@ export function zobrazTah(tah: Tah, sazby: readonly SazbyExtra6[], sazbyEurosanc
 
   switch (tah.hra) {
     case 'eurojackpot': {
-      const hlavni = tah.poradi.length === 0 ? [] : [{ nadpis: 'Eurojackpot', radky: radky(tah.poradi), poznamka: null }];
+      const hlavni = tah.poradi.length === 0 ? [] : [{ nadpis: 'Eurojackpot', radky: radky(tah.poradi), poznamka: BEZ_ZAHRANICI }];
       return {
         ...zaklad,
         osudi: [osudi(null, tah.cisla, tah.eurocisla, 'euročísla')],
@@ -141,7 +164,7 @@ export function zobrazTah(tah: Tah, sazby: readonly SazbyExtra6[], sazbyEurosanc
       };
     }
     case 'euromiliony': {
-      const hlavni = tah.poradi.length === 0 ? [] : [{ nadpis: 'Euromiliony', radky: radky(tah.poradi), poznamka: null }];
+      const hlavni = tah.poradi.length === 0 ? [] : [{ nadpis: 'Euromiliony', radky: radky(tah.poradi), poznamka: BEZ_ZAHRANICI }];
       return {
         ...zaklad,
         osudi: [osudi(null, tah.cisla, [tah.druheOsudi], 'druhé osudí')],
@@ -166,7 +189,7 @@ export function zobrazTah(tah: Tah, sazby: readonly SazbyExtra6[], sazbyEurosanc
           ...(bonus.length > 0 ? [{ nadpis: 'Bonus', radky: radky(bonus), poznamka: null }] : []),
           ...(sance === null || sance.poradi.length === 0 ? [] : [{
             nadpis: 'Šance',
-            radky: sance.poradi.map(p => ({ popis: p.popis, vzor: p.vzor ?? (p.klic === 'sousedni-cislo' ? vzor(p.klic, sance.cislice) : null), pocetVyher: p.pocetVyher, castkaKc: p.vyseVyhryKc })),
+            radky: sance.poradi.map(p => ({ poradi: poradiDoplnkove(p.klic), uhodnuto: p.popis, vzor: p.vzor ?? (p.klic === 'sousedni-cislo' ? vzor(p.klic, sance.cislice) : null), pocetVyher: p.pocetVyher, castkaKc: p.vyseVyhryKc })),
             poznamka: null,
           }]),
         ],

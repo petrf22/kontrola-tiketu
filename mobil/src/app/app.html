@@ -30,8 +30,11 @@
 </main>
 
 <footer>
-  @if (stav.vysledkyDo(); as datum) {
-    <span>Výsledky mám do {{ formatujDatum(datum) }}.</span>
+  @if (doKdy(); as doKdy) {
+    <span>Výsledky: {{ doKdy }}.</span>
+    @for (veta of chybi(); track veta) {
+      <span class="chybi">{{ veta }}</span>
+    }
   } @else {
     <span>Zatím nemám žádné výsledky.</span>
   }
@@ -39,7 +42,7 @@
     <span>Stahuji výsledky…</span>
   } @else if (stav.kontrolaServeru(); as kontrola) {
     @if (kontrola.posledniDotaz) {
-      <span>Server naposledy kontroloval {{ formatujDatumCas(kontrola.posledniDotaz) }}.</span>
+      <span>Server naposledy kontroloval {{ formatujDatumCas(kontrola.posledniDotaz) }}{{ stav.stazenoV() ? ', do telefonu staženo ' + formatujDatumCas(stav.stazenoV()!) : '' }}.</span>
     }
     @for (ceka of cekaNaTabulku(); track ceka) {
       <span>{{ ceka }}: čísla jsou známá, tabulka výher zatím ne.</span>

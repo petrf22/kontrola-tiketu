@@ -3,6 +3,8 @@ import { provideRouter, Router, withComponentInputBinding } from '@angular/route
 import { App } from './app';
 import { routes } from './app.routes';
 import { Stav } from './data/stav';
+import type { Tah } from '@kontrola-tiketu/jadro';
+import { formatujDatum } from './data/format';
 
 describe('Hlavní navigace', () => {
   beforeEach(() => {
@@ -27,5 +29,23 @@ describe('Hlavní navigace', () => {
     await router.navigateByUrl('/tiket/test');
     await f.whenStable();
     expect(f.nativeElement.querySelector('nav [aria-current=page]').textContent).toBe('Tikety');
+  });
+
+  it('patička ukáže výsledky každé hry zvlášť a chybějící losování', async () => {
+    // Úterý večer: Euromiliony už jsou, Eurojackpot ještě ne.
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(new Date(2026, 9, 13, 21, 30));
+    try {
+      const tahy = [{ hra: 'eurojackpot', datum: '2026-10-09' }, { hra: 'euromiliony', datum: '2026-10-13' }];
+      TestBed.inject(Stav).tahy.set(tahy as unknown as Tah[]);
+      const f = TestBed.createComponent(App);
+      await f.whenStable();
+      const paticka = f.nativeElement.querySelector('footer').textContent;
+      expect(paticka).toContain(`Výsledky: Eurojackpot ${formatujDatum('2026-10-09')} · Euromiliony ${formatujDatum('2026-10-13')}.`);
+      expect(paticka).toContain(`Eurojackpot ${formatujDatum('2026-10-13')} zatím není.`);
+      expect(paticka).not.toContain('Euromiliony 13. 10. 2026 zatím');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

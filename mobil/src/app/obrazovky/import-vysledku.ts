@@ -1,6 +1,7 @@
-import { Component, ElementRef, inject, signal } from '@angular/core';
+import { Component, ElementRef, computed, inject, signal } from '@angular/core';
 import { formatujDatum, formatujDatumCas } from '../data/format.js';
 import { Stav } from '../data/stav.js';
+import { popisPoslednihoTahu, stavVysledku, vetaOChybejicich } from '../data/stavVysledku.js';
 import { RouterLink } from '@angular/router';
 import { Tahy } from './tahy.js';
 
@@ -29,7 +30,10 @@ import { Tahy } from './tahy.js';
         }
       }
     } @else {
-      <p class="tlumene">{{ stav.stahuje() ? 'Probíhá aktualizace…' : stav.vysledkyDo() ? 'Uložené výsledky do ' + formatujDatum(stav.vysledkyDo()!) : 'Zatím nejsou stažené žádné výsledky.' }}</p>
+      <p class="tlumene">{{ stav.stahuje() ? 'Probíhá aktualizace…' : doKdy() ? 'Uložené výsledky: ' + doKdy() + '.' : 'Zatím nejsou stažené žádné výsledky.' }}</p>
+      @for (veta of chybi(); track veta) {
+        <p class="chybi">{{ veta }}</p>
+      }
       <section>
         <button type="button" class="stahnout" [disabled]="stav.stahuje()" (click)="stahni()">
           {{ stav.stahuje() ? 'Stahuji…' : 'Stáhnout výsledky' }}
@@ -61,7 +65,7 @@ import { Tahy } from './tahy.js';
         }
 
         @if (stav.tahy().length > 0) {
-          <p class="souhrn">V aplikaci je {{ stav.tahy().length }} tahů, poslední z {{ formatujDatum(stav.vysledkyDo()!) }}.</p>
+          <p class="souhrn">V aplikaci je {{ stav.tahy().length }} tahů, poslední z {{ formatujDatum(stav.vysledkyDo()!) }}{{ stav.stazenoV() ? ', do telefonu staženo ' + formatujDatumCas(stav.stazenoV()!) : '' }}.</p>
         }
       </section>
 
@@ -114,6 +118,7 @@ import { Tahy } from './tahy.js';
     .vyber { display: block; margin: 0.75rem 0; }
     .zprava { padding: 0.6rem 0.75rem; background: var(--barva-plocha); border-left: 3px solid var(--barva-ok); color: var(--barva-text); }
     .zprava.chyba { border-left-color: var(--barva-chyba); }
+    .chybi { margin: 0.25rem 0; }
     .souhrn { font-size: 0.85rem; color: var(--barva-text-tlumeny); }
   `,
 })
@@ -128,6 +133,11 @@ export class ImportVysledku {
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujDatumCas = formatujDatumCas;
+
+  /** Totéž co patička, ať obrazovka neříká o úplnosti výsledků něco jiného. */
+  private readonly vysledkyHer = computed(() => stavVysledku(this.stav.tahy(), new Date()));
+  protected readonly doKdy = computed(() => this.vysledkyHer().map(popisPoslednihoTahu).join(' · '));
+  protected readonly chybi = computed(() => this.vysledkyHer().map(vetaOChybejicich).filter(v => v !== ''));
 
   protected async stahni(): Promise<void> {
     await this.stav.stahniVysledky();

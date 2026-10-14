@@ -9,6 +9,7 @@ import type { StavHry } from './data/stahovani.js';
 import { OznameniPanel } from './obrazovky/oznameni-panel.js';
 import { Dialogy } from './obrazovky/dialog.js';
 import { Stav } from './data/stav.js';
+import { popisPoslednihoTahu, stavVysledku, vetaOChybejicich } from './data/stavVysledku.js';
 
 @Component({
   selector: 'app-root',
@@ -30,6 +31,11 @@ export class App {
 
   protected readonly formatujDatum = formatujDatum;
   protected readonly formatujDatumCas = formatujDatumCas;
+
+  /** Do kdy má aplikace výsledky u každé hry a která losování chybí. Přepočítá se s každým stažením. */
+  protected readonly vysledkyHer = computed(() => stavVysledku(this.stav.tahy(), new Date()));
+  protected readonly doKdy = computed(() => this.vysledkyHer().map(popisPoslednihoTahu).join(' · '));
+  protected readonly chybi = computed(() => this.vysledkyHer().map(vetaOChybejicich).filter(v => v !== ''));
 
   /** Hry, u kterých server zná tažená čísla, ale Allwyn ještě nezveřejnil tabulku výher. */
   protected readonly cekaNaTabulku = computed(() => {

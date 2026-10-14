@@ -94,6 +94,9 @@ export class Stav {
   /** Co server hlásil o poslední kontrole losování. `null`, dokud se stažení nepovedlo. */
   readonly kontrolaServeru = signal<KontrolaServeru | null>(null);
 
+  /** Kdy se naposledy povedlo stažení do telefonu. Odliší chybu sítě od výsledků, které ještě nejsou. */
+  readonly stazenoV = signal<string | null>(null);
+
   /** Jak dopadl poslední pokus o stažení — pro obrazovku výsledků. */
   readonly posledniStazeni = signal<Zprava | null>(null);
 
@@ -239,6 +242,7 @@ export class Stav {
 
         await this.oznameni.aktualizuj(pred, this.vysledky());
         this.kontrolaServeru.set(stazeno.manifest.kontrola);
+        this.stazenoV.set(new Date().toISOString());
         return this.zapis({ uspech: true, zprava: shrnutiStazeni(zpracovano.pribylo, zpracovano.zmeneno) });
       });
     } catch (chyba) {

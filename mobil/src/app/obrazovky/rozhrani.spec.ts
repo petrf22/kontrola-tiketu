@@ -438,7 +438,7 @@ describe('Výsledky losování', () => {
     expect(nadpisy(f)).toEqual([]);
     expect(text()).toContain('Stáhnout výsledky');
     expect(text()).toContain('Importovat ze souboru');
-    expect(text()).toContain(`Uložené výsledky do ${formatujDatum('2026-09-08')}`);
+    expect(text()).toContain(`Uložené výsledky: Eurojackpot ${formatujDatum('2026-09-08')}.`);
     await klikni(f, 'Přehled');
     expect(nadpisy(f)).toHaveLength(1);
   });

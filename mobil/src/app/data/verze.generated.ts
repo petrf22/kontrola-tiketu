@@ -13,7 +13,7 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '1.0.0';
+export const VERZE = '1.0.1';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [

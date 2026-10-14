@@ -16,6 +16,12 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [1.0.1] – 2026-10-14
+
+### Změněno
+- Sestavení podle doporučení Google Play: z balíku vypadla nepoužívaná pomocná obrazovka čtečky kódů od Googlu, zamčená na výšku, a R8 zmenšuje zdroje optimalizovaně (build)
+- Testy všech částí a ladicí sestavení Androidu běží na GitHubu u každé změny, aktualizace knihoven hlídá Dependabot (build)
+
 ## [1.0.0] – 2026-10-14
 
 ### Opraveno

@@ -374,6 +374,35 @@ kontrole v *Přehledu publikování*, po schválení obnovit kanál a zkontrolov
 **Když aplikace v Play „zmizí“, první pohled patří do *Souladu se zásadami*,** ne do nastavení
 testerů.
 
+### Doporučení Play Console
+
+Po vydání 1.0.0 (14. 10. 2026) ukázala Play Console čtyři doporučení. Nejsou to zamítnutí,
+jen varování. Co se s nimi udělalo a proč, ať se to při dalším vydání neřeší znovu:
+
+| Doporučení | Odkud | Co s ním |
+|---|---|---|
+| Zobrazení bez okrajů nemusí fungovat (SDK 35) | obecné upozornění pro `targetSdk` ≥ 35 | nic — Capacitor to řeší sám |
+| Zastaralé `setStatusBarColor`, `setNavigationBarColor`… | knihovny, ne náš kód | nic — nejde opravit u nás |
+| `screenOrientation="portrait"` u `GmsBarcodeScanningDelegateActivity` | `play-services-code-scanner` | aktivita odstraněná z manifestu |
+| R8: míra optimalizace 44 %, zmenšování zdrojů, AGP 9 | naše široká `-keep` pravidla | zapnuté optimalizované zmenšování zdrojů, zbytek odložený |
+
+- **Bez okrajů.** Capacitor 8 (`SystemBars` v `@capacitor/android`) na Androidu 15+ odsadí
+  WebView o systémové lišty — `index.html` nemá `viewport-fit=cover`, takže obsah pod lišty
+  nezalézá. `enableEdgeToEdge()` do `MainActivity` nepatří, okraje spravuje Capacitor.
+- **Zastaralá API** volají jen knihovny: `datepicker` z Material (aplikace ho nikdy neotevře),
+  `IONCAMRImageEditorActivity` z pluginu kamery (editor jen při `allowEdit: true`, nepoužíváme)
+  a obfuskované `n4.e.onCreate` — mapování se mezi buildy mění, ale podle tvaru je to dialog
+  z Material, nejspíš `BottomSheetDialog` z výběru zdroje kamery (`CameraSource.Prompt`, taky
+  nepoužíváme). Zmizí s aktualizací knihoven.
+- **Orientace.** `GmsBarcodeScanningDelegateActivity` patří k `BarcodeScanner.scan()` přes
+  modul stahovaný z Google Play, který aplikace záměrně nepoužívá. Manifest ji odstraňuje
+  (`tools:node="remove"`) a `test/soukromi.test.ts` to hlídá.
+- **R8.** `android.r8.optimizedResourceShrinking=true` v `android/gradle.properties`; AAB
+  i rozdělená APK s ním prošly. Míru optimalizace drží dole pravidla `-keep class … { *; }`
+  pro Capacitor a ML Kit v `proguard-rules.pro`. Zúžit je jde, ale zisk je malý (velikost tvoří
+  nativní knihovny) a chyba se projeví až pádem na telefonu — samostatný úkol s ověřením na
+  zařízení. **AGP 9** až s Capacitorem, který ho podporuje; teď je postavený na AGP 8.13.
+
 ---
 
 ## Postup vydání

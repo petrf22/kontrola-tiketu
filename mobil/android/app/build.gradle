@@ -77,10 +77,12 @@ android {
             // Vlastní klíč, když je k dispozici, jinak ladicí — na ověření R8 stačí.
             // Zpátky na ladicí klíč se smí spadnout jen tady; publishableBundle to nedovolí.
             signingConfig hasReleaseSigning ? signingConfigs.release : signingConfigs.debug
-            // Záměrně tu NENÍ `ndk { debugSymbolLevel }`, které má předloha. Nahrání
-            // ladicích symbolů zapíná v Play Console čitelné nativní pády, a to je přesně
-            // ten druh dat o uživateli, který zadání zakazuje ("žádné analytics, crash
-            // reporting ani telemetrie, ani v dev buildu"). Viz docs/vydani.md.
+            // Záměrně tu NENÍ `ndk { debugSymbolLevel }`, které má předloha. Symboly samy
+            // žádná data nesbírají — pády posílá Android vitals podle nastavení telefonu
+            // s nimi i bez nich, symboly jen zčitelní nativní část výpisu. Nativní kód ale
+            // není náš (SQLCipher, ML Kit) a jeho knihovny přicházejí bez symbolů, takže
+            // by se nahrálo jen málo. Upozornění v Play Console se proto ignoruje.
+            // Viz docs/vydani.md, „Doporučení Play Console“.
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

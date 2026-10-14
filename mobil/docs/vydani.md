@@ -385,6 +385,7 @@ jen varování. Co se s nimi udělalo a proč, ať se to při dalším vydání 
 | Zastaralé `setStatusBarColor`, `setNavigationBarColor`… | knihovny, ne náš kód | nic — nejde opravit u nás |
 | `screenOrientation="portrait"` u `GmsBarcodeScanningDelegateActivity` | `play-services-code-scanner` | aktivita odstraněná z manifestu |
 | R8: míra optimalizace 44 %, zmenšování zdrojů, AGP 9 | naše široká `-keep` pravidla | zapnuté optimalizované zmenšování zdrojů, zbytek odložený |
+| Upozornění: bundle obsahuje nativní kód bez ladicích symbolů (1.0.1) | SQLCipher a ML Kit | nic — symboly záměrně nenahráváme |
 
 - **Bez okrajů.** Capacitor 8 (`SystemBars` v `@capacitor/android`) na Androidu 15+ odsadí
   WebView o systémové lišty — `index.html` nemá `viewport-fit=cover`, takže obsah pod lišty
@@ -402,6 +403,11 @@ jen varování. Co se s nimi udělalo a proč, ať se to při dalším vydání 
   pro Capacitor a ML Kit v `proguard-rules.pro`. Zúžit je jde, ale zisk je malý (velikost tvoří
   nativní knihovny) a chyba se projeví až pádem na telefonu — samostatný úkol s ověřením na
   zařízení. **AGP 9** až s Capacitorem, který ho podporuje; teď je postavený na AGP 8.13.
+- **Ladicí symboly.** `ndk { debugSymbolLevel }` v `app/build.gradle` záměrně chybí. Symboly
+  samy žádná data nesbírají — pády posílá Android vitals podle nastavení telefonu tak jako tak,
+  symboly by jen zčitelnily nativní část výpisu v Play Console. Nativní kód ale není náš
+  (SQLCipher, ML Kit) a jeho knihovny přicházejí bez symbolů, takže by se nahrálo jen málo.
+  Upozornění u každého nahraného bundlu se ignoruje, vydání neblokuje.
 
 ---
 

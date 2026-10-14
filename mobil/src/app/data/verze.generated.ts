@@ -13,10 +13,22 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.12.1';
+export const VERZE = '1.0.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '1.0.0',
+    datum: '2026-10-14',
+    sekce: [
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Patička i obrazovka Výsledky losování ukazují, do kdy jsou výsledky u každé hry zvlášť — dřív „Výsledky mám do 13. 10.“ platilo jen pro hru, která dorazila nejdřív; když losování podle rozvrhu už proběhlo a výsledky chybí, aplikace to napíše (např. „Eurojackpot 13. 10. 2026 zatím není“) spolu s tím, kdy server naposledy kontroloval a kdy se stahovalo do telefonu',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.12.1',
     datum: '2026-10-14',

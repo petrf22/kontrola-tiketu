@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [1.0.0] – 2026-10-14
 
 ### Opraveno
 - Patička i obrazovka Výsledky losování ukazují, do kdy jsou výsledky u každé hry zvlášť — dřív „Výsledky mám do 13. 10.“ platilo jen pro hru, která dorazila nejdřív; když losování podle rozvrhu už proběhlo a výsledky chybí, aplikace to napíše (např. „Eurojackpot 13. 10. 2026 zatím není“) spolu s tím, kdy server naposledy kontroloval a kdy se stahovalo do telefonu (aplikace)

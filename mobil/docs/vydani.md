@@ -424,6 +424,31 @@ Play Console je u vydání chce v poli *Poznámky k vydání*. Vznikají z `CHAN
   ```
 - Uložit do `~/releases/kontrola-tiketu/vX.Y.Z/poznamky-k-vydani.txt` a vypsat v shrnutí vydání.
 
+**Výjimka: první vydání do produkce** (1.0.0, 14. 10. 2026). Produkční uživatelé předchozí
+verze neviděli, takže seznam oprav proti 0.12.1 by jim nic neřekl. Poznámky tehdy
+**představují celou aplikaci**:
+
+- Funkce se berou z dlouhého popisu v obchodě (výše), ne z hlavy — tak poznámky neslibují
+  nic, co aplikace neumí. Novinky z `(aplikace)` v CHANGELOG mezi nimi mají vlastní odrážku.
+- **Upozornění, že vyhodnocení je neoficiální, má přednost před funkcemi.** Když se do 500
+  znaků nevejde všechno, vypadne funkce (u 1.0.0 bilance), ne upozornění. Znění stejné jako
+  v hlavičce aplikace: „Vyhodnocení je neoficiální, závazná je kontrola na terminálu Allwyn.“
+- Změny serveru se ani tady nevypisují — platí pro všechny verze aplikace najednou.
+
+Poznámky k 1.0.0 (463 znaků včetně značek):
+
+```
+<cs-CZ>
+• První ostrá verze: zkontrolujte papírový tiket Eurojackpotu, Sportky i Euromilionů bez toho, aby se kdokoli dozvěděl, že sázíte.
+• Vyfoťte tiket, nebo zadejte čísla ručně. Vyhodnotí i Extra 6, Šanci a Eurošanci.
+• Výsledky losování se stahují celé, pro každého stejně. Vaše čísla telefon neopouštějí.
+• U každé hry vidíte, do kdy výsledky máte a které losování ještě chybí.
+• Vyhodnocení je neoficiální, závazná je kontrola na terminálu Allwyn.
+</cs-CZ>
+```
+
+Další vydání po 1.0.0 se vrací k běžnému pravidlu — změny od verze naposledy v Play.
+
 ### Z čeho stavět
 
 **Z tagu a v odděleném worktree**, ne z rozpracovaného hlavního checkoutu — jinak se do

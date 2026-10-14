@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [0.12.1] – 2026-10-14
 
 ### Opraveno
 - Tabulka výher má zvlášť sloupec Pořadí (1., 2., …) a Uhodnuto (5+2) — dřív stálo „5+2“ ve sloupci Pořadí; počty výherců jsou nadepsané „Výherců v ČR“ a u Eurojackpotu a Euromilionů poznámka vysvětluje, že výherní listina zahraniční výherce neuvádí, takže 0 v 1. pořadí neznamená, že nikdo nevyhrál (aplikace)

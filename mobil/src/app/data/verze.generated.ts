@@ -13,10 +13,22 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '0.12.0';
+export const VERZE = '0.12.1';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '0.12.1',
+    datum: '2026-10-14',
+    sekce: [
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Tabulka výher má zvlášť sloupec Pořadí (1., 2., …) a Uhodnuto (5+2) — dřív stálo „5+2“ ve sloupci Pořadí; počty výherců jsou nadepsané „Výherců v ČR“ a u Eurojackpotu a Euromilionů poznámka vysvětluje, že výherní listina zahraniční výherce neuvádí, takže 0 v 1. pořadí neznamená, že nikdo nevyhrál',
+        ],
+      },
+    ],
+  },
   {
     verze: '0.12.0',
     datum: '2026-10-10',

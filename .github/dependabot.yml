@@ -1,0 +1,67 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /mobil
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      angular:
+        patterns:
+          - '@angular/*'
+      # Pluginy mají major svázaný s verzí Capacitoru a core/android/cli musí jít spolu —
+      # po jednom by v main zůstala nesourodá kombinace a Android build by spadl.
+      capacitor:
+        patterns:
+          - '@capacitor/*'
+          - '@capacitor-community/*'
+          - '@capacitor-mlkit/*'
+      # Každé PR mění package-lock.json, takže po jednom se slučovat nedají (konflikt
+      # a přestavba CI u všech zbylých). Drobné aktualizace proto chodí v jednom PR
+      # týdně; major zůstává samostatně, ten chce posoudit zvlášť.
+      npm-drobne:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+    ignore:
+      # @angular/build 22 vyžaduje peer typescript ">=6.0 <6.1" — TS 7 s Angularem 22
+      # nejde, npm ci padá na ERESOLVE. Odemknout, až Angular TS 7 podpoří.
+      - dependency-name: 'typescript'
+        versions: ['>=7.0.0']
+
+  - package-ecosystem: composer
+    directory: /backend
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      composer-drobne:
+        patterns:
+          - '*'
+        update-types:
+          - minor
+          - patch
+
+  # Android projekt je šablona Capacitoru — verze AGP a androidx určuje Capacitor, ne my.
+  # Dependabot tu hlídá hlavně bezpečnostní opravy; major AGP přijde až s Capacitorem,
+  # který ho podporuje (mobil/docs/vydani.md, „Doporučení Play Console“).
+  - package-ecosystem: gradle
+    directory: /mobil/android
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      androidx:
+        patterns:
+          - 'androidx.*'
+    ignore:
+      - dependency-name: 'com.android.tools.build:gradle'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

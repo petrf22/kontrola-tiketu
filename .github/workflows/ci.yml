@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Žádný job nic nezapisuje zpět do repa (jen checkout + build/test) — GITHUB_TOKEN proto
+# jen ke čtení.
+permissions:
+  contents: read
+
+jobs:
+  nastroje:
+    name: Verze a nástroje
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+      - run: node --test 'nastroje/**/*.test.mjs'
+      # VERSION a CHANGELOG.md jsou zdroj pravdy, čtyři soubory se z nich generují
+      # (kořenový CLAUDE.md, „Verze a vydání“). Skript musí projít bez změny souborů.
+      - run: node nastroje/verze/sync.mjs
+      - run: git diff --exit-code
+
+  backend:
+    name: Backend (PHP)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      # Nejnižší verze, kterou backend slibuje (composer.json, config.platform) —
+      # sdílený hosting nemusí mít novější.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: json, mbstring, pdo_sqlite, zlib
+          tools: composer
+      - run: composer install --no-interaction --no-progress
+      - run: composer test
+      - run: composer phpstan
+
+  mobil:
+    name: Mobil (Angular)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobil
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobil/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run test:angular -- --watch=false
+      - run: npx ng build
+
+  android:
+    name: Mobil (Android)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobil
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: mobil/package-lock.json
+      - uses: actions/setup-java@v6.0.1
+        with:
+          distribution: temurin
+          java-version: '21'
+      # Výchozí `packages` akce obsahuje i zastaralý balíček `tools`, který runner
+      # s cmdline-tools 20.0 už nezná a sdkmanager na něm spadne.
+      - uses: android-actions/setup-android@v4
+        with:
+          packages: platform-tools
+      - uses: gradle/actions/setup-gradle@v6
+      - run: npm ci
+      - run: npx ng build
+      - run: npx cap sync android
+      # Ladicí build stačí na ověření, že aktualizace Capacitoru, pluginů a Gradlu jdou
+      # sestavit. Release s R8 se ověřuje na telefonu při vydání (mobil/docs/vydani.md).
+      - run: ./gradlew :app:assembleDebug
+        working-directory: mobil/android

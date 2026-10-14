@@ -6,8 +6,8 @@
 // Spouští se `node nastroje/verze/sync.mjs` z kořene repozitáře.
 //
 // Že generované soubory skutečně sedí se zdrojem, hlídá test/verze.test.mjs vedle skriptu
-// (`node --test 'nastroje/**/*.test.mjs'`). V předloze (~/pracovni/kvalita-cena) to dělá CI
-// přes `git diff --exit-code`; tenhle projekt CI nemá, tak je pojistka v testech.
+// (`node --test 'nastroje/**/*.test.mjs'`) a v CI navíc `git diff --exit-code` po spuštění
+// skriptu (.github/workflows/ci.yml). Test hlídá i lokálně, kde CI neběží.
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';

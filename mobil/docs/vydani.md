@@ -27,8 +27,8 @@ Skript přepíše čtyři commitované soubory:
 | `backend/src/Verze.php` | verze PHP backendu, kterou nese jeho User-Agent |
 
 Ručně se needitují. Že sedí se zdrojem, hlídá `nastroje/verze/test/verze.test.mjs`
-(`node --test 'nastroje/**/*.test.mjs'`) — předloha na to má CI (`sync.mjs` +
-`git diff --exit-code`), tenhle projekt CI nemá, tak je pojistka v testech.
+(`node --test 'nastroje/**/*.test.mjs'`) a v CI navíc `sync.mjs` + `git diff --exit-code`
+(`.github/workflows/ci.yml`).
 
 ### versionCode
 

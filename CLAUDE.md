@@ -43,6 +43,10 @@ node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 25 test
 node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí projít bez změny souborů
 ```
 
+Totéž pouští GitHub Actions (`.github/workflows/ci.yml`) u každého push na `main` a u PR,
+navíc ladicí Android build. Knihovny hlídá Dependabot (`.github/dependabot.yml`) — týdně npm,
+Composer, Gradle a akce; drobné aktualizace chodí v jednom PR, Capacitor a Angular ve skupinách.
+
 ## Stav
 
 Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace se sedmi obrazovkami**

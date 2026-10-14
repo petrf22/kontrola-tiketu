@@ -339,8 +339,17 @@ Skutečné tikety uživatele se k tomu nepoužívají.
 
 ### Cesta do produkce
 
-Nové vývojářské účty musí projít **uzavřeným testem: 12 testerů, kteří jsou přihlášení
-souvisle 14 dní**, než Play pustí aplikaci do otevřené produkce. Počítej s tím při plánování.
+Podmínka pro nové osobní účty — **uzavřený test s 12 testery přihlášenými souvisle 14 dní** —
+tenhle účet neblokuje. Stav k 14. 10. 2026 v Play Console: produkce „Neaktivní“, otevřený
+test „Aktivní · 1 země“, interní test aktivní, uzavřený neaktivní. Panel aplikace rovnou nabízí
+úkoly produkčního vydání (země a oblasti → náhled a potvrzení → odeslat ke kontrole →
+publikovat) a žádost o přístup k produkci nikde nežádá. Jestli se po otevření úkolů neobjeví
+další podmínka, ověřené není.
+
+Kolik lidí aplikaci má, ukazuje domovská stránka Play Console: *Publikum s nainstalovanou
+aplikací* (14. 10. 2026: 17) a *Akvizice uživatelů* za 30 dní (27). Jen souhrnná čísla bez
+jmen, včetně vlastních zařízení. Otevřený test si najde kdokoliv v obchodě, nejen pozvaní.
+Aplikace sama nic nehlásí — žádná telemetrie je akceptační kritérium.
 
 Odkaz, přes který se tester přihlásí, se kopíruje z *Testeři → Připojit se na webu* dané
 stopy, nesestavuje se ručně: uzavřený a otevřený test mají

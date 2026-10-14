@@ -174,6 +174,12 @@ describe('sken nesahá na síť', () => {
     expect(obrazovka).not.toMatch(/installGoogleBarcodeScannerModule/);
   });
 
+  it('pomocná aktivita k scan() je ze sloučeného manifestu odstraněná', () => {
+    expect(cti(MANIFEST)).toMatch(
+      /android:name="com\.google\.mlkit\.vision\.codescanner\.internal\.GmsBarcodeScanningDelegateActivity"\s*tools:node="remove"/,
+    );
+  });
+
   it('čtečka má model přibalený v aplikaci, ne stahovaný z Play', () => {
     const gradle = readFileSync(
       join(KOREN, 'node_modules/@capacitor-mlkit/barcode-scanning/android/build.gradle'),

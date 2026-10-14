@@ -86,6 +86,17 @@
             tools:node="remove" />
 
         <!--
+            Pomocná aktivita k BarcodeScanner.scan(), který jede přes modul stahovaný z Google
+            Play. Aplikace ho záměrně nepoužívá (src/app/obrazovky/sken.ts, proudový startScan),
+            takže ven — cesta přes stahovaný modul pak nejde spustit ani omylem. Navíc má
+            natvrdo screenOrientation="portrait", což Play Console hlásí jako omezení pro
+            velké obrazovky. Viz docs/vydani.md, „Doporučení Play Console“.
+        -->
+        <activity
+            android:name="com.google.mlkit.vision.codescanner.internal.GmsBarcodeScanningDelegateActivity"
+            tools:node="remove" />
+
+        <!--
             FileProvider zůstává kvůli importu JSON s výsledky. Sdílí se jen dovnitř,
             exported je false a grantUriPermissions platí pro jednorázový přístup k
             vybranému souboru.

@@ -46,7 +46,8 @@ updates:
 
   # Android projekt je šablona Capacitoru — verze AGP a androidx určuje Capacitor, ne my.
   # Dependabot tu hlídá hlavně bezpečnostní opravy; major AGP přijde až s Capacitorem,
-  # který ho podporuje (mobil/docs/vydani.md, „Doporučení Play Console“).
+  # který ho podporuje (mobil/docs/vydani.md, „Přechod na Capacitor 9“). Totéž platí pro
+  # Gradle wrapper: Gradle od 9.6 s AGP 8.13 spadne (odstraněné interní API), PR #5.
   - package-ecosystem: gradle
     directory: /mobil/android
     schedule:
@@ -58,6 +59,8 @@ updates:
           - 'androidx.*'
     ignore:
       - dependency-name: 'com.android.tools.build:gradle'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'gradle-wrapper'
         update-types: ['version-update:semver-major']
 
   - package-ecosystem: github-actions

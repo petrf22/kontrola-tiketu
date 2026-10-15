@@ -402,12 +402,38 @@ jen varování. Co se s nimi udělalo a proč, ať se to při dalším vydání 
   i rozdělená APK s ním prošly. Míru optimalizace drží dole pravidla `-keep class … { *; }`
   pro Capacitor a ML Kit v `proguard-rules.pro`. Zúžit je jde, ale zisk je malý (velikost tvoří
   nativní knihovny) a chyba se projeví až pádem na telefonu — samostatný úkol s ověřením na
-  zařízení. **AGP 9** až s Capacitorem, který ho podporuje; teď je postavený na AGP 8.13.
+  zařízení. **AGP 9** až s Capacitorem, který ho podporuje; teď je postavený na AGP 8.13
+  (viz „Přechod na Capacitor 9“).
 - **Ladicí symboly.** `ndk { debugSymbolLevel }` v `app/build.gradle` záměrně chybí. Symboly
   samy žádná data nesbírají — pády posílá Android vitals podle nastavení telefonu tak jako tak,
   symboly by jen zčitelnily nativní část výpisu v Play Console. Nativní kód ale není náš
   (SQLCipher, ML Kit) a jeho knihovny přicházejí bez symbolů, takže by se nahrálo jen málo.
   Upozornění u každého nahraného bundlu se ignoruje, vydání neblokuje.
+
+### Přechod na Capacitor 9
+
+Nutný kvůli Play: aktualizace musí cílit na API vydané nejpozději před rokem. `targetSdk` 36
+platí od 31. 8. 2026; **API 37 bude podle stejného cyklu povinné zhruba koncem srpna 2027**
+(oficiální datum k 15. 10. 2026 ještě není). Capacitor 8 stojí na AGP 8.13 a `compileSdk` 36.
+
+Capacitor 9 byl 15. 10. 2026 ve verzi `9.0.0-alpha.8` a přináší najednou:
+
+- AGP 9.2.1, Gradle wrapper 9.5.1, `compileSdk`/`targetSdk` 37, `minSdkVersion` 26 (teď 24),
+- vestavěný Kotlin v AGP 9 — pluginy kamery a souborů dnes aplikují `kotlin-android` samy,
+- pluginy ve verzi 9 — `@capacitor/*` i `@capacitor-mlkit/*` od capawesome.
+
+**Nedělat po kouskách.** Gradle ≥ 9.6 s AGP 8.13 nesestaví (odstraněné interní API; zavřené
+PR #5 Dependabotu s Gradlem 9.8.1) a AGP 9 s Capacitorem 8 jde jen s obezličkami
+(`android.builtInKotlin=false`, `android.newDsl=false`, záplaty pluginů). Dependabot proto
+major AGP ani Gradle wrapperu nenabízí (`.github/dependabot.yml`). Přechod je jedna větev, až
+bude Capacitor 9 stabilní a ML Kit pluginy pro něj vyjdou: `npx cap migrate`, pak
+`test/soukromi.test.ts` proti sestavenému APK (`aapt2`, sloučený manifest — oprávnění,
+`datatransport`, odstraněné aktivity) a sken a fotka tiketu na telefonu.
+
+Čtečka kódů od 8.2 (capawesome) už v `scan()` nevolá Googlí modul, ale vlastní `ScanActivity`
+(`exported="false"`), kterou přidává do manifestu. Aplikace `scan()` nepoužívá (jen `startScan`
+a `readBarcodesFromImage`), takže aktivita leží nevyužitá; při přechodu zvážit `tools:node="remove"`
+jako u `GmsBarcodeScanningDelegateActivity`.
 
 ---
 

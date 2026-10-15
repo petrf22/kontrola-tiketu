@@ -16,6 +16,14 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [1.0.2] – 2026-10-15
+
+### Opraveno
+- Volba „Pouze kontrola bez uložení“ už nerozbaluje sekci „Rozsah kontroly“ — ta se otevře sama, jen když tiket kontrolujete za jiné období než na papíře (aplikace)
+
+### Změněno
+- Aktualizované knihovny: Angular, Capacitor, testovací nástroje, Gradle wrapper a PHPStan (build)
+
 ## [1.0.1] – 2026-10-14
 
 ### Změněno

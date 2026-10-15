@@ -13,10 +13,22 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '1.0.1';
+export const VERZE = '1.0.2';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '1.0.2',
+    datum: '2026-10-15',
+    sekce: [
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Volba „Pouze kontrola bez uložení“ už nerozbaluje sekci „Rozsah kontroly“ — ta se otevře sama, jen když tiket kontrolujete za jiné období než na papíře',
+        ],
+      },
+    ],
+  },
   {
     verze: '1.0.0',
     datum: '2026-10-14',

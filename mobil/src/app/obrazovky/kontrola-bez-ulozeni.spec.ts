@@ -105,7 +105,8 @@ describe('Kontrola bez uložení', () => {
 
   it('za období od–do zkontroluje všechna slosování v rozsahu', async () => {
     const f = await formular('2026-09-08', 1);
-    expect(f.nativeElement.querySelector('details:has(.rozsah)').open).toBe(true);
+    // Volba kontroly bez uložení rozsah nerozbaluje; rozbalený je, jen když je tiket virtuální.
+    expect(f.nativeElement.querySelector('details:has(.rozsah)').open).toBe(false);
     vypln(f, '[data-cesta="kontrola.od"]', '2026-09-04');
     // Jedno slosování předvyplní jen svůj den (úterý); páteční tah se musí přidat.
     (f.nativeElement.querySelector('input[name=dny][value=pa]') as HTMLInputElement).click();

@@ -310,7 +310,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
         <p class="napoveda">Spočítáno podle ceníku: {{ popisRozpisuCeny(hra(), rozpis) }}.</p>
       }
 
-      <details [open]="virtualni() || jenKontrola()">
+      <details [open]="virtualni()">
         <summary>Rozsah kontroly{{ virtualni() ? ' · virtuální tiket' : '' }}</summary>
       <fieldset class="rozsah">
         <legend>Rozsah kontroly</legend>

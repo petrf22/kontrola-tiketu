@@ -38,6 +38,7 @@ import {
   popisRozsahuKontroly,
 } from '../data/format.js';
 import { DocasnyTiket } from '../data/docasnyTiket.js';
+import { maTrvaleUloziste } from '../data/tokeny.js';
 import { DuplicitniTiket, Stav } from '../data/stav.js';
 import { NazevTiketu } from './nazev-tiketu.js';
 import { VyhryTahu } from './vyhry-tahu.js';
@@ -177,6 +178,24 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             </div>
           }
         </dl>
+        <!--
+          Série kontrol: další tiket rovnou bez návratu do nabídky. Odchodem se tenhle zapomene
+          (onDestroy); replaceUrl drží historii mělkou, takže „zpět“ vede vždy na Přidat tiket.
+        -->
+        @if (docasny()) {
+          <div class="dalsi-tiket">
+            <p>Máš další tiket?</p>
+            @if (naZarizeni) {
+              <a class="hlavni" routerLink="/sken-cisel" [queryParams]="serie" replaceUrl>Vyfotit další tiket</a>
+              <p class="tlumene">
+                <a routerLink="/z-obrazku" [queryParams]="serie" replaceUrl>z obrázku</a> ·
+                <a routerLink="/tiket/novy" [queryParams]="serie" replaceUrl>zadat ručně</a>
+              </p>
+            } @else {
+              <a class="hlavni" routerLink="/tiket/novy" [queryParams]="serie" replaceUrl>Zadat další tiket ručně</a>
+            }
+          </div>
+        }
 
         <p class="tlumene">
           @if (t.kontrola) {
@@ -569,6 +588,15 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     }
     .zapomenuti p { margin: 0; }
     .zapomenuti button { justify-self: start; }
+    .dalsi-tiket {
+      display: grid; gap: 0.5rem; margin: 1rem 0; padding: 0.75rem;
+      border: 1px solid var(--barva-ram); border-radius: 0.85rem;
+    }
+    .dalsi-tiket p { margin: 0; }
+    .dalsi-tiket .hlavni {
+      display: block; padding: 0.85rem 1rem; border: 1px solid var(--barva-ram); border-radius: 6px;
+      background: var(--barva-plocha); text-align: center; text-decoration: none; font-weight: 600;
+    }
   `,
 })
 export class Detail {
@@ -579,6 +607,9 @@ export class Detail {
   protected readonly stav = inject(Stav);
   private readonly router = inject(Router);
   private readonly docasnyTiket = inject(DocasnyTiket);
+  protected readonly naZarizeni = maTrvaleUloziste();
+  /** Příznak série kontrol bez uložení pro další tiket; formulář podle něj předvybere volbu. */
+  protected readonly serie = { kontrola: '1' };
 
   protected readonly tiket = computed(() =>
     this.docasny()

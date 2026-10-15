@@ -1,5 +1,5 @@
 import { Component, DestroyRef, ElementRef, computed, inject, linkedSignal, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   DELKA_KODU_DOPLNKOVE_HRY,
   DNY_LOSOVANI,
@@ -542,8 +542,13 @@ export class NovyTiket {
     inject(DestroyRef).onDestroy(() => dialogy.upravuje.set(false));
   }
 
-  /** Zvolil uživatel „Pouze kontrola bez uložení“? */
-  protected readonly jenKontrola = signal(false);
+  /**
+   * Zvolil uživatel „Pouze kontrola bez uložení“? V sérii kontrol (`?kontrola=1` z výsledku
+   * předchozího tiketu) je předvybraná, jinak je výchozí uložení.
+   */
+  protected readonly jenKontrola = signal(
+    inject(ActivatedRoute).snapshot.queryParamMap.get('kontrola') === '1',
+  );
 
   /**
    * Sériové číslo z naskenovaného čárového kódu, pokud uživatel přišel ze skenu.

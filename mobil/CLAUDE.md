@@ -8,8 +8,8 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 609 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
-npm run test:angular -- --watch=false   # 57 testů obrazovek (seznam, detail, formulář, výsledky)
+npm test             # vitest, 621 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm run test:angular -- --watch=false   # 91 testů obrazovek (seznam, detail, formulář, výsledky)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -122,6 +122,11 @@ drží jen `DocasnyTiket` v paměti — modul schválně nezná úložiště ani
 a v `DestroyRef.onDestroy` tiket zapomene; formulář tam naviguje s `replaceUrl`, aby „zpět“
 nevedlo zpátky do formuláře. Bez jediného vylosovaného slosování se kontrola neprovede — tiket
 by se zapomněl dřív, než by bylo s čím porovnat.
+
+Výsledek nabízí „Vyfotit další tiket“ (a z obrázku / ručně) pro kontrolu několika tiketů po sobě.
+Režim série nese query parametr `?kontrola=1` přes focení až do formuláře, kde předvybere
+kontrolu bez uložení — schválně ne stav v paměti, aby nezůstal viset, když uživatel sérii
+opustí jinudy. Všechny kroky jdou s `replaceUrl`, takže „zpět“ vede vždy na Přidat tiket.
 
 ## Ceník
 

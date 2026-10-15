@@ -52,6 +52,28 @@ describe('Přímé focení tiketu', () => {
     expect(navigate).toHaveBeenCalledWith(['/tiket/novy'], { replaceUrl: true });
   });
 
+  it('v sérii kontrol předá formuláři, že jde jen o kontrolu', async () => {
+    vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+    vi.spyOn(zavislostiCapacitor, 'poriz').mockRejectedValue(new Error('Focení zrušeno.'));
+    TestBed.configureTestingModule({ providers: [provideRouter([{ path: 'sken-cisel', component: SkenCisel }])] });
+    const harness = await RouterTestingHarness.create();
+    const komponenta = await harness.navigateByUrl('/sken-cisel?kontrola=1', SkenCisel);
+    const el = harness.routeNativeElement!;
+    expect(el.querySelector('a[href="/tiket/novy?kontrola=1"]')?.textContent).toContain('Zadat čísla ručně');
+    const navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
+    const cteni = prectiTiket(tiketEJ([
+      ['SLOSOVÁNÍ: 1 (ÚT)', '08.09.2026'], ['1: 23 30 33 37 47', '02 03 NT'],
+    ]), 'eurojackpot');
+    (komponenta as unknown as { nejistaHra: WritableSignal<VysledekSnimku | null> }).nejistaHra.set({
+      hra: { hra: null, podle: [] } as unknown as VysledekSnimku['hra'], cteni: null, prectiJako: () => cteni,
+      maSloupce: true, serioveCislo: null, docasnySoubor: '',
+    });
+    harness.detectChanges();
+    [...el.querySelectorAll('button')].find(b => b.textContent?.trim() === 'Eurojackpot')!.click();
+    await harness.fixture.whenStable();
+    expect(navigate).toHaveBeenCalledWith(['/tiket/novy'], { replaceUrl: true, queryParams: { kontrola: '1' } });
+  });
+
   it('v prohlížeči fotoaparát nespouští a nabídne ruční zadání', async () => {
     vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(false);
     const poriz = vi.spyOn(zavislostiCapacitor, 'poriz');

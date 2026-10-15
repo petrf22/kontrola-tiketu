@@ -73,7 +73,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
     @if (chyba(); as text) {
       <p class="chyba-akce" role="alert">{{ text }}</p>
     }
-    <p><a class="zpet" routerLink="/tiket/novy">Zadat čísla ručně</a></p>
+    <p><a class="zpet" routerLink="/tiket/novy" [queryParams]="serie">Zadat čísla ručně</a></p>
   `,
   styles: `
     .poznamka { color: var(--barva-text-tlumeny); font-size: 0.9rem; }
@@ -92,7 +92,13 @@ export class SkenCisel implements OnInit {
   private readonly router = inject(Router);
   private readonly nactena = inject(NactenaCisla);
   private readonly naskenovany = inject(NaskenovanyTiket);
-  protected readonly zGalerie = inject(ActivatedRoute).snapshot.data['zdroj'] === 'galerie';
+  private readonly trasa = inject(ActivatedRoute).snapshot;
+  protected readonly zGalerie = this.trasa.data['zdroj'] === 'galerie';
+  /**
+   * Série kontrol bez uložení (`?kontrola=1` z výsledku předchozího tiketu). Příznak jen
+   * projde do formuláře, aby tam byla předvybraná kontrola bez uložení.
+   */
+  protected readonly serie = this.trasa.queryParamMap.get('kontrola') === '1' ? { kontrola: '1' } : null;
   private readonly zavislosti = this.zGalerie ? zavislostiGalerie : zavislostiCapacitor;
   protected readonly znovu = this.zGalerie ? 'Vybrat jiný obrázek' : 'Vyfotit znovu';
 
@@ -155,6 +161,7 @@ export class SkenCisel implements OnInit {
     this.nactena.uloz(cteni, hraPodle);
     // Snímání se v historii nahradí formulářem. Jinak by Zpět z formuláře vrátilo sem
     // a obrazovka by fotoaparát hned otevřela znovu.
-    await this.router.navigate(['/tiket/novy'], { replaceUrl: true });
+    await this.router.navigate(['/tiket/novy'],
+      this.serie === null ? { replaceUrl: true } : { replaceUrl: true, queryParams: this.serie });
   }
 }

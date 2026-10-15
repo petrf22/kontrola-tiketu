@@ -1,5 +1,7 @@
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
+import { RouterTestingHarness } from '@angular/router/testing';
+import { Capacitor } from '@capacitor/core';
 import type { Tiket } from '@kontrola-tiketu/jadro';
 import { EJ_2026_09_04, EJ_2026_09_08 } from '../../../knihovny/jadro/test/fixtures/eurojackpot';
 import { Detail } from './detail';
@@ -125,6 +127,19 @@ describe('Kontrola bez uložení', () => {
     expect(text(f)).toContain(`do posledního staženého losování (${formatujDatum('2026-09-08')})`);
   });
 
+  it('v sérii kontrol (?kontrola=1) má předvybranou kontrolu bez uložení', async () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [provideRouter([{ path: 'tiket/novy', component: NovyTiket }]), { provide: ULOZISTE, useClass: UlozisteVPameti }],
+    });
+    const harness = await RouterTestingHarness.create();
+    await harness.navigateByUrl('/tiket/novy?kontrola=1', NovyTiket);
+    const volby = harness.routeNativeElement!.querySelectorAll('input[name=ulozeni]') as NodeListOf<HTMLInputElement>;
+    expect(volby[0]!.checked).toBe(false);
+    expect(volby[1]!.checked).toBe(true);
+    expect(harness.routeNativeElement!.textContent).toContain('Tiket se neuloží');
+  });
+
   describe('výsledek', () => {
     async function vysledek() {
       TestBed.inject(DocasnyTiket).uloz(tiket);
@@ -143,6 +158,35 @@ describe('Kontrola bez uložení', () => {
       f.destroy();
       expect(TestBed.inject(DocasnyTiket).tiket()).toBeNull();
       expect(stav.tikety()).toHaveLength(0);
+    });
+
+    it('na telefonu nabídne vyfotit další tiket v sérii kontrol', async () => {
+      vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+      const f = await vysledek();
+      const odkazy = [...(f.nativeElement as HTMLElement).querySelectorAll('.dalsi-tiket a')]
+        .map(a => [a.textContent?.trim(), a.getAttribute('href')]);
+      expect(odkazy).toEqual([
+        ['Vyfotit další tiket', '/sken-cisel?kontrola=1'],
+        ['z obrázku', '/z-obrazku?kontrola=1'],
+        ['zadat ručně', '/tiket/novy?kontrola=1'],
+      ]);
+      vi.mocked(Capacitor.isNativePlatform).mockRestore();
+    });
+
+    it('v prohlížeči nabídne další tiket jen ručně', async () => {
+      const f = await vysledek();
+      const odkazy = [...(f.nativeElement as HTMLElement).querySelectorAll('.dalsi-tiket a')]
+        .map(a => a.getAttribute('href'));
+      expect(odkazy).toEqual(['/tiket/novy?kontrola=1']);
+    });
+
+    it('uložený tiket další kontrolu nenabízí', async () => {
+      await stav.ulozTiket(tiket);
+      const f = TestBed.createComponent(Detail);
+      f.componentRef.setInput('id', tiket.id);
+      await f.whenStable();
+      expect(f.nativeElement.querySelector('.souhrn-tiketu')).not.toBeNull();
+      expect(f.nativeElement.querySelector('.dalsi-tiket')).toBeNull();
     });
 
     it('„Přesto uložit“ tiket uloží a přejde na jeho detail', async () => {

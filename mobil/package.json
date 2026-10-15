@@ -36,9 +36,9 @@
     "@angular/cli": "^22.1.7",
     "@angular/compiler-cli": "^22.1.0",
     "@capacitor/cli": "8.5.1",
-    "@types/node": "^26.5.0",
+    "@types/node": "^26.6.5",
     "jsdom": "^28.0.0",
-    "prettier": "^3.8.1",
+    "prettier": "^3.9.10",
     "typescript": "~6.0.2",
     "vitest": "^4.0.8"
   },

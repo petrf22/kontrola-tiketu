@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Opraveno
+- Tlačítko „Vyfotit další tiket“ po kontrole bez uložení je zase čitelné — mělo text v barvě pozadí, v tmavém režimu tmavý na tmavém (aplikace)
+
 ## [1.1.0] – 2026-10-16
 
 ### Přidáno

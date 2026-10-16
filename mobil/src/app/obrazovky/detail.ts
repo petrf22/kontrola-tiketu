@@ -594,8 +594,9 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     }
     .dalsi-tiket p { margin: 0; }
     .dalsi-tiket .hlavni {
-      display: block; padding: 0.85rem 1rem; border: 1px solid var(--barva-ram); border-radius: 6px;
-      background: var(--barva-plocha); text-align: center; text-decoration: none; font-weight: 600;
+      display: block; padding: 0.85rem 1rem; border: 1px solid transparent; border-radius: 6px;
+      background: var(--barva-duraz); color: var(--barva-pozadi);
+      text-align: center; text-decoration: none; font-weight: 600;
     }
   `,
 })

@@ -13,10 +13,22 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '1.0.2';
+export const VERZE = '1.1.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '1.1.0',
+    datum: '2026-10-16',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Po kontrole bez uložení můžete rovnou vyfotit další tiket (nebo ho načíst z obrázku či zadat ručně) a kontrolovat tak několik tiketů po sobě, aniž by se ukládaly; Zpět vede vždy na Přidat tiket',
+        ],
+      },
+    ],
+  },
   {
     verze: '1.0.2',
     datum: '2026-10-15',

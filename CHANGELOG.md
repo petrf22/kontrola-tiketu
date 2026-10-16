@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [1.1.0] – 2026-10-16
+
+### Přidáno
+- Po kontrole bez uložení můžete rovnou vyfotit další tiket (nebo ho načíst z obrázku či zadat ručně) a kontrolovat tak několik tiketů po sobě, aniž by se ukládaly; Zpět vede vždy na Přidat tiket (aplikace)
+
 ## [1.0.2] – 2026-10-15
 
 ### Opraveno

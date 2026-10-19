@@ -16,6 +16,12 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [1.1.2] – 2026-10-19
+
+### Změněno
+- Po kontrole bez uložení vidíte cenu tiketu, výhru a bilanci hned pod názvem hry; upozornění, že tiket není uložený, je až pod nabídkou dalšího tiketu a je označené jako varování, ne jako chyba (aplikace)
+- Tlačítka mají v celé aplikaci jednotný vzhled jako volby na Přidat tiket; plnou barvu má jen hlavní akce obrazovky a „Akce tiketu“ je v detailu vpravo (aplikace)
+
 ## [1.1.1] – 2026-10-16
 
 ### Opraveno

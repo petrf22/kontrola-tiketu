@@ -13,10 +13,23 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '1.1.1';
+export const VERZE = '1.1.2';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '1.1.2',
+    datum: '2026-10-19',
+    sekce: [
+      {
+        nazev: 'Změněno',
+        polozky: [
+          'Po kontrole bez uložení vidíte cenu tiketu, výhru a bilanci hned pod názvem hry; upozornění, že tiket není uložený, je až pod nabídkou dalšího tiketu a je označené jako varování, ne jako chyba',
+          'Tlačítka mají v celé aplikaci jednotný vzhled jako volby na Přidat tiket; plnou barvu má jen hlavní akce obrazovky a „Akce tiketu“ je v detailu vpravo',
+        ],
+      },
+    ],
+  },
   {
     verze: '1.1.1',
     datum: '2026-10-16',

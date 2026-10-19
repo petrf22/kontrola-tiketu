@@ -91,7 +91,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       } @else {
       <div class="akce-tiketu">
         <a routerLink="/" [queryParams]="t.archivovany ? {archiv: '1'} : {}">← {{ t.archivovany ? 'Archiv' : 'Tikety' }}</a>
-        <button type="button" class="vedlejsi" (click)="nabidkaAkci.otevri()">Akce tiketu</button>
+        <button type="button" (click)="nabidkaAkci.otevri()">Akce tiketu</button>
       </div>
       <!-- Dialog mimo lištu: jako další položka flexu by tlačítko odsunul od pravého okraje. -->
       <app-dialog #nabidkaAkci nadpis="Akce tiketu" [spodni]="true" [zavritPozadim]="true">
@@ -202,7 +202,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           <div class="zapomenuti" role="status">
             <p>Tiket není uložený. Odchodem z této obrazovky se tiket i vsazená čísla odstraní.</p>
             @if (chybaAkce(); as chyba) { <p id="chyba-akce" class="chyba" role="alert">{{ chyba }}</p> }
-            <button type="button" class="vedlejsi" [disabled]="uklada()" (click)="ulozDocasny()">Přesto uložit mezi mé tikety</button>
+            <button type="button" [disabled]="uklada()" (click)="ulozDocasny()">Přesto uložit mezi mé tikety</button>
           </div>
         }
 
@@ -539,7 +539,6 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     @media (max-width: 480px) { .dvojice { grid-template-columns: minmax(0, 1fr); } }
     .chyba { margin: 0; color: var(--barva-chyba); font-size: 0.85rem; }
     .tlacitka { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0.5rem 0; }
-    .tlacitka button.hlavni { background: var(--barva-duraz); color: var(--barva-pozadi); border-color: transparent; }
     .rozbalit { margin-top: 1.25rem; width: 100%; }
     .varovani {
       padding: 0.6rem 0.75rem; background: var(--barva-plocha);
@@ -603,7 +602,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     }
     .dalsi-tiket p { margin: 0; }
     .dalsi-tiket .hlavni {
-      display: block; padding: 0.85rem 1rem; border: 1px solid transparent; border-radius: 6px;
+      display: block; padding: 0.85rem 1rem; border: 1px solid transparent; border-radius: 0.65rem;
       background: var(--barva-duraz); color: var(--barva-pozadi);
       text-align: center; text-decoration: none; font-weight: 600;
     }

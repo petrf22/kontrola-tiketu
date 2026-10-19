@@ -79,12 +79,7 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
     .poznamka { color: var(--barva-text-tlumeny); font-size: 0.9rem; }
     .chyba { color: var(--barva-chyba); }
     .volby { display: flex; flex-direction: column; gap: 0.6rem; margin-top: 1.25rem; }
-    button {
-      padding: 0.85rem 1rem; border: 1px solid var(--barva-ram); border-radius: 6px;
-      background: var(--barva-plocha); color: inherit; font: inherit; font-size: 1rem;
-      cursor: pointer; text-align: center;
-    }
-    button:disabled { opacity: 0.5; cursor: default; }
+    button { padding: 0.85rem 1rem; font-size: 1rem; text-align: center; }
     .vedlejsi { color: var(--barva-text-tlumeny); }
   `,
 })

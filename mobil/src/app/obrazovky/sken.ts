@@ -49,10 +49,6 @@ import { maTrvaleUloziste } from '../data/tokeny.js';
   styles: `
     .poznamka { color: var(--barva-text-tlumeny); font-size: 0.9rem; }
     .chyba { color: var(--barva-chyba); }
-    button {
-      padding: 0.5rem 0.9rem; border: 1px solid var(--barva-ram); border-radius: 4px;
-      background: var(--barva-plocha); color: inherit; font: inherit; cursor: pointer;
-    }
   `,
   host: { '[class.skenuje]': 'skenuje()' },
 })

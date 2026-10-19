@@ -105,7 +105,7 @@ import { Tahy } from './tahy.js';
     .karty { display: flex; margin: 0.75rem 0 1rem; border-bottom: 1px solid var(--barva-ram); }
     .karty button {
       border: none; border-bottom: 3px solid transparent; border-radius: 0; background: none;
-      padding: 0.65rem 1.1rem; color: var(--barva-text-tlumeny);
+      padding: 0.65rem 1.1rem; color: var(--barva-text-tlumeny); font-weight: 400;
     }
     .karty [aria-selected=true] { border-bottom-color: var(--barva-duraz); color: var(--barva-text); font-weight: 600; }
     .stahnout { font-size: 1rem; padding: 0.6rem 1.1rem; }

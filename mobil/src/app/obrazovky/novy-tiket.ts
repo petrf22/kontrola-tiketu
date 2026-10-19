@@ -447,7 +447,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
       }
 
       @if (chybaUlozeni(); as chyba) { <p role="alert" class="chyba-akce">{{ chyba }}</p> }
-      <button type="submit" class="ulozit" [disabled]="uklada()">
+      <button type="submit" class="ulozit hlavni" [disabled]="uklada()">
         Zkontrolovat tiket
       </button>
       @if (jenKontrola()) {
@@ -475,10 +475,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
     .rozsah { display: grid; gap: 0.6rem; }
     .tlacitka-rozsahu { display: flex; flex-wrap: wrap; gap: 0.5rem; }
     .tlacitka-rozsahu:empty { display: none; }
-    .tlacitka-rozsahu button {
-      padding: 0.35rem 0.7rem; border: 1px solid var(--barva-ram); border-radius: 4px;
-      background: var(--barva-plocha); color: inherit; font: inherit; font-size: 0.85rem; cursor: pointer;
-    }
+    .tlacitka-rozsahu button { padding: 0.35rem 0.7rem; font-size: 0.85rem; }
     .napoveda { margin: 0; font-size: 0.8rem; line-height: 1.45; color: var(--barva-text-tlumeny); }
     form h2 { margin: 0.5rem 0 0; font-size: 1.1rem; }
     .sloupec { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr) minmax(4rem, 6rem) auto; gap: .4rem; align-items: center; }
@@ -496,11 +493,7 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
     }
     .poradi { width: 1.5rem; color: var(--barva-text-tlumeny); font-variant-numeric: tabular-nums; }
     .euro { max-width: 8rem; }
-    .odebrat, .pridat, .ulozit {
-      padding: 0.45rem 0.8rem; border: 1px solid var(--barva-ram); border-radius: 4px;
-      background: var(--barva-plocha); color: inherit; font: inherit; cursor: pointer;
-    }
-    .ulozit { background: var(--barva-duraz); color: var(--barva-pozadi); border-color: transparent; }
+    .odebrat, .pridat, .ulozit { padding: 0.45rem 0.8rem; }
     .problemy { margin: 0; padding-left: 1.1rem; color: var(--barva-chyba); font-size: 0.85rem; }
     .pod-tlacitkem {
       margin: -0.5rem 0 0; font-size: 0.78rem; color: var(--barva-text-tlumeny);

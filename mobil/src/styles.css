@@ -97,6 +97,8 @@ button:disabled { opacity: .6; cursor: default; }
 .hlavni { background: var(--barva-duraz); color: var(--barva-pozadi); }
 .nabidka { display: grid; gap: .75rem; }
 .nabidka a { display: block; padding: 1rem; border: 1px solid var(--barva-ram); border-radius: .85rem; text-decoration: none; font-weight: 600; }
+/* Vedlejší tlačítko vypadá jako volby na Přidat tiket: obrys na pozadí a písmo v barvě důrazu. */
+button.vedlejsi { background: transparent; color: var(--barva-duraz); font-weight: 600; }
 .nabidka small { display: block; margin-top: .35rem; font-weight: 400; }
 .prepinace { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
 .prepinace [aria-pressed=true] { background: var(--barva-duraz); color: var(--barva-pozadi); }

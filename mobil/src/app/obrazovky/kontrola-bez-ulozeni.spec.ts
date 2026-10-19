@@ -160,6 +160,16 @@ describe('Kontrola bez uložení', () => {
       expect(stav.tikety()).toHaveLength(0);
     });
 
+    it('výsledek je hned pod nadpisem, upozornění na neuložení až pod dalším tiketem', async () => {
+      const f = await vysledek();
+      const el = f.nativeElement as HTMLElement;
+      expect(el.querySelector('h2 + .souhrn-tiketu')).not.toBeNull();
+      const poradi = ['.souhrn-tiketu', '.dalsi-tiket', '.zapomenuti'].map(s => el.querySelector(s)!);
+      for (let i = 1; i < poradi.length; i++) {
+        expect(poradi[i - 1].compareDocumentPosition(poradi[i]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      }
+    });
+
     it('na telefonu nabídne vyfotit další tiket v sérii kontrol', async () => {
       vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
       const f = await vysledek();

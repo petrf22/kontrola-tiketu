@@ -91,31 +91,30 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       } @else {
       <div class="akce-tiketu">
         <a routerLink="/" [queryParams]="t.archivovany ? {archiv: '1'} : {}">← {{ t.archivovany ? 'Archiv' : 'Tikety' }}</a>
-        <button type="button" (click)="nabidkaAkci.otevri()">Akce tiketu</button>
-        <app-dialog #nabidkaAkci nadpis="Akce tiketu" [spodni]="true" [zavritPozadim]="true">
-          <div class="nabidka-akci" (click)="zavriAkce($event)">
-            <button type="button" [disabled]="uklada()" (click)="zacniUpravuNazvu()">Pojmenovat tiket</button>
-            <button type="button" [disabled]="uklada()" (click)="zacniUpravuCeny()">Upravit cenu</button>
-            <button type="button" [disabled]="uklada()" (click)="zacniUpravuRozsahu()">Upravit rozsah kontroly</button>
-            @if (t.kontrola?.do === null) {
-              <button type="button" [disabled]="uklada()" (click)="zacniUkonceni()">Ukončit kontrolu</button>
-            } @else if (t.kontrola) {
-              <button type="button" [disabled]="uklada()" (click)="pokracujBezKonce()">Pokračovat bez konce</button>
-            }
-            <button type="button" [disabled]="uklada()" (click)="archivuj()">{{ t.archivovany ? 'Vrátit z archivu' : 'Archivovat' }}</button>
-            <button type="button" class="smazat" [disabled]="uklada()" (click)="otevriMazani()">Smazat tiket</button>
-            <button type="button">Zavřít nabídku</button>
-          </div>
-        </app-dialog>
+        <button type="button" class="vedlejsi" (click)="nabidkaAkci.otevri()">Akce tiketu</button>
       </div>
+      <!-- Dialog mimo lištu: jako další položka flexu by tlačítko odsunul od pravého okraje. -->
+      <app-dialog #nabidkaAkci nadpis="Akce tiketu" [spodni]="true" [zavritPozadim]="true">
+        <div class="nabidka-akci" (click)="zavriAkce($event)">
+          <button type="button" [disabled]="uklada()" (click)="zacniUpravuNazvu()">Pojmenovat tiket</button>
+          <button type="button" [disabled]="uklada()" (click)="zacniUpravuCeny()">Upravit cenu</button>
+          <button type="button" [disabled]="uklada()" (click)="zacniUpravuRozsahu()">Upravit rozsah kontroly</button>
+          @if (t.kontrola?.do === null) {
+            <button type="button" [disabled]="uklada()" (click)="zacniUkonceni()">Ukončit kontrolu</button>
+          } @else if (t.kontrola) {
+            <button type="button" [disabled]="uklada()" (click)="pokracujBezKonce()">Pokračovat bez konce</button>
+          }
+          <button type="button" [disabled]="uklada()" (click)="archivuj()">{{ t.archivovany ? 'Vrátit z archivu' : 'Archivovat' }}</button>
+          <button type="button" class="smazat" [disabled]="uklada()" (click)="otevriMazani()">Smazat tiket</button>
+          <button type="button">Zavřít nabídku</button>
+        </div>
+      </app-dialog>
       }
       <h2>{{ t.nazev ? t.nazev + ' · ' : '' }}{{ nazevHry(t.hra) }} @if (t.kontrola) { <span class="stitek">virtuální</span> }
         @if (docasny()) { <span class="stitek">bez uložení</span> }</h2>
-      @if (docasny()) {
-        <div class="zapomenuti" role="status">
-          <p>Tiket není uložený. Odchodem z této obrazovky se tiket i vsazená čísla odstraní.</p>
-          <button type="button" [disabled]="uklada()" (click)="ulozDocasny()">Přesto uložit mezi mé tikety</button>
-        </div>
+      <!-- Při kontrole bez uložení jde o výsledek, proto rovnou pod nadpis. -->
+      @if (docasny() && vysledek(); as v) {
+        <ng-container *ngTemplateOutlet="souhrn; context: { $implicit: v }" />
       }
       @if (t.archivovany) {
         <p class="info">V archivu. Tiket se dál započítává do bilance.
@@ -127,7 +126,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           @if (vratitelnyArchiv() !== null) { <button type="button" [disabled]="uklada()" (click)="vratArchiv()">Zpět</button> }
         </p>
       }
-      @if (!dialogy.otevreny() && chybaAkce(); as chyba) { <p id="chyba-akce" class="chyba-akce" role="alert">{{ chyba }}</p> }
+      @if (!docasny() && !dialogy.otevreny() && chybaAkce(); as chyba) { <p id="chyba-akce" class="chyba-akce" role="alert">{{ chyba }}</p> }
       <p class="popis">
         {{ pocetSloupcu(t.sloupce.length) }} ·
         @if (t.kontrola; as k) { Kontrola {{ popisRozsahuKontroly(k) }} }
@@ -157,7 +156,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
           <div class="tlacitka"><button type="submit" class="hlavni" [disabled]="uklada()">Uložit cenu</button><button type="button" (click)="uprava.set('zadna')">Zrušit</button></div>
         </form>
       }
-      @if (vysledek(); as v) {
+      <ng-template #souhrn let-v>
         <dl class="souhrn-tiketu">
           <div>
             <dt>{{ t.kontrola ? 'Vsazeno' : 'Cena tiketu' }}</dt>
@@ -178,6 +177,11 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             </div>
           }
         </dl>
+      </ng-template>
+      @if (vysledek(); as v) {
+        @if (!docasny()) {
+          <ng-container *ngTemplateOutlet="souhrn; context: { $implicit: v }" />
+        }
         <!--
           Série kontrol: další tiket rovnou bez návratu do nabídky. Odchodem se tenhle zapomene
           (onDestroy); replaceUrl drží historii mělkou, takže „zpět“ vede vždy na Přidat tiket.
@@ -194,6 +198,11 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             } @else {
               <a class="hlavni" routerLink="/tiket/novy" [queryParams]="serie" replaceUrl>Zadat další tiket ručně</a>
             }
+          </div>
+          <div class="zapomenuti" role="status">
+            <p>Tiket není uložený. Odchodem z této obrazovky se tiket i vsazená čísla odstraní.</p>
+            @if (chybaAkce(); as chyba) { <p id="chyba-akce" class="chyba" role="alert">{{ chyba }}</p> }
+            <button type="button" class="vedlejsi" [disabled]="uklada()" (click)="ulozDocasny()">Přesto uložit mezi mé tikety</button>
           </div>
         }
 
@@ -584,7 +593,7 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
     .smazat { color: var(--barva-chyba); }
     .zapomenuti {
       display: grid; gap: 0.5rem; padding: 0.6rem 0.75rem; background: var(--barva-plocha);
-      border-left: 3px solid var(--barva-chyba); font-size: 0.85rem; line-height: 1.5;
+      border-left: 3px solid var(--barva-duraz); font-size: 0.85rem; line-height: 1.5;
     }
     .zapomenuti p { margin: 0; }
     .zapomenuti button { justify-self: start; }

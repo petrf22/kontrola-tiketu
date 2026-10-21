@@ -5,7 +5,8 @@ import type { VysledekCteni } from '@kontrola-tiketu/ocr';
 import { HRY, nazevHry } from '../data/format.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { nactiTiketZeSnimku, type VysledekSnimku } from '../data/snimekTiketu.js';
-import { zavislostiCapacitor, zavislostiGalerie } from '../data/snimekTiketu-capacitor.js';
+import { chybaProUzivatele } from '../data/chybaProUzivatele.js';
+import { FoceniZruseno, zavislostiCapacitor, zavislostiGalerie } from '../data/snimekTiketu-capacitor.js';
 import { maTrvaleUloziste } from '../data/tokeny.js';
 
 /**
@@ -132,7 +133,9 @@ export class SkenCisel implements OnInit {
       }
       await this.pokracuj(snimek, snimek.cteni, snimek.hra.podle);
     } catch (potiz) {
-      this.chyba.set(potiz instanceof Error ? potiz.message : String(potiz));
+      // Zavřený fotoaparát není chyba — zůstane „Vyfotit znovu“ a „Zadat čísla ručně“.
+      if (potiz instanceof FoceniZruseno) return;
+      this.chyba.set(chybaProUzivatele(potiz, 'Snímek se nepodařilo zpracovat. Zkus to znovu.'));
     } finally {
       this.pracuje.set(false);
     }

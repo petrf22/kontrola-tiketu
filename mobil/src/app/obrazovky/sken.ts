@@ -6,6 +6,7 @@ import {
   type Barcode,
 } from '@capacitor-mlkit/barcode-scanning';
 import { ChybaCarovehoKodu, prectiCarovyKod, type PrectenyKod } from '@kontrola-tiketu/ocr';
+import { chybaProUzivatele } from '../data/chybaProUzivatele.js';
 import { NaskenovanyTiket } from '../data/sken.js';
 import { maTrvaleUloziste } from '../data/tokeny.js';
 
@@ -81,7 +82,7 @@ export class Sken implements OnDestroy {
     } catch (potiz) {
       this.skenuje.set(false);
       document.body.classList.remove('skenuje');
-      this.chyba.set(potiz instanceof Error ? potiz.message : String(potiz));
+      this.chyba.set(chybaProUzivatele(potiz, 'Čtečku kódu se nepodařilo spustit. Zkus to znovu, nebo zadej tiket ručně.'));
     }
   }
 

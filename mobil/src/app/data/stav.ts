@@ -19,6 +19,7 @@ import {
   type Tiket,
   type VysledekTiketu,
 } from '@kontrola-tiketu/jadro';
+import { chybaProUzivatele } from './chybaProUzivatele.js';
 import { maTrvaleUloziste, SIT, ULOZISTE } from './tokeny.js';
 import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js';
 import { stahniVysledky, type KontrolaServeru } from './stahovani.js';
@@ -107,7 +108,7 @@ export class Stav {
       await this.uloziste.pripoj?.();
     } catch (chyba) {
       this.chybaUloziste.set(
-        `Nepodařilo se otevřít šifrovanou databázi: ${chyba instanceof Error ? chyba.message : String(chyba)}`,
+        `Nepodařilo se otevřít šifrovanou databázi. ${chybaProUzivatele(chyba, 'Zkus aplikaci zavřít a otevřít znovu.')}`,
       );
       this.nacteno.set(true);
       return;
@@ -248,7 +249,7 @@ export class Stav {
     } catch (chyba) {
       return this.zapis({
         uspech: false,
-        zprava: `Výsledky se nepodařilo uložit: ${chyba instanceof Error ? chyba.message : String(chyba)}`,
+        zprava: `Výsledky se nepodařilo uložit. ${chybaProUzivatele(chyba, 'Zkus to znovu.')}`,
       });
     } finally {
       this.stahuje.set(false);

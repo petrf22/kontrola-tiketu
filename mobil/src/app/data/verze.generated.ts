@@ -13,10 +13,23 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '1.1.3';
+export const VERZE = '1.1.4';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '1.1.4',
+    datum: '2026-10-21',
+    sekce: [
+      {
+        nazev: 'Opraveno',
+        polozky: [
+          'Když zavřete fotoaparát nebo výběr obrázku bez fotky, aplikace už neukáže anglickou chybu „User cancelled photos app“ — zůstane jen nabídka vyfotit znovu',
+          'Chyby fotoaparátu, čtečky čárového kódu a databáze se ukazují česky, například když telefon nepovolí přístup ke kameře',
+        ],
+      },
+    ],
+  },
   {
     verze: '1.1.3',
     datum: '2026-10-21',

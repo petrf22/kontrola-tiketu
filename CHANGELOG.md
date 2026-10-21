@@ -16,6 +16,12 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [1.1.4] – 2026-10-21
+
+### Opraveno
+- Když zavřete fotoaparát nebo výběr obrázku bez fotky, aplikace už neukáže anglickou chybu „User cancelled photos app“ — zůstane jen nabídka vyfotit znovu (aplikace)
+- Chyby fotoaparátu, čtečky čárového kódu a databáze se ukazují česky, například když telefon nepovolí přístup ke kameře (aplikace)
+
 ## [1.1.3] – 2026-10-21
 
 ### Změněno

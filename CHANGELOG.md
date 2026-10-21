@@ -16,6 +16,12 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [1.1.3] – 2026-10-21
+
+### Změněno
+- Obrysová tlačítka mají výraznější okraj, v tmavém režimu jsou lépe vidět; „Přesto uložit mezi mé tikety“ je přes celou šířku a odliší se od upozornění (aplikace)
+- Nabídka „Máš další tiket?“ se ukáže i po uložení nového tiketu, takže jde fotit tikety po sobě i s ukládáním (aplikace)
+
 ## [1.1.2] – 2026-10-19
 
 ### Změněno

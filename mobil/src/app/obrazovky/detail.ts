@@ -1,6 +1,6 @@
 import { Dialog, Dialogy } from './dialog.js';
 import { NgTemplateOutlet } from '@angular/common';
-import { Component, DestroyRef, ElementRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild } from '@angular/core';
+import { booleanAttribute, Component, DestroyRef, ElementRef, computed, effect, inject, input, linkedSignal, signal, untracked, viewChild } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import {
   platnyCenik,
@@ -179,14 +179,12 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
         </dl>
       </ng-template>
       @if (vysledek(); as v) {
-        @if (!docasny()) {
-          <ng-container *ngTemplateOutlet="souhrn; context: { $implicit: v }" />
-        }
         <!--
-          Série kontrol: další tiket rovnou bez návratu do nabídky. Odchodem se tenhle zapomene
-          (onDestroy); replaceUrl drží historii mělkou, takže „zpět“ vede vždy na Přidat tiket.
+          Série tiketů: další rovnou bez návratu do nabídky, po kontrole bez uložení i po uložení
+          nově přidaného. Tiket jen ke kontrole se odchodem zapomene (onDestroy); replaceUrl drží
+          historii mělkou, takže „zpět“ vede vždy na Přidat tiket, resp. na seznam.
         -->
-        @if (docasny()) {
+        <ng-template #dalsiTiket let-serie>
           <div class="dalsi-tiket">
             <p>Máš další tiket?</p>
             @if (naZarizeni) {
@@ -199,6 +197,15 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
               <a class="hlavni" routerLink="/tiket/novy" [queryParams]="serie" replaceUrl>Zadat další tiket ručně</a>
             }
           </div>
+        </ng-template>
+        @if (!docasny()) {
+          <ng-container *ngTemplateOutlet="souhrn; context: { $implicit: v }" />
+          @if (pridany()) {
+            <ng-container *ngTemplateOutlet="dalsiTiket; context: { $implicit: {} }" />
+          }
+        }
+        @if (docasny()) {
+          <ng-container *ngTemplateOutlet="dalsiTiket; context: { $implicit: serie }" />
           <div class="zapomenuti" role="status">
             <p>Tiket není uložený. Odchodem z této obrazovky se tiket i vsazená čísla odstraní.</p>
             @if (chybaAkce(); as chyba) { <p id="chyba-akce" class="chyba" role="alert">{{ chyba }}</p> }
@@ -613,6 +620,11 @@ export class Detail {
   readonly id = input('');
   /** Tiket zadaný jen ke kontrole (trasa `/kontrola`): drží ho `DocasnyTiket`, ne úložiště. */
   readonly docasny = input(false);
+  /**
+   * Tiket právě přidaný z formuláře nebo z kontroly bez uložení (`?pridany=1`): detail nabídne
+   * další tiket. Při pozdějším otevření ze seznamu parametr chybí a nabídka se neukáže.
+   */
+  readonly pridany = input(false, { transform: booleanAttribute });
 
   protected readonly stav = inject(Stav);
   private readonly router = inject(Router);
@@ -796,7 +808,7 @@ export class Detail {
     if (!t) return;
     if (await this.provedAkci(() => this.stav.ulozTiket(t))) {
       this.docasnyTiket.zapomen();
-      await this.router.navigate(['/tiket', t.id], { replaceUrl: true });
+      await this.router.navigate(['/tiket', t.id], { queryParams: { pridany: '1' }, replaceUrl: true });
     }
   }
 

@@ -66,7 +66,7 @@ describe('Kontrola bez uložení', () => {
     expect(volby[1]!.checked).toBe(false);
     await klikni(f, 'Zkontrolovat tiket');
     expect(stav.tikety()).toHaveLength(1);
-    expect(navigate.mock.calls[0]![0]).toEqual(['/tiket', stav.tikety()[0]!.id]);
+    expect(navigate).toHaveBeenCalledWith(['/tiket', stav.tikety()[0]!.id], { queryParams: { pridany: '1' } });
   });
 
   it('vylosovaný tiket zkontroluje bez uložení a přejde na výsledek místo formuláře', async () => {
@@ -190,7 +190,7 @@ describe('Kontrola bez uložení', () => {
       expect(odkazy).toEqual(['/tiket/novy?kontrola=1']);
     });
 
-    it('uložený tiket další kontrolu nenabízí', async () => {
+    it('uložený tiket otevřený ze seznamu další tiket nenabízí', async () => {
       await stav.ulozTiket(tiket);
       const f = TestBed.createComponent(Detail);
       f.componentRef.setInput('id', tiket.id);
@@ -199,12 +199,31 @@ describe('Kontrola bez uložení', () => {
       expect(f.nativeElement.querySelector('.dalsi-tiket')).toBeNull();
     });
 
+    it('právě uložený tiket nabídne další pod souhrnem, s předvybraným uložením', async () => {
+      vi.spyOn(Capacitor, 'isNativePlatform').mockReturnValue(true);
+      await stav.ulozTiket(tiket);
+      const f = TestBed.createComponent(Detail);
+      f.componentRef.setInput('id', tiket.id);
+      f.componentRef.setInput('pridany', '1');
+      await f.whenStable();
+      const el = f.nativeElement as HTMLElement;
+      expect(el.querySelector('.souhrn-tiketu + .dalsi-tiket')).not.toBeNull();
+      expect(el.querySelector('.zapomenuti')).toBeNull();
+      const odkazy = [...el.querySelectorAll('.dalsi-tiket a')].map(a => [a.textContent?.trim(), a.getAttribute('href')]);
+      expect(odkazy).toEqual([
+        ['Vyfotit další tiket', '/sken-cisel'],
+        ['z obrázku', '/z-obrazku'],
+        ['zadat ručně', '/tiket/novy'],
+      ]);
+      vi.mocked(Capacitor.isNativePlatform).mockRestore();
+    });
+
     it('„Přesto uložit“ tiket uloží a přejde na jeho detail', async () => {
       const f = await vysledek();
       await klikni(f, 'Přesto uložit mezi mé tikety');
       expect(stav.tikety().map(t => t.id)).toEqual([tiket.id]);
       expect(TestBed.inject(DocasnyTiket).tiket()).toBeNull();
-      expect(navigate).toHaveBeenCalledWith(['/tiket', tiket.id], { replaceUrl: true });
+      expect(navigate).toHaveBeenCalledWith(['/tiket', tiket.id], { queryParams: { pridany: '1' }, replaceUrl: true });
     });
 
     it('bez tiketu v paměti řekne, že už byl zapomenut', async () => {

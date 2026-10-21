@@ -128,6 +128,10 @@ Režim série nese query parametr `?kontrola=1` přes focení až do formuláře
 kontrolu bez uložení — schválně ne stav v paměti, aby nezůstal viset, když uživatel sérii
 opustí jinudy. Všechny kroky jdou s `replaceUrl`, takže „zpět“ vede vždy na Přidat tiket.
 
+Stejnou nabídku má i detail právě uloženého tiketu: formulář (a „Přesto uložit“) tam naviguje
+s `?pridany=1`, odkazy pak vedou bez `kontrola=1`, takže formulář předvybere uložení. Tiket
+otevřený ze seznamu parametr nemá a nabídku neukáže.
+
 ## Ceník
 
 Ceník sázek (`CenikHry`) přichází z backendu v balíku jako `ceny` a ukládá se vždy celý. Cena

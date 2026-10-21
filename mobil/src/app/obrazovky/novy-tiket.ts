@@ -974,6 +974,7 @@ export class NovyTiket {
     } finally { this.uklada.set(false); }
     // Průchozí údaje ze skenu už splnily účel.
     this.naskenovany.zapomen();
-    await this.router.navigate(['/tiket', tiket.id]);
+    // `pridany`: detail nabídne další tiket, ať jde skenovat v sérii i s ukládáním.
+    await this.router.navigate(['/tiket', tiket.id], { queryParams: { pridany: '1' } });
   }
 }

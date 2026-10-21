@@ -595,7 +595,8 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       border-left: 3px solid var(--barva-duraz); font-size: 0.85rem; line-height: 1.5;
     }
     .zapomenuti p { margin: 0; }
-    .zapomenuti button { justify-self: start; }
+    /* Pozadí obrazovky, jinak obrysové tlačítko na ploše upozornění splývá s textem. */
+    .zapomenuti button { background: var(--barva-pozadi); }
     .dalsi-tiket {
       display: grid; gap: 0.5rem; margin: 1rem 0; padding: 0.75rem;
       border: 1px solid var(--barva-ram); border-radius: 0.85rem;

@@ -9,6 +9,8 @@
   --barva-ram: #d9d7d2;
   --barva-text: #1b1a18;
   --barva-text-tlumeny: #6b6862;
+  /* Obrys vedlejších tlačítek: výraznější než rámečky, na tmavém pozadí by --barva-ram zanikla. */
+  --barva-obrys: var(--barva-text-tlumeny);
   --barva-duraz: #8a5a2b;
   --barva-ok: #3f7a4a;
   --barva-chyba: #a33a2c;
@@ -84,7 +86,7 @@ h3 { font-size: 1.1rem; }
 a { color: var(--barva-duraz); text-underline-offset: .2em; }
 button, input, select, summary, .zpet { min-height: 48px; }
 input[type=checkbox], input[type=radio] { min-height: 24px; width: 24px; vertical-align: middle; accent-color: var(--barva-duraz); }
-button, select { border: 1px solid var(--barva-ram); border-radius: .65rem; padding: .65rem .85rem; font: inherit; cursor: pointer; }
+button, select { border: 1px solid var(--barva-obrys); border-radius: .65rem; padding: .65rem .85rem; font: inherit; cursor: pointer; }
 select { background: var(--barva-plocha); color: var(--barva-text); }
 /*
   Tlačítko vypadá jako volby na Přidat tiket: obrys na pozadí a tučné písmo v barvě důrazu.
@@ -102,7 +104,7 @@ button:disabled { opacity: .6; cursor: default; }
 .zpet { display: inline-flex; align-items: center; }
 .hlavni { background: var(--barva-duraz); color: var(--barva-pozadi); border-color: transparent; }
 .nabidka { display: grid; gap: .75rem; }
-.nabidka a { display: block; padding: 1rem; border: 1px solid var(--barva-ram); border-radius: .85rem; text-decoration: none; font-weight: 600; }
+.nabidka a { display: block; padding: 1rem; border: 1px solid var(--barva-obrys); border-radius: .85rem; text-decoration: none; font-weight: 600; }
 .nabidka small { display: block; margin-top: .35rem; font-weight: 400; }
 .prepinace { display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0; }
 .prepinace [aria-pressed=true] { background: var(--barva-duraz); color: var(--barva-pozadi); }

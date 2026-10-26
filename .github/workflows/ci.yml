@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '24'
       - run: node --test 'nastroje/**/*.test.mjs'
-      # VERSION a CHANGELOG.md jsou zdroj pravdy, čtyři soubory se z nich generují
+      # VERSION a CHANGELOG.md jsou zdroj pravdy, pět souborů se z nich generuje
       # (kořenový CLAUDE.md, „Verze a vydání“). Skript musí projít bez změny souborů.
       - run: node nastroje/verze/sync.mjs
       - run: git diff --exit-code

@@ -16,6 +16,11 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
+## [Nezveřejněno]
+
+### Změněno
+- Generátor verze přepisuje i verzi v `mobil/package-lock.json`, takže ji už nesrovnává až Dependabot (build)
+
 ## [1.1.4] – 2026-10-21
 
 ### Opraveno

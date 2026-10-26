@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Sjednocené verzování celého repozitáře (mobil/docs/vydani.md, sekce "Postup vydání").
 // Kořenové VERSION + CHANGELOG.md jsou jediný zdroj pravdy — tenhle skript z nich přepisuje
-// čtyři commitované výstupy (package.json aplikace, versionCode/versionName v Android buildu,
-// historii změn pro obrazovku "O aplikaci" a verzi PHP backendu).
+// pět commitovaných výstupů (package.json aplikace a jeho lockfile, versionCode/versionName
+// v Android buildu, historii změn pro obrazovku "O aplikaci" a verzi PHP backendu).
 // Spouští se `node nastroje/verze/sync.mjs` z kořene repozitáře.
 //
 // Že generované soubory skutečně sedí se zdrojem, hlídá test/verze.test.mjs vedle skriptu
@@ -25,6 +25,12 @@ export const CASTI = ['aplikace', 'jádro', 'fetcher', 'backend', 'build'];
 
 /** package.json soubory, ve kterých se drží jedno společné číslo verze. */
 const BALICKY = ['mobil/package.json'];
+
+/**
+ * Lockfile nese verzi balíčku dvakrát (kořen a `packages[""]`). Bez přepisu ho srovná až
+ * nejbližší `npm install` — typicky v PR od Dependabotu, kam změna verze nepatří.
+ */
+const ZAMKY = ['mobil/package-lock.json'];
 
 const GRADLE = 'mobil/android/app/build.gradle';
 const HISTORIE_TS = 'mobil/src/app/data/verze.generated.ts';
@@ -161,6 +167,24 @@ export function generuj(koren = KOREN) {
       throw new Error(`${relativni}: nenašel jsem pole "version"`);
     }
     vystup.set(relativni, obsah.replace(pole, `$1${verze}$2`));
+  }
+
+  // "version" je v lockfilu u každé závislosti, regulární výraz by tu sáhl vedle. Proto přes
+  // JSON — ale jen když soubor má přesně formát, jaký píše npm, jinak by přepis změnil víc
+  // než verzi.
+  for (const relativni of ZAMKY) {
+    const obsah = cti(koren, relativni);
+    const zamek = JSON.parse(obsah);
+    const naformatuj = (data) => `${JSON.stringify(data, null, 2)}\n`;
+    if (naformatuj(zamek) !== obsah) {
+      throw new Error(`${relativni}: není ve formátu, jaký píše npm — spusť v mobil/ npm install`);
+    }
+    if (typeof zamek.version !== 'string' || typeof zamek.packages?.['']?.version !== 'string') {
+      throw new Error(`${relativni}: nenašel jsem pole "version" v kořeni a v packages[""]`);
+    }
+    zamek.version = verze;
+    zamek.packages[''].version = verze;
+    vystup.set(relativni, naformatuj(zamek));
   }
 
   // Groovy, ne Kotlin DSL — mezi jménem a hodnotou není "=".

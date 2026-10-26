@@ -19,10 +19,11 @@ const cti = (relativni) => readFileSync(join(KOREN, relativni), 'utf8');
 const GENEROVANE = generuj();
 
 describe('generované soubory sedí se zdrojem', () => {
-  it('generují se právě čtyři soubory', () => {
+  it('generuje se právě pět souborů', () => {
     assert.deepEqual([...GENEROVANE.keys()].sort(), [
       'backend/src/Verze.php',
       'mobil/android/app/build.gradle',
+      'mobil/package-lock.json',
       'mobil/package.json',
       'mobil/src/app/data/verze.generated.ts',
     ]);
@@ -174,7 +175,7 @@ describe('generátor proti podvrženému kořeni', () => {
   const changelog = (verze) =>
     `# Změny\n\n## [${verze}] – 2026-09-09\n\n### Přidáno\n- Něco (aplikace)\n`;
 
-  it('zapíše novou verzi do všech čtyř souborů', () => {
+  it('zapíše novou verzi do všech pěti souborů', () => {
     const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
     const soubory = generuj(koren);
     for (const [relativni, obsah] of soubory) {
@@ -182,6 +183,7 @@ describe('generátor proti podvrženému kořeni', () => {
         assert.equal(JSON.parse(obsah).version, '1.2.3', relativni);
       }
     }
+    assert.equal(JSON.parse(soubory.get('mobil/package-lock.json')).packages[''].version, '1.2.3');
     assert.ok(soubory.get('mobil/android/app/build.gradle').includes('versionCode 10203'));
     assert.ok(soubory.get('mobil/android/app/build.gradle').includes('versionName "1.2.3"'));
     assert.ok(soubory.get('mobil/src/app/data/verze.generated.ts').includes("VERZE = '1.2.3'"));
@@ -224,6 +226,23 @@ describe('generátor proti podvrženému kořeni', () => {
     assert.ok(ts.includes('Viditelná věc'));
     assert.ok(!ts.includes('Věc na serveru'));
     assert.ok(!ts.includes('Věc ve výpočtu'));
+  });
+
+  it('v lockfilu změní jen verzi balíčku, ne verze závislostí', () => {
+    const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
+    const puvodni = JSON.parse(cti('mobil/package-lock.json'));
+    const novy = JSON.parse(generuj(koren).get('mobil/package-lock.json'));
+    puvodni.version = '1.2.3';
+    puvodni.packages[''].version = '1.2.3';
+    assert.deepEqual(novy, puvodni);
+  });
+
+  it('padne na lockfilu v jiném formátu, než jaký píše npm', () => {
+    // Přepis přes JSON by jinak tiše přeformátoval celý soubor.
+    const koren = docasnyKoren('1.2.3', changelog('1.2.3'));
+    const zamek = join(koren, 'mobil/package-lock.json');
+    writeFileSync(zamek, JSON.stringify(JSON.parse(readFileSync(zamek, 'utf8'))));
+    assert.throws(() => generuj(koren), /formátu, jaký píše npm/);
   });
 
   it('padne, když CHANGELOG.md nemá sekci pro verzi z VERSION', () => {

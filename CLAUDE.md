@@ -39,7 +39,7 @@ Ověřené příkazy:
 cd backend && composer test && composer phpstan      # PHPUnit 96 testů, PHPStan level max
 cd mobil && npm test && npm run typecheck            # vitest 621 testů, tsc strict
 cd mobil && npm run test:angular -- --watch=false    # obrazovky v prohlížeči, 96 testů
-node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 25 testů
+node --test 'nastroje/**/*.test.mjs'                 # generátor verze, 28 testů
 node nastroje/verze/sync.mjs                         # přegeneruje verzi; musí projít bez změny souborů
 ```
 
@@ -112,8 +112,8 @@ platí dál doslova: **nikdy nenavrhuj dotaz na server vázaný na konkrétní t
 
 ## Verze a vydání
 
-**Zdroj pravdy o verzi je kořenový `VERSION` a `CHANGELOG.md`.** Čtyři soubory z nich generuje
-`node nastroje/verze/sync.mjs` — `mobil/package.json`, `versionCode`/`versionName`
+**Zdroj pravdy o verzi je kořenový `VERSION` a `CHANGELOG.md`.** Pět souborů z nich generuje
+`node nastroje/verze/sync.mjs` — `mobil/package.json` a jeho lockfile, `versionCode`/`versionName`
 v `mobil/android/app/build.gradle`, `mobil/src/app/data/verze.generated.ts` pro obrazovku
 „O aplikaci“ a `backend/src/Verze.php`. **Needituj je ručně**; že sedí se zdrojem, hlídá
 `nastroje/verze/test/verze.test.mjs`.

@@ -17,11 +17,12 @@ Všechno ostatní se z nich generuje příkazem (z kořene repozitáře):
 node nastroje/verze/sync.mjs
 ```
 
-Skript přepíše čtyři commitované soubory:
+Skript přepíše pět commitovaných souborů:
 
 | Soubor | Co |
 |---|---|
 | `mobil/package.json` | `"version"` |
+| `mobil/package-lock.json` | `"version"` v kořeni a v `packages[""]` |
 | `mobil/android/app/build.gradle` | `versionCode` + `versionName` |
 | `mobil/src/app/data/verze.generated.ts` | verze a historie pro obrazovku „O aplikaci“ |
 | `backend/src/Verze.php` | verze PHP backendu, kterou nese jeho User-Agent |
@@ -445,8 +446,8 @@ Tenhle projekt je sólo a commituje se **přímo do `main`**, bez feature větv�
 1. Doplnit položky do `## [Nezveřejněno]` v `CHANGELOG.md` a přejmenovat sekci
    na `## [X.Y.Z] – RRRR-MM-DD`.
 2. Zapsat `X.Y.Z` do `VERSION`.
-3. `node nastroje/verze/sync.mjs` — přepíše čtyři generované soubory.
-4. `git diff --stat` — musí ukázat právě ty čtyři plus `VERSION` a `CHANGELOG.md`.
+3. `node nastroje/verze/sync.mjs` — přepíše pět generovaných souborů.
+4. `git diff --stat` — musí ukázat právě těch pět plus `VERSION` a `CHANGELOG.md`.
    Cokoli navíc znamená, že skript sáhl, kam neměl; zastavit se.
 5. Testy všech částí:
    ```bash

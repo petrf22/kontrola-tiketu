@@ -50,8 +50,8 @@ node nastroje/verze/sync.mjs
 git diff --stat
 ```
 
-Musí se změnit právě ty čtyři generované soubory (`mobil/package.json`,
-`mobil/android/app/build.gradle`, `mobil/src/app/data/verze.generated.ts`,
+Musí se změnit právě těch pět generovaných souborů (`mobil/package.json`,
+`mobil/package-lock.json`, `mobil/android/app/build.gradle`, `mobil/src/app/data/verze.generated.ts`,
 `backend/src/Verze.php`) plus `VERSION` a `CHANGELOG.md`.
 **Cokoli navíc — zastav se a zeptej.**
 

@@ -579,10 +579,10 @@ git tag -a vX.Y.(Z+1) -m 'Verze X.Y.(Z+1)'
 - ~~Podpisový klíč~~ — vytvořen 10. 9. 2026, otisk výše. **Zálohovat mimo tenhle počítač;
   bez něj se aplikace se stejným `applicationId` už nikdy nevydá.**
 - ~~Veřejná adresa se zásadami~~ — vyřešená, viz výše.
-- **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
-  je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
-  a míří na uzavřený test, ne rovnou do produkce.
-- **Tiket Euromilionů není ověřený na papíře** — rozvržení sloupců, popisek Eurošance ani
-  čárový kód. Viz `docs/ocr-a-carovy-kod.md`, „Euromiliony: neověřeno na papíře“.
+- ~~Šance u Sportky na reálném tiketu~~ — podoba řádku `Šance:` ověřená na fotce 14. 9. 2026
+  (`docs/ocr-a-carovy-kod.md`, „Jak tikety vypadají“), výhra Sportky se Šancí sedí na částku
+  vyplacenou prodejnou (`test/tiketyUzivatele.test.ts`, tikety z 2. 10. 2026).
+- ~~Tiket Euromilionů na papíře~~ — rozvržení sloupců, popisek Eurošance i čárový kód ověřené
+  na fotce 14. 9. 2026, výhra s Eurošancí sedí na vyplacenou částku (tentýž test).
 - ~~Backend s formátem 2~~ — nasazený 13. 9. 2026 spolu s vydáním 0.2.0. Aplikace do 0.1.1
   ze serveru už nestáhne nic (balík ve formátu 2 odmítne s výzvou k aktualizaci).

@@ -34,10 +34,10 @@ Dvě části. Žádná z nich nikdy neposílá vsazená čísla ani nic, co by i
    přímo na zařízení a vyhodnocení proběhne lokálně. Spojit se umí jedině se serverem
    výsledků — jinam systém TLS spojení nepustí. Výsledky jdou naimportovat i souborem.
 
-Dřív aplikace neměla oprávnění k síti vůbec a výsledky se nosily jen souborem z desktopového
-fetcheru. Pro kontrolu
-dvakrát týdně to bylo nepoužitelné, a zadání pro takový případ síť připouští s tvrdým
-pravidlem: stahuje se vždy všechno, nikdy dotaz vázaný na konkrétní tiket.
+Do verze 0.1.1 aplikace neměla oprávnění k síti vůbec a výsledky se nosily jen souborem
+z desktopového fetcheru. Pro kontrolu dvakrát týdně to bylo nepoužitelné, a zadání pro takový
+případ síť připouští s tvrdým pravidlem: stahuje se vždy všechno, nikdy dotaz vázaný na
+konkrétní tiket.
 
 ## Soukromí
 
@@ -57,9 +57,9 @@ pravidlem: stahuje se vždy všechno, nikdy dotaz vázaný na konkrétní tiket.
 
 ## Stav
 
-**Verze 0.1.0** — hotové a ověřené na skutečném telefonu (Xiaomi 14T Pro, Android 16).
-Historie změn je v [`CHANGELOG.md`](CHANGELOG.md), postup vydání
-v [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
+**Verze 1.1.4** (21. 10. 2026) — aplikace je v Google Play v produkci od verze 1.0.0
+(14. 10. 2026), backend běží na `kontrolatiketu.petrf22.cz` od 13. 9. 2026. Historie změn je
+v [`CHANGELOG.md`](CHANGELOG.md), postup vydání v [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
 
 Repozitář má tři nezávislé části, každá s vlastními testy:
 
@@ -75,19 +75,25 @@ nastroje/    generátor verze, ikony a screenshoty pro Google Play
 - **Backend** — `backend`. PHP 8.2 bez běhových závislostí: rozvrh dotazů, archiv surových
   listin, parser, SQLite a publikace do statických souborů.
 - **Vyhodnocovací jádro** — `mobil/knihovny/jadro`. Čistá knihovna bez UI, I/O a sítě. Umí
-  Eurojackpot, Sportku i Euromiliony včetně Šance, Extra 6, Eurošance a Bonusu. Testy jedou
-  proti reálným tahům z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher.
+  Eurojackpot, Sportku i Euromiliony včetně Šance, Extra 6, Eurošance a Bonusu, cenu tiketu
+  podle ceníku a virtuální tiket kontrolovaný za libovolné období. Testy jedou proti reálným
+  tahům z let 2015 a 2026 a ověřují se proti oficiálně publikované tabulce výher; sedm
+  skutečných tiketů všech tří her sedí na výhru vyplacenou prodejnou.
 - **Čtení tiketu** — `mobil/knihovny/ocr`. Skládá rozpoznaný text na sloupce (páruje levou
   a pravou část řádku podle rámečků, snese nakloněný snímek) a čte sériové číslo z čárového
   kódu. Nezávisí na ML Kitu, takže jde otestovat bez zařízení.
-- **Aplikace** — `mobil`. Angular + Capacitor. Seznam tiketů, sken čárového kódu, ruční zadání,
-  stažení i import výsledků a detail vyhodnocení. Data drží šifrovaná databáze (SQLCipher,
+- **Aplikace** — `mobil`. Angular + Capacitor. Seznam tiketů s filtrem a archivem, focení
+  tiketu nebo načtení z obrázku, sken čárového kódu, ruční zadání, kontrola bez uložení,
+  detail vyhodnocení, přehled vsazeno × vyhráno, výsledky losování s tabulkami výher, jejich
+  stažení i import. Data drží šifrovaná databáze (SQLCipher,
   klíč v Android Keystore). Android projekt je zatvrzený podle požadavků na soukromí —
   sestavené APK má právě `CAMERA` a `INTERNET` se síťovým allowlistem, ověřeno testem.
 
 ```bash
 cd mobil && npm install && npm test                    # aplikace, jádro, OCR
+cd mobil && npm run test:angular -- --watch=false      # obrazovky v prohlížeči
 cd backend && composer install && composer test       # backend
+node --test 'nastroje/**/*.test.mjs'                   # generátor verze
 
 # backend: stažení listin za období do archivu a převod na soubor pro import (bez sítě)
 cd backend
@@ -99,19 +105,18 @@ Backend stahuje jeden dotaz na hru a týden, posílá poctivý User-Agent, drž�
 prodlevu a respektuje `robots.txt` — právě kvůli němu se nepoužívá JSON API, které web sám
 používá. Co je jednou v archivu, se znovu nestahuje.
 
+Testy všech tří částí a ladicí sestavení Androidu pouští GitHub Actions u každé změny,
+aktualizace knihoven hlídá Dependabot.
+
 ### Co ještě chybí
 
 Aby nevznikl mylný dojem, že je všechno vyzkoušené:
 
-- **Šance u Sportky není ověřená na reálném tiketu.** Podoba Extra 6 u Eurojackpotu ověřená
-  je, u Šance je vzor volnější a nikdo ho proti papíru neviděl. Proto je první verze `0.1.0`
-  a míří na uzavřený test, ne rovnou do produkce.
-- **Tiket Euromilionů není ověřený na papíře.** Server výsledků je publikuje od 13. 9. 2026.
-- **Na Google Play je aplikace zatím ve veřejném testování**, ne v produkci — viz
-  [`mobil/docs/vydani.md`](mobil/docs/vydani.md).
-- **Stahování výsledků se ještě neověřovalo na telefonu.** Backend běží na
-  `kontrolatiketu.petrf22.cz` (od 13. 9. 2026), ale síťový allowlist se na zařízení nezkoušel.
-  Do té doby je jistý import souboru.
+- **Že spojení jinam než na server výsledků selže, se na telefonu neověřilo.** Ověřené je
+  jen to, že allowlist stažení výsledků pustí (14. 9. 2026, verze 0.2.0 z Google Play).
+  Sestavené APK hlídá test, chování systému na zařízení ne.
+- **Tiket s nevsazenou doplňkovou hrou (`NE`) zatím nikdo nevyfotil** — čtení vychází
+  z popisu, ne z papíru ([`mobil/docs/ocr-a-carovy-kod.md`](mobil/docs/ocr-a-carovy-kod.md)).
 
 Zadání a postup jsou v [`zadani-kontrola-tiketu.md`](zadani-kontrola-tiketu.md).
 

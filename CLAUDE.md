@@ -49,19 +49,21 @@ Composer, Gradle a akce; drobné aktualizace chodí v jednom PR, Capacitor a Ang
 
 ## Stav
 
-Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace se sedmi obrazovkami**
+Hotové je **vyhodnocovací jádro**, **čtení tiketu**, **aplikace**
 a **backend se stahováním výsledků do aplikace** (10.–11. 9. 2026).
 
 **Euromiliony** (13. 9. 2026) jsou vydané ve verzi 0.2.0 a backend s nimi je nasazený. Přinesly
 `verzeFormatu` 2 — aplikace do 0.1.1 ho odmítne, takže ze serveru stahuje jen 0.2.0 a novější
-(`backend/docs/backend.md`, API). Tiket Euromilionů je od 14. 9. 2026 ověřený na fotce, na
-telefonu zatím ne.
+(`backend/docs/backend.md`, API). Tikety všech tří her jsou ověřené na fotkách (14. 9. 2026)
+a sedm skutečných tiketů uživatele sedí na výhru vyplacenou prodejnou
+(`mobil/test/tiketyUzivatele.test.ts`, 4. 10. 2026).
 
-**Verze 0.2.0 je v Google Play a běží na telefonu** (14. 9. 2026). Backend je nasazený na
-`kontrolatiketu.petrf22.cz` (13. 9. 2026; Gigaserver, jen FTP — viz `backend/docs/backend.md`).
-Na zařízení je ověřené stažení všech výsledků přes allowlist s prázdnými `<trust-anchors />`
-i fotka a čárový kód bez odstraněného `datatransport`. Neověřené zůstává, že spojení na jinou
-doménu selže — viz `mobil/docs/vydani.md`, „Co vydání ještě blokuje“.
+**Aplikace je v Google Play v produkci od verze 1.0.0** (14. 10. 2026), aktuální je 1.1.4
+(21. 10. 2026). Backend je nasazený na `kontrolatiketu.petrf22.cz` (13. 9. 2026; Gigaserver,
+jen FTP — viz `backend/docs/backend.md`). Na zařízení je ověřené stažení všech výsledků přes
+allowlist s prázdnými `<trust-anchors />` i fotka a čárový kód bez odstraněného
+`datatransport` (0.2.0, 14. 9. 2026). Neověřené zůstává, že spojení na jinou doménu selže —
+viz `mobil/docs/vydani.md`, „Co vydání ještě blokuje“.
 
 ## Účel a hlavní omezení
 

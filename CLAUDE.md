@@ -121,6 +121,6 @@ v `mobil/android/app/build.gradle`, `mobil/src/app/data/verze.generated.ts` pro 
 `versionCode = major*10000 + minor*100 + patch`. Google Play už nikdy nepřijme nižší
 versionCode, než naposledy nahraný — proto ten vzorec a proto skript padá při přetečení.
 
-Vydání dělá projektový příkaz **`/vydat`**; celý postup a rozhodnutí kolem Play jsou
+Vydání dělá projektový příkaz **`/release-kontrola-tiketu`**; celý postup a rozhodnutí kolem Play jsou
 v `mobil/docs/vydani.md`. Globální `/release-gitlab` na tenhle projekt nesedí (hledá
 `ClientApp/package.json` a `*.csproj`) — nepoužívej ho.

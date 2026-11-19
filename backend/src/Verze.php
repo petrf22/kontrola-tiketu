@@ -8,5 +8,5 @@ namespace KontrolaTiketu;
 
 final class Verze
 {
-    public const VERZE = '1.1.4';
+    public const VERZE = '1.2.0';
 }

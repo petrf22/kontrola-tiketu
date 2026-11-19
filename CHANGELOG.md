@@ -16,7 +16,7 @@ dostanou jen položky označené `aplikace` — uživatele mobilu nezajímá, co
 ani v sestavování. Vydání, ve kterém
 pro uživatele nic není, se v aplikaci neukáže vůbec.
 
-## [Nezveřejněno]
+## [1.2.0] – 2026-11-19
 
 ### Přidáno
 - Skupinové sázení: tiket nese počet členů, kteří se dělí o vklad i výhru; počet se zapamatuje k názvu („Práce“) a při zadání dalšího tiketu téhož názvu se předvyplní (aplikace)
@@ -24,6 +24,7 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 
 ### Změněno
 - Generátor verze přepisuje i verzi v `mobil/package-lock.json`, takže ji už nesrovnává až Dependabot (build)
+- Projektový příkaz pro vydání se jmenuje `/release-kontrola-tiketu` (build)
 
 ## [1.1.4] – 2026-10-21
 

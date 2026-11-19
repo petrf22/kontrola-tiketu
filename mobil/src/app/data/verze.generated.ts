@@ -13,10 +13,23 @@ export interface Vydani {
   readonly sekce: readonly SekceZmen[];
 }
 
-export const VERZE = '1.1.4';
+export const VERZE = '1.2.0';
 
 /** Nejnovější vydání první. */
 export const HISTORIE: readonly Vydani[] = [
+  {
+    verze: '1.2.0',
+    datum: '2026-11-19',
+    sekce: [
+      {
+        nazev: 'Přidáno',
+        polozky: [
+          'Skupinové sázení: tiket nese počet členů, kteří se dělí o vklad i výhru; počet se zapamatuje k názvu („Práce“) a při zadání dalšího tiketu téhož názvu se předvyplní',
+          'Detail, seznam a přehled ukazují vklad, výhru a bilanci na jednoho člena, přehled i „Můj podíl“ přes všechny skupinové tikety',
+        ],
+      },
+    ],
+  },
   {
     verze: '1.1.4',
     datum: '2026-10-21',

@@ -18,6 +18,10 @@ pro uživatele nic není, se v aplikaci neukáže vůbec.
 
 ## [Nezveřejněno]
 
+### Přidáno
+- Skupinové sázení: tiket nese počet členů, kteří se dělí o vklad i výhru; počet se zapamatuje k názvu („Práce“) a při zadání dalšího tiketu téhož názvu se předvyplní (aplikace)
+- Detail, seznam a přehled ukazují vklad, výhru a bilanci na jednoho člena, přehled i „Můj podíl“ přes všechny skupinové tikety (aplikace)
+
 ### Změněno
 - Generátor verze přepisuje i verzi v `mobil/package-lock.json`, takže ji už nesrovnává až Dependabot (build)
 

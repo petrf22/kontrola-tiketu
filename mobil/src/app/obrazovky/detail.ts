@@ -5,6 +5,7 @@ import { Router, RouterLink } from '@angular/router';
 import {
   platnyCenik,
   pocetSlosovaniPodleCeny,
+  clenuTiketu,
   rozpisCenyTiketu,
   type Tiket,
   zkontrolujTiket,
@@ -40,6 +41,7 @@ import {
 import { DocasnyTiket } from '../data/docasnyTiket.js';
 import { maTrvaleUloziste } from '../data/tokeny.js';
 import { DuplicitniTiket, Stav } from '../data/stav.js';
+import { platnyPocetClenu } from '../data/nazvyTiketu.js';
 import { NazevTiketu } from './nazev-tiketu.js';
 import { VyhryTahu } from './vyhry-tahu.js';
 import { zobrazTah, type ZobrazenyTah } from '../data/zobrazeniTahu.js';
@@ -137,6 +139,11 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
       @if (uprava() === 'nazev') {
         <form class="uprava" (submit)="ulozNazev($event)">
           <app-nazev-tiketu [hodnota]="novyNazev()" (zmena)="novyNazev.set($event)" />
+          <label>Počet členů skupiny (nepovinný)
+            <input name="clenu" type="number" min="1" max="99" step="1" inputmode="numeric" placeholder="1 = sázím sám"
+              [value]="noviClenove()" (input)="noviClenove.set($any($event.target).value)" />
+          </label>
+          <p class="tlumene">Vklad i výhra se dělí počtem členů. Počet se zapamatuje k názvu pro další tikety.</p>
           <div class="tlacitka"><button type="submit" class="hlavni" [disabled]="uklada()">Uložit název</button><button type="button" (click)="uprava.set('zadna')">Zrušit</button></div>
         </form>
       }
@@ -157,6 +164,9 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
         </form>
       }
       <ng-template #souhrn let-v>
+        @if (clenu() > 1) {
+          <p class="clenove-skupiny" data-test="clenove">Skupina: {{ clenu() }} členů</p>
+        }
         <dl class="souhrn-tiketu">
           <div>
             <dt>{{ t.kontrola ? 'Vsazeno' : 'Cena tiketu' }}</dt>
@@ -177,6 +187,28 @@ type Uprava = 'zadna' | 'ukonceni' | 'rozsah' | 'cena' | 'nazev';
             </div>
           }
         </dl>
+        @if (clenu() > 1) {
+          <!-- Podíl jednoho člena skupiny: vklad, výhra a bilance dělené počtem členů. -->
+          <dl class="souhrn-tiketu na-jednoho" data-test="na-jednoho" [attr.aria-label]="'Na jednoho z ' + clenu() + ' členů'">
+            <div>
+              <dt>Vklad na jednoho</dt>
+              <dd>{{ v.vsazenoKc === null ? 'Neznámý' : formatujKc(v.vsazenoKc / clenu()) }}</dd>
+            </div>
+            @if (cekani()) {
+              <div><dt>Výhra na jednoho</dt><dd class="semafor-nehotovy">--- Kč</dd></div>
+              <div><dt>Bilance na jednoho</dt><dd class="semafor-nehotovy">--- Kč</dd></div>
+            } @else {
+              <div>
+                <dt>Výhra na jednoho</dt>
+                <dd>{{ formatujKc(v.celkemKc / clenu()) }}@if (!v.soucetJisty) { * }</dd>
+              </div>
+              <div>
+                <dt>Bilance na jednoho</dt>
+                <dd [class]="'semafor-' + semaforBilance(v.celkemKc, v.bilanceKc, jisty())">{{ v.bilanceKc === null ? 'Nelze určit' : (v.bilanceKc > 0 ? '+' : '') + formatujKc(v.bilanceKc / clenu()) }}</dd>
+              </div>
+            }
+          </dl>
+        }
       </ng-template>
       @if (vysledek(); as v) {
         <!--
@@ -729,9 +761,13 @@ export class Detail {
     this.limitHistorie.set(20);
   }
   protected readonly novyNazev = signal('');
+  protected readonly noviClenove = signal('');
+  /** Počet členů skupiny tiketu; 1 = sázím sám. */
+  protected readonly clenu = computed(() => { const t = this.tiket(); return t ? clenuTiketu(t) : 1; });
 
   protected zacniUpravuNazvu(): void {
     this.novyNazev.set(this.tiket()?.nazev ?? '');
+    this.noviClenove.set(String(this.tiket()?.clenu ?? ''));
     this.uprava.set('nazev');
   }
 
@@ -739,9 +775,18 @@ export class Detail {
     e.preventDefault();
     const t = this.tiket();
     if (!t) return;
-    if (await this.provedAkci(() => this.stav.ulozTiket({ ...t, nazev: this.novyNazev() }))) {
+    const clenu = Number(this.noviClenove());
+    const { clenu: _stary, ...bezClenu } = t;
+    const upraveny: Tiket = { ...bezClenu, nazev: this.novyNazev(), ...(platnyPocetClenu(clenu) ? { clenu } : {}) };
+    if (await this.provedAkci(() => this.stav.ulozTiket(upraveny))) {
+      // Výchozí počet skupiny se mění jen vědomou změnou pole; oprava názvu ho nesmí přepsat
+      // historickou hodnotou tohoto tiketu.
+      if (upraveny.clenu !== t.clenu) {
+        const ulozeny = this.stav.tikety().find(x => x.id === t.id);
+        try { await this.stav.ulozSkupinu(ulozeny?.nazev, ulozeny?.clenu); } catch { /* jen se nepředvyplní */ }
+      }
       this.uprava.set('zadna');
-      this.zpravaAkce.set('Název byl uložen.');
+      this.zpravaAkce.set('Název a skupina byly uloženy.');
     }
   }
 
@@ -806,7 +851,7 @@ export class Detail {
   protected async ulozDocasny(): Promise<void> {
     const t = this.tiket();
     if (!t) return;
-    if (await this.provedAkci(() => this.stav.ulozTiket(t))) {
+    if (await this.provedAkci(() => this.stav.ulozTiket(t, { zdeditClenu: true }))) {
       this.docasnyTiket.zapomen();
       await this.router.navigate(['/tiket', t.id], { queryParams: { pridany: '1' }, replaceUrl: true });
     }

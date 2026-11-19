@@ -41,6 +41,7 @@ import {
 import { DocasnyTiket } from '../data/docasnyTiket.js';
 import { NactenaCisla, NaskenovanyTiket } from '../data/sken.js';
 import { DuplicitniTiket, Stav } from '../data/stav.js';
+import { klicNazvu, platnyPocetClenu } from '../data/nazvyTiketu.js';
 import { popisTerminu } from '../data/zobrazeniTiketu.js';
 import { NazevTiketu } from './nazev-tiketu.js';
 import { Dialogy } from './dialog.js';
@@ -129,6 +130,17 @@ function stejneDny(a: readonly Den[] | null, b: readonly Den[] | null): boolean 
     <form (submit)="uloz($event)" novalidate>
       @if (!jenKontrola()) {
         <app-nazev-tiketu [hodnota]="nazevPole()" (zmena)="nazev.set($event)" />
+        <label>Počet členů skupiny (nepovinný)
+          <input name="clenu" data-cesta="clenu" type="number" min="1" max="99" step="1" inputmode="numeric"
+            placeholder="1 = sázím sám" [value]="clenuPole()"
+            [attr.aria-invalid]="clenuChyba() !== null"
+            (input)="clenuRucne.set($any($event.target).value)" aria-describedby="napoveda-clenu chyba-clenu" />
+        </label>
+        <span id="chyba-clenu">@if (clenuChyba(); as chyba) { <span class="chyba-pole" role="alert">{{ chyba }}</span> }</span>
+        <p id="napoveda-clenu" class="napoveda">
+          Sázíš-li za víc lidí, vklad i výhra se dělí počtem členů. Počet se zapamatuje k názvu
+          a příště se předvyplní.
+        </p>
       }
       <fieldset>
         <legend>Hra</legend>
@@ -554,6 +566,34 @@ export class NovyTiket {
   protected readonly nazevPole = computed(() => this.nazev() ??
     this.stav.tikety().find(t => t.id === this.serioveCislo)?.nazev ?? '');
 
+  /** Ručně zadaný počet členů; `null`, dokud uživatel pole nezměnil — pak platí předvyplnění. */
+  protected readonly clenuRucne = signal<string | null>(null);
+  /**
+   * Předvyplnění. Opakovaný sken uloženého tiketu (stejné sériové číslo i název) nese počet toho
+   * tiketu, i prázdný pro samostatnou sázku — uložení bez úpravy tak nepřepočítá jeho historii.
+   * Výchozí počet skupiny patří novým tiketům.
+   */
+  protected readonly clenuPole = computed(() => {
+    const rucne = this.clenuRucne();
+    if (rucne !== null) return rucne;
+    const nazev = this.nazevPole();
+    const stary = this.serioveCislo === null ? undefined : this.stav.tikety().find(t => t.id === this.serioveCislo);
+    if (stary !== undefined && klicNazvu(nazev) === klicNazvu(stary.nazev)) return String(stary.clenu ?? '');
+    return String(nazev === '' ? '' : (this.stav.skupiny()[klicNazvu(nazev)] ?? ''));
+  });
+  /** Prázdné pole nebo 1 je v pořádku (sázím sám); cokoli jiného než celé číslo 1–99 je chyba. */
+  protected readonly clenuChyba = computed<string | null>(() => {
+    const text = this.clenuPole().trim();
+    if (text === '') return null;
+    const n = Number(text.replace(',', '.'));
+    return Number.isInteger(n) && n >= 1 && n <= 99 ? null : 'Počet členů musí být celé číslo od 1 do 99.';
+  });
+  /** Počet členů z pole; prázdné nebo 1 znamená sázím sám (`undefined`). */
+  private readonly clenu = computed<number | undefined>(() => {
+    const clenu = Number(this.clenuPole());
+    return platnyPocetClenu(clenu) ? clenu : undefined;
+  });
+
   /** Čísla rozpoznaná ze snímku. Jsou jen návrh — uživatel je tu potvrzuje a opravuje. */
   private readonly nacteny = inject(NactenaCisla).vyzvedni();
   private readonly rozpoznane = this.nacteny?.cteni ?? null;
@@ -789,6 +829,7 @@ export class NovyTiket {
     return {
       ...(kontrola === null ? {} : { kontrola }),
       ...(this.nazev() === null ? {} : { nazev: this.nazev() }),
+      ...(this.clenu() === undefined || this.jenKontrola() ? {} : { clenu: this.clenu() }),
       // Sériové číslo z kódu je nejlepší identifikátor — díky němu druhý sken téhož tiketu
       // nevytvoří duplicitu. Ručně zadaný tiket ho nemá, tak si vyrobí vlastní.
       // Virtuální tiket má vlastní předponu, jinak by ho ručně zadaný papírový tiket se stejnými
@@ -959,6 +1000,12 @@ export class NovyTiket {
   }
 
   private async ulozAZkontroluj(tiket: Tiket, nahradit: readonly string[]): Promise<void> {
+    // „Nahradit uložený tiket“ nejde přes kontrolu formuláře; neplatný počet by se jinak potichu
+    // zahodil a původní tiket by se smazal.
+    if (this.clenuChyba() !== null) {
+      requestAnimationFrame(() => this.element.nativeElement.querySelector<HTMLElement>('input[name=clenu]')?.focus());
+      return;
+    }
     this.uklada.set(true);
     this.chybaUlozeni.set(null);
     try {
@@ -972,6 +1019,13 @@ export class NovyTiket {
       }
       return;
     } finally { this.uklada.set(false); }
+    // Skupina se pamatuje podle názvu, který tiket skutečně dostal (i zděděný při nahrazení).
+    // Tiket už je uložený, takže selhání zápisu skupiny uložení neruší.
+    // Výchozí počet se mění jen vědomou změnou pole, ne tím, že se uložil předvyplněný starý tiket.
+    if (this.clenuRucne() !== null) {
+      const ulozeny = this.stav.tikety().find(t => t.id === tiket.id);
+      try { await this.stav.ulozSkupinu(ulozeny?.nazev, ulozeny?.clenu); } catch { /* výchozí počet se jen nepředvyplní */ }
+    }
     // Průchozí údaje ze skenu už splnily účel.
     this.naskenovany.zapomen();
     // `pridany`: detail nabídne další tiket, ať jde skenovat v sérii i s ukládáním.

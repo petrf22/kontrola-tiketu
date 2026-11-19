@@ -5,12 +5,15 @@ import { Stav } from '../data/stav.js';
 import { odpovidaNazvu, seskupPodleNazvu } from '../data/nazvyTiketu.js';
 import { cekaniNaSlosovani, dosudJisty, popisTerminu, semaforVyhry, type Cekani, type FiltrSeznamu } from '../data/zobrazeniTiketu.js';
 import { FiltrNazvu } from './filtr-nazvu.js';
-import type { Tiket } from '@kontrola-tiketu/jadro';
+import { clenuTiketu, spolecnyPocetClenu, type Tiket } from '@kontrola-tiketu/jadro';
 
 interface RadekSeznamu {
   readonly tiket: Tiket;
   readonly termin: string;
   readonly castkaKc: number;
+  /** Počet členů skupiny (1 = sázím sám) a bilance jednoho člena; `null`, když cena tiketu není známá. */
+  readonly clenu: number;
+  readonly bilanceNaJednohoKc: number | null;
   /** Všechna proběhlá slosování jsou spočítaná; nevadí, že tiket běží dál. */
   readonly dosudJisty: boolean;
   readonly chybi: number;
@@ -53,7 +56,7 @@ interface RadekSeznamu {
       @if (!archiv()) { <p><a class="zpet" routerLink="/sken-cisel">Vyfotit tiket</a> · <a class="zpet" routerLink="/tiket/novy">Zadat ručně</a></p> }
     } @else {
       @for (skupina of skupiny(); track skupina.klic) {
-        @if (seskupit()) { <h3 class="nazev-skupiny">{{ skupina.nazev }} <small>({{ skupina.polozky.length }})</small></h3> }
+        @if (seskupit()) { <h3 class="nazev-skupiny">{{ skupina.nazev }} <small>({{ skupina.polozky.length }})</small>@if (clenuSkupiny(skupina.polozky); as n) { <small> · {{ n }}&nbsp;členů</small> }</h3> }
       <ul class="tikety">
         @for (radek of skupina.polozky; track radek.tiket.id) {
           <li [class.nehotovy]="radek.cekani || !radek.dosudJisty">
@@ -67,10 +70,11 @@ interface RadekSeznamu {
               } @else {
                 <span class="vysledek" [class]="'semafor-' + semaforVyhry(radek.castkaKc, radek.dosudJisty)">{{ formatujKc(radek.castkaKc) }}</span>
               }
-              @if (radek.tiket.nazev || radek.tiket.kontrola || radek.duplicitni) {
+              @if (radek.tiket.nazev || radek.tiket.kontrola || radek.duplicitni || radek.clenu > 1) {
                 <span class="stitky">
                   @if (radek.duplicitni) { <span class="stitek duplicitni">Duplicita</span> }
                   @if (radek.tiket.nazev) { <span class="stitek nazev-tiketu">{{ radek.tiket.nazev }}</span> }
+                  @if (radek.clenu > 1) { <span class="stitek clenove">{{ radek.clenu }}&nbsp;členů</span> }
                   @if (radek.tiket.kontrola) { <span class="stitek virtualni">Virtuální</span> }
                 </span>
               }
@@ -79,6 +83,9 @@ interface RadekSeznamu {
                 @if (!radek.tiket.kontrola) { &middot; {{ radek.tiket.slosovani.pocet }}&nbsp;slos. }
                 &middot; {{ radek.tiket.sloupce.length }}&nbsp;sl.
               </span>
+              @if (radek.clenu > 1 && !radek.cekani && radek.bilanceNaJednohoKc !== null) {
+                <span class="na-jednoho">Na jednoho: {{ radek.bilanceNaJednohoKc > 0 ? '+' : '' }}{{ formatujKc(radek.bilanceNaJednohoKc) }}</span>
+              }
               <!-- Úplně vyhodnocený tiket poznámku nemá: hlásí se jen to, co vyžaduje pozornost. -->
               @if (radek.cekani; as c) {
                 <span class="poznamka">{{ c.duvod === 'pred-slosovanim' ? 'Slosování od' : 'Slosování' }} {{ formatujDatum(c.od) }}</span>
@@ -118,7 +125,7 @@ interface RadekSeznamu {
     .nazev-skupiny small { color: var(--barva-text-tlumeny); font-weight: 400; }
     .vysledek { text-align: right; font-variant-numeric: tabular-nums; }
     /* Pod prvním řádkem už je všechno přes celou šířku. */
-    .stitky, .detail, .poznamka { grid-column: 1 / -1; }
+    .stitky, .detail, .poznamka, .na-jednoho { grid-column: 1 / -1; }
     .stitky { display: flex; flex-wrap: wrap; gap: .3rem; margin: .15rem 0; }
     .stitek {
       min-width: 0; padding: 0 0.45rem; border: 1px solid; border-radius: 999px;
@@ -130,7 +137,7 @@ interface RadekSeznamu {
       color: var(--barva-vyhrano); font-size: 0.65rem; text-transform: uppercase;
       letter-spacing: 0.05em; align-self: center;
     }
-    .detail, .poznamka { font-size: 0.8rem; color: var(--barva-text-tlumeny); }
+    .detail, .poznamka, .na-jednoho { font-size: 0.8rem; color: var(--barva-text-tlumeny); }
   `,
 })
 export class Seznam {
@@ -186,6 +193,11 @@ export class Seznam {
       + (nazev === undefined ? '' : ` · ${nazev}`);
   });
 
+  /** Počet členů zobrazených tiketů skupiny; `null`, když se liší nebo jde o samostatné sázky. */
+  protected clenuSkupiny(radky: readonly RadekSeznamu[]): number | null {
+    return spolecnyPocetClenu(radky.map(r => r.tiket));
+  }
+
   protected readonly radky = computed<RadekSeznamu[]>(() =>
     [...this.stav.tikety()].filter(t => !!t.archivovany === this.archiv())
       .filter(t => this.typ() === 'vsechny' || (this.typ() === 'virtualni' ? !!t.kontrola : !t.kontrola))
@@ -196,6 +208,8 @@ export class Seznam {
         tiket,
         termin: popisTerminu(tiket, this.stav.tahy()),
         castkaKc: vysledek.celkemKc,
+        clenu: clenuTiketu(tiket),
+        bilanceNaJednohoKc: vysledek.bilanceKc === null ? null : vysledek.bilanceKc / clenuTiketu(tiket),
         dosudJisty: dosudJisty(vysledek),
         chybi: vysledek.chybejicichSlosovani,
         pokracuje: vysledek.pokracuje,

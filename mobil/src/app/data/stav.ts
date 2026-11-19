@@ -24,11 +24,12 @@ import { maTrvaleUloziste, SIT, ULOZISTE } from './tokeny.js';
 import { nactiVysledky, shrnutiImportu, type VysledekImportu } from './import.js';
 import { stahniVysledky, type KontrolaServeru } from './stahovani.js';
 import { shrnutiStazeni, zpracujStazene } from './vysledkyZeServeru.js';
-import { seskupPodleNazvu, upravNazev } from './nazvyTiketu.js';
+import { klicNazvu, nactenaSkupiny, platnyPocetClenu, seskupPodleNazvu, upravNazev, type Skupiny } from './nazvyTiketu.js';
 import { nactenyFiltrSeznamu, VYCHOZI_FILTR_SEZNAMU, type FiltrSeznamu } from './zobrazeniTiketu.js';
 import { Oznameni } from './oznameni.js';
 
 const KLIC_FILTRU_SEZNAMU = 'filtrSeznamu';
+const KLIC_SKUPIN = 'skupiny';
 
 /**
  * Tiket by se uložil vedle jiného se stejnými sloupci na totéž slosování. Výhry i vsazené
@@ -55,6 +56,8 @@ export class Stav {
 
   readonly tikety = signal<readonly Tiket[]>([]);
   readonly skupinyNazvu = computed(() => seskupPodleNazvu(this.tikety(), t => t.nazev));
+  /** Výchozí počet členů skupin (skupinové sázení) podle `klicNazvu`. */
+  readonly skupiny = signal<Skupiny>({});
   readonly tahy = signal<readonly Tah[]>([]);
   readonly sazby = signal<readonly SazbyExtra6[]>([]);
   readonly sazbyEurosance = signal<readonly SazbyEurosance[]>([]);
@@ -114,14 +117,16 @@ export class Stav {
       return;
     }
 
-    const [tikety, tahy, sazby, sazbyEurosance, ceny, filtr] = await Promise.all([
+    const [tikety, tahy, sazby, sazbyEurosance, ceny, filtr, skupiny] = await Promise.all([
       this.uloziste.nactiTikety(),
       this.uloziste.nactiTahy(),
       this.uloziste.nactiSazby(),
       this.uloziste.nactiSazbyEurosance(),
       this.uloziste.nactiCeny(),
       this.uloziste.nactiNastaveni(KLIC_FILTRU_SEZNAMU),
+      this.uloziste.nactiNastaveni(KLIC_SKUPIN),
     ]);
+    this.skupiny.set(nactenaSkupiny(skupiny));
     this.filtrSeznamu.set(nactenyFiltrSeznamu(filtr));
     this.tikety.set(tikety);
     this.tahy.set(tahy);
@@ -138,12 +143,29 @@ export class Stav {
   }
 
   /**
+   * Zapamatuje výchozí počet členů skupiny, aby se příště při zadání tiketu stejného názvu
+   * předvyplnil. Jeden člen (nebo nesmysl) skupinu smaže; bez názvu se nic neukládá.
+   */
+  async ulozSkupinu(nazev: string | null | undefined, clenu: number | null | undefined): Promise<void> {
+    const klic = klicNazvu(nazev);
+    if (klic === '') return;
+    const dalsi = { ...this.skupiny() };
+    if (platnyPocetClenu(clenu)) dalsi[klic] = clenu;
+    else delete dalsi[klic];
+    this.skupiny.set(dalsi);
+    await this.uloziste.ulozNastaveni(KLIC_SKUPIN, dalsi);
+  }
+
+  /**
    * Uloží tiket. Když by vznikla duplicita, nic neuloží a vyhodí {@link DuplicitniTiket};
    * tikety v `nahradit` se po uložení smažou — tak se úplnější sken prosadí místo staršího.
    * Duplicitu, kterou tiket měl už před úpravou, uložení netrestá: přejmenovat nebo
    * archivovat se musí dát i tiket z doby před touto kontrolou.
    */
-  ulozTiket(tiket: Tiket, { nahradit = [] }: { readonly nahradit?: readonly string[] } = {}): Promise<void> {
+  ulozTiket(
+    tiket: Tiket,
+    { nahradit = [], zdeditClenu = false }: { readonly nahradit?: readonly string[]; readonly zdeditClenu?: boolean } = {},
+  ): Promise<void> {
     return this.vyhradne(async () => {
       const pred = this.vysledky();
       const tikety = this.tikety();
@@ -153,10 +175,17 @@ export class Stav {
       if (nove.length > 0) throw new DuplicitniTiket(nove);
 
       const nahrazeny = tikety.find(t => t.id !== tiket.id && nahradit.includes(t.id));
+      // Nový sken bez názvu zachová původní; explicitní null nebo prázdný text jej odstraní.
+      // Vynechaný počet členů znamená „sázím sám“, ne „nech původní“ — uživatel ho ve formuláři
+      // vždy rozhodl. Zdědí se jen na výslovnou žádost (`zdeditClenu`): tiket, který počet nemohl
+      // zadat, např. dočasný kontrolovaný bez uložení a pak uložený přes stejné sériové číslo.
+      const zdedit = tiket.nazev === undefined;
+      const clenu = tiket.clenu ?? (zdeditClenu ? (puvodni?.clenu ?? nahrazeny?.clenu) : undefined);
+      const { clenu: _zahodit, ...bezClenu } = tiket;
       const ulozeny: Tiket = {
-        ...tiket,
-        // Nový sken bez názvu zachová původní; explicitní null nebo prázdný text jej odstraní.
-        nazev: upravNazev(tiket.nazev === undefined ? (puvodni?.nazev ?? nahrazeny?.nazev) : tiket.nazev),
+        ...bezClenu,
+        nazev: upravNazev(zdedit ? (puvodni?.nazev ?? nahrazeny?.nazev) : tiket.nazev),
+        ...(platnyPocetClenu(clenu) ? { clenu } : {}),
         archivovany: tiket.archivovany ?? puvodni?.archivovany ?? false,
       };
       await this.uloziste.ulozTiket(ulozeny);

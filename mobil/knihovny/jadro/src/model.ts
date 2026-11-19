@@ -204,6 +204,12 @@ export interface RozsahKontroly {
 export interface Tiket {
   /** Vlastní název pro seskupení napříč hrami. Starší tikety jej nemají; null název odstraní. */
   readonly nazev?: string | null;
+  /**
+   * Skupinové sázení: kolik lidí se o vklad i výhru dělí (celé číslo ≥ 2). Chybí = sázím sám.
+   * Hodnota je kopie z výchozí hodnoty skupiny v době uložení — pozdější změna skupiny
+   * stará čísla nemění.
+   */
+  readonly clenu?: number;
   /** Lokální identifikátor odvozený ze sériového čísla tiketu. Slouží k deduplikaci. */
   readonly id: string;
   readonly hra: Hra;

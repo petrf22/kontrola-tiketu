@@ -8,8 +8,8 @@ souboru (importem). Společná pravidla repozitáře jsou v kořenovém `CLAUDE.
 
 ```bash
 npm install          # po instalaci je potřeba npm approve-scripts esbuild
-npm test             # vitest, 621 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
-npm run test:angular -- --watch=false   # 96 testů obrazovek (seznam, detail, formulář, výsledky)
+npm test             # vitest, 628 testů (jádro, OCR, soukromí aplikace, síť, tok dat)
+npm run test:angular -- --watch=false   # 111 testů obrazovek (seznam, detail, formulář, výsledky)
 npm run typecheck    # tsc strict nad knihovnami a testy
 npx ng serve         # vývoj v prohlížeči
 npx ng build         # web do dist/
@@ -102,6 +102,20 @@ zůstávají beze změny. Pole je nepovinné, aby tikety uložené dřív platil
 je `cenaZaSlosovaniKc × počet zkontrolovaných slosování`; když je `cenaZaSlosovaniKc` `null`,
 počítá se každé slosování podle ceníku platného v jeho den (`knihovny/jadro/src/cenik.ts`).
 Rozsah shodný s papírem se neukládá (`sestavKontrolu` v `data/kontrola.ts`).
+
+## Skupinové sázení
+
+Jeden člověk sází za víc lidí: `Tiket.clenu` (celé ≥ 2, chybí = sám) dělí vklad i výhru. Výchozí počet
+členů drží `Stav.skupiny` (nastavení `skupiny`, klíč `klicNazvu`) a předvyplní se ve formuláři podle
+názvu; do tiketu se **kopíruje**, pozdější změna skupiny stará čísla nemění. Podíl na člena počítá
+`souhrnBilance` po tiketech (`vsazenoNaClenaKc`, `vyhranoNaClenaKc`), protože počet členů se mezi
+tikety může lišit. Žádná nová tabulka ani migrace; vše lokálně v šifrovaném úložišti.
+
+Počet členů nikdy neodvozuj potichu: `Stav.ulozTiket` ho **nedědí**, vynechaný znamená „sázím sám“
+(zdědí se jen s `zdeditClenu`, což dělá „Přesto uložit“ u dočasného tiketu). Opakovaný sken téhož
+sériového čísla a názvu předvyplní počet toho tiketu, ne výchozí počet skupiny. Výchozí počet skupiny
+se mění jen vědomou změnou pole, nikdy uložením názvu. Záhlaví skupin čtou počet ze zobrazených
+tiketů (`spolecnyPocetClenu`), ne z výchozí hodnoty.
 
 ## Duplicity
 

@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { souhrnBilance, type Hra } from '@kontrola-tiketu/jadro';
+import { spolecnyPocetClenu, souhrnBilance, type Hra } from '@kontrola-tiketu/jadro';
 import { HRY, nazevHry, formatujKc } from '../data/format.js';
 import { Stav } from '../data/stav.js';
 import { semaforBilance, semaforVyhry } from '../data/zobrazeniTiketu.js';
@@ -44,6 +44,15 @@ function uTiketu(pocet: number): string {
         <div><dt>Vyhráno</dt><dd [class]="'semafor-' + semafor(souhrn().celkem).vyhra">{{ formatujKc(souhrn().celkem.vyhranoKc) }}</dd></div>
         <div><dt>Bilance</dt><dd [class]="'semafor-' + semafor(souhrn().celkem).bilance">{{ formatujKc(souhrn().celkem.vyhranoKc - souhrn().celkem.vsazenoKc) }}</dd></div>
       </dl>
+      @if (souhrn().celkem.skupinovych > 0) {
+        <!-- Můj podíl: u skupinových tiketů vklad i výhra dělené počtem členů, ostatní tikety celé. -->
+        <h3>Můj podíl</h3>
+        <dl class="souhrn-tiketu" data-test="muj-podil">
+          <div><dt>Vsazeno</dt><dd>{{ formatujKc(souhrn().celkem.vsazenoNaClenaKc) }}</dd></div>
+          <div><dt>Vyhráno</dt><dd>{{ formatujKc(souhrn().celkem.vyhranoNaClenaKc) }}</dd></div>
+          <div><dt>Bilance</dt><dd [class]="'semafor-' + semaforPodilu(souhrn().celkem)">{{ formatujKc(souhrn().celkem.vyhranoNaClenaKc - souhrn().celkem.vsazenoNaClenaKc) }}</dd></div>
+        </dl>
+      }
       <p class="tlumene">Včetně archivovaných tiketů.</p>
       @if (souhrn().celkem.nejistych > 0 || souhrn().celkem.tiketuBezCeny > 0) {
         <p class="varovani-akce">Přehled není úplný: některé tikety nemají konečný výsledek nebo známou cenu.</p>
@@ -53,12 +62,19 @@ function uTiketu(pocet: number): string {
         @for (skupina of skupiny(); track skupina.klic) {
           <section>
             <h4>{{ skupina.nazev }}</h4>
-            <p class="pocet">{{ pocetTiketu(skupina.bilance.tiketu) }}</p>
+            <p class="pocet">{{ pocetTiketu(skupina.bilance.tiketu) }}@if (skupina.clenu; as n) { · {{ n }}&nbsp;členů }</p>
             <dl class="souhrn-tiketu">
               <div><dt>Vsazeno</dt><dd>{{ formatujKc(skupina.bilance.vsazenoKc) }}</dd></div>
               <div><dt>Vyhráno</dt><dd [class]="'semafor-' + semafor(skupina.bilance).vyhra">{{ formatujKc(skupina.bilance.vyhranoKc) }}</dd></div>
               <div><dt>Bilance</dt><dd [class]="'semafor-' + semafor(skupina.bilance).bilance">{{ formatujKc(skupina.bilance.vyhranoKc - skupina.bilance.vsazenoKc) }}</dd></div>
             </dl>
+            @if (skupina.bilance.skupinovych > 0) {
+              <dl class="souhrn-tiketu na-jednoho" data-test="na-jednoho" aria-label="Na jednoho člena">
+                <div><dt>Vsazeno na jednoho</dt><dd>{{ formatujKc(skupina.bilance.vsazenoNaClenaKc) }}</dd></div>
+                <div><dt>Vyhráno na jednoho</dt><dd>{{ formatujKc(skupina.bilance.vyhranoNaClenaKc) }}</dd></div>
+                <div><dt>Bilance na jednoho</dt><dd [class]="'semafor-' + semaforPodilu(skupina.bilance)">{{ formatujKc(skupina.bilance.vyhranoNaClenaKc - skupina.bilance.vsazenoNaClenaKc) }}</dd></div>
+              </dl>
+            }
             @if (skupina.bilance.nejistych > 0 || skupina.bilance.tiketuBezCeny > 0) {
               <p class="tlumene">Neúplná bilance — chybí konečný výsledek nebo cena.</p>
             }
@@ -143,6 +159,12 @@ export class Prehled {
     return { vyhra: semaforVyhry(b.vyhranoKc, jisty), bilance: semaforBilance(b.vyhranoKc, b.vyhranoKc - b.vsazenoKc, jisty) };
   }
 
+  /** Barva bilance podílu na jednoho; stejná pravidla jako u celku. */
+  protected semaforPodilu(b: { vsazenoNaClenaKc: number; vyhranoNaClenaKc: number; nejistych: number; tiketuBezCeny: number }) {
+    const jisty = b.nejistych === 0 && b.tiketuBezCeny === 0;
+    return semaforBilance(b.vyhranoNaClenaKc, b.vyhranoNaClenaKc - b.vsazenoNaClenaKc, jisty);
+  }
+
   protected readonly nazev = signal('*');
   private readonly vybraneTikety = computed(() => this.stav.tikety().filter(t => odpovidaNazvu(t, this.nazev())));
   protected readonly souhrn = computed(() => souhrnBilance(this.vybraneTikety(), this.stav.vysledky()));
@@ -152,6 +174,8 @@ export class Prehled {
       bilance: souhrnBilance(skupina.polozky, this.stav.vysledky()).celkem,
       // Seznam ukazuje buď aktuální, nebo archiv; skupina jen v archivu by jinak otevřela prázdný seznam.
       jenArchiv: skupina.polozky.every(t => t.archivovany),
+      /** Počet členů, pokud ho mají všechny tikety skupiny stejný; jinak `null` (různé počty se neukazují). */
+      clenu: spolecnyPocetClenu(skupina.polozky),
     })));
 
   /** Hra bez tiketů by ukazovala prázdný koláč, který nic neříká. */
